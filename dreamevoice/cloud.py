@@ -32,6 +32,7 @@ from urllib.parse import quote
 import requests
 
 from .errors import LoginError, NetworkError
+from .i18n import t
 
 _LOG = logging.getLogger(__name__)
 
@@ -94,14 +95,51 @@ MARKEN_LABELS = {
 def regionen_fuer(marke: str) -> list:
     """Die Regionen, die es bei dieser Marke gibt."""
     return REGIONS_JE_MARKE.get(marke, list(REGIONS))
-REGION_LABELS = {
-    "eu": "Europe (Germany, Austria, Switzerland)",
-    "us": "North/South America",
-    "sg": "Asia-Pacific",
-    "ru": "Russia",
-    "kr": "Korea",
-    "cn": "China (Mainland)",
-}
+
+
+class _RegionLabels:
+    """Region display names, dict-like but resolved on every access.
+
+    A plain dict built here at import time would freeze every label in
+    whatever language happened to be active at that moment - and this
+    module is imported (via ui/tab_connect.py and ui/page_start.py)
+    while ui/app.py is still working through its own top-of-file
+    imports, well before MainWindow.__init__ calls i18n.set_language().
+    Resolving lazily through t() means the labels always match whatever
+    language the user actually picked, without page_start.py or
+    tab_connect.py - which only ever do REGION_LABELS[x], .get(...), or
+    .items() - needing to change at all.
+    """
+
+    #: "kr" -> "Korea" is identical in both languages, so it's a plain
+    #: literal rather than a translation key.
+    _KEYS = {
+        "eu": "cloud.region_eu",
+        "us": "cloud.region_us",
+        "sg": "cloud.region_sg",
+        "ru": "cloud.region_ru",
+        "cn": "cloud.region_cn",
+    }
+    _STATIC = {"kr": "Korea"}
+
+    def __getitem__(self, code: str) -> str:
+        if code in self._KEYS:
+            return t(self._KEYS[code])
+        return self._STATIC[code]
+
+    def get(self, code: str, default: Any = None) -> Any:
+        if code in self._KEYS:
+            return t(self._KEYS[code])
+        return self._STATIC.get(code, default)
+
+    def items(self):
+        return [(code, self[code]) for code in REGIONS]
+
+    def __contains__(self, code: object) -> bool:
+        return code in self._KEYS or code in self._STATIC
+
+
+REGION_LABELS = _RegionLabels()
 
 # MIoT-Adressen des Sprachpaket-Dienstes (Service 7).
 SIID_VOICE = 7
@@ -192,7 +230,7 @@ class DreameCloud:
         """Meldet an. Wirft LoginError/NetworkError mit Klartextmeldung."""
         email = (email or "").strip()
         if not email or not password:
-            raise LoginError("Email and password must not be empty.")
+            raise LoginError(t("cloud.login_empty_credentials"))
         if region not in REGIONS:
             region = "eu"
 
@@ -215,20 +253,18 @@ class DreameCloud:
             )
         except requests.exceptions.SSLError as exc:
             raise NetworkError(
-                "The secure connection to the Dreame server didn't come "
-                "through.",
-                "Check whether a firewall, VPN, or antivirus with HTTPS "
-                "scanning is interfering.",
+                t("cloud.ssl_error_message"),
+                t("cloud.ssl_error_hint"),
             ) from exc
         except requests.exceptions.Timeout as exc:
             raise NetworkError(
-                "The Dreame server didn't respond in time.",
-                "Check your internet connection and try again.",
+                t("cloud.timeout_message"),
+                t("cloud.timeout_hint"),
             ) from exc
         except requests.exceptions.RequestException as exc:
             raise NetworkError(
-                "The Dreame server can't be reached.",
-                f"Technical details: {exc}",
+                t("cloud.request_error_message"),
+                t("cloud.technical_details", details=exc),
             ) from exc
 
         self._apply_login_response(resp)
@@ -248,26 +284,24 @@ class DreameCloud:
                                                    or "user" in low
                                                    or not detail):
                 raise LoginError(
-                    "Email or password wasn't accepted.",
-                    "Check your credentials in the Dreamehome app. Also "
-                    "check the right region: accounts from Germany are "
-                    "almost always on 'Europe'.",
+                    t("cloud.login_rejected"),
+                    t("cloud.login_rejected_hint"),
                 )
             raise LoginError(
-                f"The sign-in was rejected (HTTP {resp.status_code}).",
-                detail or "No further explanation from the server.",
+                t("cloud.signin_rejected_http", status=resp.status_code),
+                detail or t("cloud.no_further_explanation"),
             )
 
         try:
             data = resp.json()
         except ValueError as exc:
-            raise LoginError("The server's response was unreadable.") from exc
+            raise LoginError(t("cloud.response_unreadable")) from exc
 
         token = data.get("access_token")
         if not token:
             raise LoginError(
-                "The server didn't provide an access token.",
-                f"Response: {json.dumps(data)[:300]}",
+                t("cloud.no_access_token"),
+                t("cloud.response_detail", data=json.dumps(data)[:300]),
             )
 
         self.access_token = token
@@ -307,7 +341,7 @@ class DreameCloud:
                 last = exc
         if isinstance(last, Exception):
             raise last
-        raise LoginError("Sign-in did not succeed in any region.")
+        raise LoginError(t("cloud.signin_failed_any_region"))
 
     def _ensure_token(self) -> None:
         if self.access_token and time.time() < self._expires_at:
@@ -315,7 +349,7 @@ class DreameCloud:
         if self._email and self._password:
             self.login(self._email, self._password, self.region)
         elif not self.access_token:
-            raise LoginError("Not signed in.")
+            raise LoginError(t("cloud.not_signed_in"))
 
     @property
     def logged_in(self) -> bool:
@@ -344,7 +378,7 @@ class DreameCloud:
                 continue
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"The Dreame server responded with HTTP {resp.status_code}.",
+                    t("cloud.server_http_status", status=resp.status_code),
                     (resp.text or "")[:300],
                 )
             try:
@@ -353,8 +387,8 @@ class DreameCloud:
                 last_exc = exc
 
         raise NetworkError(
-            "The request to the Dreame server failed.",
-            f"Technical details: {last_exc}",
+            t("cloud.request_failed"),
+            t("cloud.technical_details", details=last_exc),
         )
 
     # -- Geräte -----------------------------------------------------------
@@ -363,8 +397,8 @@ class DreameCloud:
         data = self._api(PATH_DEVICE_LIST)
         if data.get("code") != 0 or "data" not in data:
             raise NetworkError(
-                "The device list couldn't be loaded.",
-                f"Server response: {json.dumps(data)[:300]}",
+                t("cloud.device_list_failed"),
+                t("cloud.server_response_detail", data=json.dumps(data)[:300]),
             )
         records = (((data.get("data") or {}).get("page") or {}).get("records")) or []
         devices = [Device(r) for r in records]
@@ -373,7 +407,7 @@ class DreameCloud:
     def device_info(self, did: str) -> Dict[str, Any]:
         data = self._api(PATH_DEVICE_INFO, {"did": str(did)})
         if data.get("code") != 0:
-            raise NetworkError("The device data couldn't be loaded.")
+            raise NetworkError(t("cloud.device_data_failed"))
         return data.get("data") or {}
 
     # -- MIoT-Befehle ------------------------------------------------------
@@ -402,9 +436,8 @@ class DreameCloud:
         inner = data.get("data")
         if not inner or "result" not in inner:
             raise NetworkError(
-                "The robot didn't respond to the command.",
-                "It's probably offline or in standby. Wake it in the "
-                "Dreamehome app and try again.",
+                t("cloud.robot_no_response"),
+                t("cloud.robot_no_response_hint"),
             )
         return inner["result"]
 

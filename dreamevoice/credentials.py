@@ -23,6 +23,8 @@ import sys
 from ctypes import wintypes
 from typing import Optional
 
+from .i18n import t
+
 _LOG = logging.getLogger(__name__)
 
 # Die Einträge tauchen unter diesen Namen in Windows auf.
@@ -148,5 +150,4 @@ def exists(target: str) -> bool:
 
 def describe(target: str) -> str:
     """Wo der Eintrag in Windows zu finden ist."""
-    return (f"Control Panel > Credential Manager > "
-            f"Windows Credentials > “{target}”")
+    return t("credentials.describe_location", target=target)

@@ -35,6 +35,7 @@ import requests
 
 from .audio import _run, find_ffmpeg
 from .errors import AudioError, NetworkError
+from .i18n import t
 from .paths import data_dir
 
 _LOG = logging.getLogger(__name__)
@@ -63,17 +64,8 @@ def installed_path() -> Optional[Path]:
 
 def describe_source() -> str:
     """Text für den Bestätigungsdialog."""
-    return (
-        f"ffmpeg will be downloaded from GitHub:\n\n{DOWNLOAD_URL}\n\n"
-        f"That's the official Windows build project, also linked by "
-        f"ffmpeg.org ({PROJECT_URL}).\n\n"
-        f"Size: about {APPROX_SIZE_MB} MB. Only ffmpeg.exe and ffprobe.exe "
-        f"are extracted from the archive and placed in the app's data "
-        f"folder. Nothing on the system is changed, nothing is installed, "
-        f"and nothing is written to the registry.\n\n"
-        f"Alternative without downloading: just copy an existing "
-        f"ffmpeg.exe into this app's folder."
-    )
+    return t("ffmpeg_setup.describe_source", url=DOWNLOAD_URL,
+             project_url=PROJECT_URL, size_mb=APPROX_SIZE_MB)
 
 
 def _noop_log(_: str) -> None:
@@ -92,45 +84,46 @@ def download_and_install(progress: Optional[ProgressFn] = None,
     dest.mkdir(parents=True, exist_ok=True)
     archive = dest / "_download.zip"
 
-    log(f"Lade von {DOWNLOAD_URL}")
+    log(t("ffmpeg_setup.log_downloading_from", url=DOWNLOAD_URL))
     try:
         with requests.get(DOWNLOAD_URL, stream=True, timeout=120,
                           headers={"User-Agent": "DreameSprachpakete/1.0"}) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"The download failed (HTTP {resp.status_code}).",
-                    f"Source: {DOWNLOAD_URL}")
+                    t("ffmpeg_setup.download_failed_title", status=resp.status_code),
+                    t("ffmpeg_setup.download_failed_detail", url=DOWNLOAD_URL))
 
             total = int(resp.headers.get("Content-Length") or 0)
             if total and total > MAX_ARCHIVE_BYTES:
                 raise NetworkError(
-                    "The offered file is unexpectedly large.",
-                    f"{total // (1024 * 1024)} MB - the download was aborted.")
+                    t("ffmpeg_setup.file_too_large_title"),
+                    t("ffmpeg_setup.file_too_large_detail",
+                      size_mb=total // (1024 * 1024)))
 
             done = 0
             with archive.open("wb") as fh:
                 for block in resp.iter_content(chunk_size=1 << 18):
                     if cancelled():
-                        raise NetworkError("Cancelled by the user.")
+                        raise NetworkError(t("ffmpeg_setup.cancelled_by_user"))
                     if not block:
                         continue
                     fh.write(block)
                     done += len(block)
                     if done > MAX_ARCHIVE_BYTES:
-                        raise NetworkError("The download became unexpectedly "
-                                           "large and was aborted.")
+                        raise NetworkError(t("ffmpeg_setup.download_grew_too_large"))
                     if progress:
                         progress(done, total)
     except requests.exceptions.RequestException as exc:
         archive.unlink(missing_ok=True)
-        raise NetworkError("ffmpeg couldn't be downloaded.",
-                           f"Technical details: {exc}") from exc
+        raise NetworkError(t("ffmpeg_setup.download_error_title"),
+                           t("ffmpeg_setup.technical_details_detail", error=exc)) from exc
     except Exception:
         archive.unlink(missing_ok=True)
         raise
 
-    log(f"Downloaded: {archive.stat().st_size // (1024 * 1024)} MB")
-    log("Extracting ffmpeg.exe and ffprobe.exe ...")
+    log(t("ffmpeg_setup.log_downloaded",
+          size_mb=archive.stat().st_size // (1024 * 1024)))
+    log(t("ffmpeg_setup.log_extracting"))
 
     extracted: list[str] = []
     try:
@@ -154,42 +147,41 @@ def download_and_install(progress: Optional[ProgressFn] = None,
                 extracted.append(name)
     except zipfile.BadZipFile as exc:
         archive.unlink(missing_ok=True)
-        raise AudioError("The downloaded file isn't a valid archive.",
-                         f"Technical details: {exc}") from exc
+        raise AudioError(t("ffmpeg_setup.invalid_archive_title"),
+                         t("ffmpeg_setup.technical_details_detail", error=exc)) from exc
     finally:
         archive.unlink(missing_ok=True)
 
     exe = dest / "ffmpeg.exe"
     if not exe.is_file():
         raise AudioError(
-            "No ffmpeg.exe was in the archive.",
-            f"Found: {', '.join(extracted) or 'nothing'}. "
-            f"Please get ffmpeg manually and place it next to the app.")
+            t("ffmpeg_setup.exe_missing_title"),
+            t("ffmpeg_setup.exe_missing_detail",
+              found=', '.join(extracted) or t("ffmpeg_setup.nothing_found")))
 
-    log(f"Extracted: {', '.join(extracted)}")
+    log(t("ffmpeg_setup.log_extracted", files=', '.join(extracted)))
 
     # Funktionsprobe: läuft die Datei, und kann sie Vorbis kodieren?
     try:
         version = _run([str(exe), "-version"], timeout=30)
     except Exception as exc:
-        raise AudioError("The extracted ffmpeg.exe won't start.",
-                         f"Technical details: {exc}") from exc
+        raise AudioError(t("ffmpeg_setup.exe_wont_start_title"),
+                         t("ffmpeg_setup.technical_details_detail", error=exc)) from exc
 
     if version.returncode != 0:
-        raise AudioError("The extracted ffmpeg.exe reports an error.",
+        raise AudioError(t("ffmpeg_setup.exe_error_title"),
                          (version.stderr or "")[:300])
 
     first_line = (version.stdout or "").splitlines()
-    log(first_line[0] if first_line else "ffmpeg started")
+    log(first_line[0] if first_line else t("ffmpeg_setup.ffmpeg_started_fallback"))
 
     encoders = _run([str(exe), "-hide_banner", "-encoders"], timeout=30)
     if "libvorbis" not in (encoders.stdout or ""):
         raise AudioError(
-            "This ffmpeg is missing the Vorbis encoder (libvorbis).",
-            "Without it, no Dreame voice packs can be generated. "
-            "Please use a complete ffmpeg build.")
+            t("ffmpeg_setup.vorbis_missing_title"),
+            t("ffmpeg_setup.vorbis_missing_detail"))
 
-    log("Vorbis encoder present - ffmpeg is ready to use.")
+    log(t("ffmpeg_setup.log_vorbis_ready"))
     return exe
 
 

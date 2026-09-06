@@ -7,6 +7,7 @@ from datetime import datetime
 from tkinter import ttk
 from typing import Callable, Optional
 
+from ..i18n import t
 from .state import spaeter
 from .theme import Theme
 
@@ -466,10 +467,10 @@ class MessageDialog(tk.Toplevel):
 
         knoepfe = ttk.Frame(rahmen, style="Card.TFrame")
         knoepfe.pack(fill="x", padx=16, pady=16)
-        self.btn_copy = ttk.Button(knoepfe, text="Copy text",
+        self.btn_copy = ttk.Button(knoepfe, text=t("widgets.message_copy_button"),
                                    command=self._kopieren)
         self.btn_copy.pack(side="left")
-        ttk.Button(knoepfe, text="Close", style="Accent.TButton",
+        ttk.Button(knoepfe, text=t("widgets.message_close_button"), style="Accent.TButton",
                    command=self.destroy).pack(side="right")
 
         self.bind("<Escape>", lambda _e: self.destroy())
@@ -495,9 +496,9 @@ class MessageDialog(tk.Toplevel):
 
     def _kopieren(self) -> None:
         copy_to_clipboard(self, self._volltext)
-        self.btn_copy.configure(text="Copied")
+        self.btn_copy.configure(text=t("widgets.message_copied_button"))
         spaeter(self, 1500,
-                lambda: self.btn_copy.configure(text="Copy text"))
+                lambda: self.btn_copy.configure(text=t("widgets.message_copy_button")))
 
     def _zentrieren(self) -> None:
         self.update_idletasks()

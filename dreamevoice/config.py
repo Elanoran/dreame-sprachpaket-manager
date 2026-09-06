@@ -15,6 +15,7 @@ import logging
 from typing import Any, Dict, List
 
 from . import credentials
+from .i18n import t
 from .paths import config_file, log_file
 
 _LOG = logging.getLogger(__name__)
@@ -180,13 +181,34 @@ class Config:
 
         self._values["password_enc"] = encrypt_password(plain)
 
+    #: Language-independent codes for where a secret is stored - used for
+    #: logic (comparisons). The *_location properties turn these into
+    #: display text via t(); comparing against translated text directly
+    #: (as tab_store.py's _refresh_key_location used to) silently breaks
+    #: the moment the display text isn't English anymore.
+    LOCATION_CREDENTIAL_MANAGER = "credential_manager"
+    LOCATION_CONFIG_ENCRYPTED = "config_encrypted"
+    LOCATION_NOT_SAVED = "not_saved"
+
+    @staticmethod
+    def _location_text(code: str) -> str:
+        return {
+            Config.LOCATION_CREDENTIAL_MANAGER: t("config.location_credential_manager"),
+            Config.LOCATION_CONFIG_ENCRYPTED: t("config.location_config_encrypted"),
+            Config.LOCATION_NOT_SAVED: t("config.location_not_saved"),
+        }[code]
+
+    @property
+    def password_location_code(self) -> str:
+        if credentials.exists(credentials.TARGET_DREAME):
+            return self.LOCATION_CREDENTIAL_MANAGER
+        if self._values.get("password_enc"):
+            return self.LOCATION_CONFIG_ENCRYPTED
+        return self.LOCATION_NOT_SAVED
+
     @property
     def password_location(self) -> str:
-        if credentials.exists(credentials.TARGET_DREAME):
-            return "Windows-Anmeldeinformationsspeicher"
-        if self._values.get("password_enc"):
-            return "config.json (verschlüsselt mit deinem Windows-Konto)"
-        return "nicht gespeichert"
+        return self._location_text(self.password_location_code)
 
     @staticmethod
     def can_remember_password() -> bool:
@@ -217,13 +239,17 @@ class Config:
         self._values["elevenlabs_key_enc"] = encrypt_password(plain) if plain else ""
 
     @property
+    def elevenlabs_key_location_code(self) -> str:
+        if credentials.exists(credentials.TARGET_ELEVENLABS):
+            return self.LOCATION_CREDENTIAL_MANAGER
+        if self._values.get("elevenlabs_key_enc"):
+            return self.LOCATION_CONFIG_ENCRYPTED
+        return self.LOCATION_NOT_SAVED
+
+    @property
     def elevenlabs_key_location(self) -> str:
         """Wo der Schlüssel liegt - für die Anzeige."""
-        if credentials.exists(credentials.TARGET_ELEVENLABS):
-            return "Windows Credential Manager"
-        if self._values.get("elevenlabs_key_enc"):
-            return "config.json (encrypted with your Windows account)"
-        return "not saved"
+        return self._location_text(self.elevenlabs_key_location_code)
 
     def forget_elevenlabs_key(self) -> None:
         credentials.delete(credentials.TARGET_ELEVENLABS)

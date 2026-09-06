@@ -30,6 +30,7 @@ import requests
 
 from . import PROJEKT_URL, embedded
 from .errors import NetworkError, PackError
+from .i18n import t
 from .paths import data_dir
 
 _LOG = logging.getLogger(__name__)
@@ -93,30 +94,30 @@ class FertigerDialekt:
 # "Eigene Stimmen" selbst erzeugt.
 KATALOG: List[FertigerDialekt] = [
     FertigerDialekt(
-        key="bayerisch", name="Bavarian",
+        key="bayerisch", name=t("dialektpakete.katalog_bayerisch_name"),
         datei="Bayerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Upper Bavarian, as spoken around Munich."),
+        beschreibung=t("dialektpakete.katalog_bayerisch_beschreibung")),
     FertigerDialekt(
-        key="bayerisch-weiblich", name="Bavarian",
+        key="bayerisch-weiblich", name=t("dialektpakete.katalog_bayerisch_weiblich_name"),
         datei="Bayerisch-Weiblich-Aufnahmen.zip", ansagen=598,
-        stimme="ElevenLabs", geschlecht="female",
-        beschreibung="Upper Bavarian, as spoken around Munich."),
+        stimme="ElevenLabs", geschlecht=t("dialektpakete.katalog_bayerisch_weiblich_geschlecht"),
+        beschreibung=t("dialektpakete.katalog_bayerisch_weiblich_beschreibung")),
     FertigerDialekt(
-        key="hessisch", name="Hessian",
+        key="hessisch", name=t("dialektpakete.katalog_hessisch_name"),
         datei="Hessisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Frankfurt-style Hessian from the Rhine-Main area."),
+        beschreibung=t("dialektpakete.katalog_hessisch_beschreibung")),
     FertigerDialekt(
-        key="wienerisch", name="Viennese",
+        key="wienerisch", name=t("dialektpakete.katalog_wienerisch_name"),
         datei="Wienerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Viennese vernacular, not stage dialect."),
+        beschreibung=t("dialektpakete.katalog_wienerisch_beschreibung")),
     FertigerDialekt(
-        key="berlinerisch", name="Berlin Dialect",
+        key="berlinerisch", name=t("dialektpakete.katalog_berlinerisch_name"),
         datei="Berlinerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Berlin's Schnauze, with the hard j instead of g."),
+        beschreibung=t("dialektpakete.katalog_berlinerisch_beschreibung")),
 ]
 
 

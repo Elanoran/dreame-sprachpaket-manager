@@ -15,25 +15,36 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Dict, Iterable, List, Optional
 
+from .i18n import t
 from .paths import resource_dir
 
 _LOG = logging.getLogger(__name__)
 
-GROUP_ORDER = [
-    "Cleaning",
-    "Errors & Maintenance",
-    "Battery & Charging",
-    "Base Station",
-    "Network",
-    "Voice Assistant",
-    "Battery Level",
-    "Controls",
-    "Other",
-]
+
+def group_order() -> List[str]:
+    """Bevorzugte Reihenfolge der Gruppen, in der aktuell aktiven Sprache.
+
+    Als Funktion statt als Modulkonstante, damit ein Sprachwechsel wirkt:
+    dieses Modul wird lange vor dem Aufruf von i18n.set_language()
+    importiert (schon beim Start über textfiles/importer), eine zur
+    Importzeit ausgewertete Liste würde also für die ganze Laufzeit auf
+    Englisch einfrieren.
+    """
+    return [
+        t("sounds.group_cleaning"),
+        t("sounds.group_errors"),
+        t("sounds.group_battery_charging"),
+        t("sounds.group_base_station"),
+        t("sounds.group_network"),
+        t("sounds.group_voice_assistant"),
+        t("sounds.group_battery_level"),
+        t("sounds.group_controls"),
+        t("sounds.group_other"),
+    ]
 
 
 @dataclass
@@ -43,7 +54,7 @@ class Sound:
     id: int
     de: str = ""
     en: str = ""
-    group: str = "Other"
+    group: str = field(default_factory=lambda: t("sounds.group_other"))
     common: bool = False
 
     @property
@@ -53,7 +64,7 @@ class Sound:
             return self.en
         if self.de:
             return self.de
-        return "(unknown announcement - please listen)"
+        return t("sounds.title_fallback")
 
     @property
     def has_german_label(self) -> bool:
@@ -93,7 +104,7 @@ class SoundCatalog:
 
     def groups(self) -> List[str]:
         present = {s.group for s in self._sounds}
-        ordered = [g for g in GROUP_ORDER if g in present]
+        ordered = [g for g in group_order() if g in present]
         ordered += sorted(present - set(ordered))
         return ordered
 
@@ -143,7 +154,7 @@ class SoundCatalog:
 
         sounds = [
             Sound(id=int(entry["id"]), de=entry.get("de", ""), en=entry.get("en", ""),
-                  group=entry.get("group", "Other"), common=bool(entry.get("common")))
+                  group=entry.get("group", t("sounds.group_other")), common=bool(entry.get("common")))
             for entry in data.get("sounds", [])
         ]
         return cls(sounds, data.get("source_model", ""))

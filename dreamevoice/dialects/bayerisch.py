@@ -31,13 +31,11 @@ bleiben.
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "bayerisch"
-NAME = "Bavarian"
-BESCHREIBUNG = (
-    "Modern Old Bavarian, as spoken in and around Munich: written "
-    "phonetically, with grumpiness and wit in the right places."
-)
+NAME = t("bayerisch.name")
+BESCHREIBUNG = t("bayerisch.beschreibung")
 LANG_ID = "BAYERN"
 
 TEXTE = {

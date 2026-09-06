@@ -22,6 +22,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List, Optional
 
+from .i18n import t
 from .paths import build_dir
 
 _LOG = logging.getLogger(__name__)
@@ -60,7 +61,7 @@ def suggest_name(dialect_name: str, engine: str, voice_label: str = "") -> str:
     stimme = (voice_label or "").strip()
     # Klammerzusätze wie "(de · selbst erzeugt)" machen den Namen unnötig lang.
     stimme = stimme.split("(")[0].strip()
-    teile = ["dialect", dialect_name, dienst]
+    teile = [t("library.suggest_name_dialect_tag"), dialect_name, dienst]
     if stimme:
         teile.append(stimme)
     return safe_name("_".join(teile))
@@ -125,7 +126,7 @@ class PackInfo:
         kopf = " · ".join(teile)
         anhang = []
         if self.replaced:
-            anhang.append(f"{self.replaced} announcements")
+            anhang.append(t("library.label_announcements", count=self.replaced))
         anhang.append(f"{self.size_mb:.1f} MB")
         if self.created:
             anhang.append(self.created[:10])

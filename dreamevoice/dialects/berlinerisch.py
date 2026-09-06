@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "berlinerisch"
-NAME = "Berlin Dialect"
-BESCHREIBUNG = (
-    "Berlin's famous 'Schnauze': blunt, dry, with heart. Loves to "
-    "complain, but cleans anyway."
-)
+NAME = t("berlinerisch.name")
+BESCHREIBUNG = t("berlinerisch.beschreibung")
 LANG_ID = "BERLIN"
 
 TEXTE = {

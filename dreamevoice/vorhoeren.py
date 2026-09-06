@@ -36,6 +36,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from .audio import SUPPORTED_INPUT
+from .i18n import t
 from .importer import sound_id_from_name
 from .sounds import SoundCatalog
 
@@ -172,9 +173,11 @@ def nach_wav(quelle: Path, ziel: Path, ffmpeg: Optional[Path]) -> Optional[Path]
 def beschriftung(nummer: int, katalog: Optional[SoundCatalog] = None) -> str:
     """Was diese Ansage bedeutet - für die Anzeige beim Abspielen."""
     if katalog is None:
-        return f"Announcement {nummer}"
+        return t("vorhoeren.announcement_plain", nummer=nummer)
     eintrag = katalog.get(nummer)
-    return f"Announcement {nummer} · {eintrag.title}" if eintrag else f"Announcement {nummer}"
+    if eintrag:
+        return t("vorhoeren.announcement_with_title", nummer=nummer, title=eintrag.title)
+    return t("vorhoeren.announcement_plain", nummer=nummer)
 
 
 def dauer(datei: Path) -> float:
@@ -302,7 +305,7 @@ def probe_vorbereiten(quelle: Path, ffmpeg: Optional[Path],
         # Ordner kann sofort weg statt bis zum Beenden zu warten.
         shutil.rmtree(arbeit, ignore_errors=True)
         if log:
-            log("There's no announcement in this pack to preview.")
+            log(t("vorhoeren.no_announcement_to_preview"))
         return {}
     _ARBEITSORDNER.append(arbeit)
 
@@ -317,5 +320,5 @@ def probe_vorbereiten(quelle: Path, ffmpeg: Optional[Path],
         if arbeit in _ARBEITSORDNER:
             _ARBEITSORDNER.remove(arbeit)
         if log:
-            log("ffmpeg is needed to preview - it couldn't be used.")
+            log(t("vorhoeren.ffmpeg_needed"))
     return fertig

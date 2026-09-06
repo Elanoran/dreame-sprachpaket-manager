@@ -33,6 +33,7 @@ from typing import Any, Callable, Dict, List, Optional
 import requests
 
 from .errors import AudioError, NetworkError
+from .i18n import t
 
 _LOG = logging.getLogger(__name__)
 
@@ -43,6 +44,15 @@ class Ueberlastet(NetworkError):
     Eigener Typ, weil das Gegenteil von "Kontingent aufgebraucht"
     gemeint ist: Dort hilft nur Warten bis zum nächsten Monat, hier
     genügen ein paar Sekunden.
+    """
+
+
+class KontingentAufgebraucht(NetworkError):
+    """Das ElevenLabs-Kontingent ist für diesen Monat aufgebraucht.
+
+    Eigener Typ statt eines Textvergleichs auf `message`: die Meldung
+    ist jetzt je nach Sprache deutsch oder englisch, ein Substring-Test
+    auf einen englischen Wortlaut würde im Deutschen nicht mehr greifen.
     """
 
 
@@ -122,9 +132,9 @@ class ElevenVoice:
     def label(self) -> str:
         teile = [x for x in (self.language, self.accent) if x]
         if self.category == "generated":
-            teile.append("self-created")
+            teile.append(t("elevenlabs.voice_creation_self"))
         elif self.category == "cloned":
-            teile.append("cloned")
+            teile.append(t("elevenlabs.voice_creation_cloned"))
         extra = " · ".join(teile)
         return f"{self.name} ({extra})" if extra else self.name
 
@@ -151,7 +161,7 @@ class Quota:
         return max(0, self.limit - self.used)
 
     def describe(self) -> str:
-        return f"{self.left} of {self.limit} characters left"
+        return t("elevenlabs.quota_left", left=self.left, limit=self.limit)
 
 
 #: Je Thread eine offene Verbindung.
@@ -222,17 +232,16 @@ def _request(method: str, path: str, api_key: str, api_version: str = "v1",
         resp = _http(method, url, headers=_headers(api_key),
                      timeout=kwargs.pop("timeout", 30), **kwargs)
     except requests.exceptions.RequestException as exc:
-        raise NetworkError("ElevenLabs can't be reached.",
-                           f"Call: {method} {url}\nTechnical details: {exc}") from exc
+        raise NetworkError(
+            t("elevenlabs.unreachable_title"),
+            t("elevenlabs.unreachable_detail", method=method, url=url, error=exc)
+        ) from exc
 
     if resp.status_code == 401 and raise_on_auth:
         raise NetworkError(
-            "The access key wasn't accepted.",
-            f"Call: {method} {url}\n"
-            f"Response: {(resp.text or '')[:200]}\n\n"
-            f"Check the key at elevenlabs.io/app/settings/api-keys. "
-            f"It starts with 'sk_'. Make sure nothing was cut off when "
-            f"copying and no space came along.")
+            t("elevenlabs.auth_rejected_title"),
+            t("elevenlabs.auth_rejected_detail", method=method, url=url,
+              response=(resp.text or "")[:200]))
     if resp.status_code == 429:
         # 429 hat bei ElevenLabs ZWEI Bedeutungen, und sie führen zu
         # entgegengesetztem Verhalten: "Kontingent leer" heißt aufhören,
@@ -242,28 +251,26 @@ def _request(method: str, path: str, api_key: str, api_version: str = "v1",
         meldung = (_server_message(resp) or "").lower()
         if any(w in meldung for w in ("quota", "character_limit", "credit",
                                       "exceeded", "aufgebraucht")):
-            raise NetworkError(
-                "The quota at ElevenLabs is used up.",
-                "The free quota refills every month. Until then you can "
-                "generate the pack with the Windows voice.")
+            raise KontingentAufgebraucht(
+                t("elevenlabs.quota_exhausted_title"),
+                t("elevenlabs.quota_exhausted_detail"))
         raise Ueberlastet(
-            "ElevenLabs isn't accepting further requests right now.",
-            "The service limits how many announcements can be spoken at "
-            "once. The app throttles itself and tries again - this isn't "
-            "an error.\n\n"
-            f"Service response: {_server_message(resp) or '(none given)'}")
+            t("elevenlabs.throttled_title"),
+            t("elevenlabs.throttled_detail",
+              response=_server_message(resp) or t("elevenlabs.no_response_given")))
     return resp
 
 
 def check_key(api_key: str) -> Quota:
     """Prüft den Schlüssel und liefert das verbleibende Kontingent."""
     if not (api_key or "").strip():
-        raise NetworkError("No access key was entered.")
+        raise NetworkError(t("elevenlabs.no_key_entered"))
 
     resp = _request("GET", "user/subscription", api_key)
     if resp.status_code != 200:
-        raise NetworkError(f"ElevenLabs responded with HTTP {resp.status_code}.",
-                           (resp.text or "")[:200])
+        raise NetworkError(
+            t("elevenlabs.http_error_generic", status=resp.status_code),
+            (resp.text or "")[:200])
     data = resp.json()
     return Quota(used=int(data.get("character_count", 0)),
                  limit=int(data.get("character_limit", 0)))
@@ -272,7 +279,7 @@ def check_key(api_key: str) -> Quota:
 def _parse_voice(raw: Dict[str, Any]) -> ElevenVoice:
     return ElevenVoice(
         voice_id=raw.get("voice_id", ""),
-        name=raw.get("name", "") or "(ohne Namen)",
+        name=raw.get("name", "") or t("elevenlabs.voice_no_name"),
         labels=raw.get("labels") or {},
         description=raw.get("description") or "",
         category=raw.get("category", "") or "",
@@ -317,7 +324,7 @@ def list_voices(api_key: str) -> List[ElevenVoice]:
     # Rückfallebene, falls v2 nicht erreichbar ist.
     resp = _request("GET", "voices", api_key)
     if resp.status_code != 200:
-        raise NetworkError(f"The voice list didn't come through (HTTP {resp.status_code}).")
+        raise NetworkError(t("elevenlabs.voice_list_failed", status=resp.status_code))
     return [_parse_voice(raw) for raw in resp.json().get("voices", [])]
 
 
@@ -377,14 +384,8 @@ def _konto_hinweis(api_key: str) -> str:
     if anzahl is None:
         return ""
     if anzahl == 0:
-        return ("Important: the account this access key belongs to has no "
-                "custom voices at all - only the built-in ones. So the "
-                "voice you're looking for was very likely created in a "
-                "different ElevenLabs account. Enter the key for the "
-                "account the voice is in above.\n\n")
-    return (f"For reference: the account for this key has "
-            f"{anzahl} custom voices - the one you're looking for isn't "
-            f"among them.\n\n")
+        return t("elevenlabs.no_custom_voices")
+    return t("elevenlabs.custom_voices_count", count=anzahl)
 
 
 def get_voice(api_key: str, voice_id: str) -> ElevenVoice:
@@ -396,15 +397,13 @@ def get_voice(api_key: str, voice_id: str) -> ElevenVoice:
     voice_id = (voice_id or "").strip()
     if not voice_id:
         raise NetworkError(
-            "No voice ID was entered.",
-            "The ID is on the voice in ElevenLabs under the three dots "
-            "('Copy Voice ID') and is about 20 characters long.")
+            t("elevenlabs.no_voice_id_title"),
+            t("elevenlabs.no_voice_id_detail"))
 
     if voice_id.startswith("sk_"):
         raise NetworkError(
-            "The voice ID field has an access key in it.",
-            "Keys start with 'sk_', voice IDs don't. The two fields are "
-            "probably swapped: the key belongs above, the voice ID here.")
+            t("elevenlabs.id_field_has_key_title"),
+            t("elevenlabs.id_field_has_key_detail"))
 
     resp = _request("GET", f"voices/{voice_id}", api_key, raise_on_auth=False)
 
@@ -415,27 +414,19 @@ def get_voice(api_key: str, voice_id: str) -> ElevenVoice:
 
     if _is_key_problem(resp):
         raise NetworkError(
-            "ElevenLabs rejected the access key.",
-            f"Server response (HTTP {resp.status_code}):\n{meldung}\n\n"
-            f"A valid key starts with 'sk_'. Most common causes:\n"
-            f"· only part of it was caught when copying\n"
-            f"· the key was revoked or regenerated in ElevenLabs\n"
-            f"· key and voice ID are swapped in the fields\n\n"
-            f"Get a new key: elevenlabs.io/app/settings/api-keys")
+            t("elevenlabs.voice_key_rejected_title"),
+            t("elevenlabs.voice_key_rejected_detail", status=resp.status_code,
+              message=meldung))
 
     if resp.status_code in (400, 404, 422):
         raise NetworkError(
-            f"No voice could be loaded for the ID '{voice_id}'.",
-            f"Server response (HTTP {resp.status_code}):\n{meldung}\n\n"
-            + _konto_hinweis(api_key) +
-            f"Check the ID in your ElevenLabs account: click the three "
-            f"dots on the voice and choose 'Copy Voice ID'. Voices from "
-            f"the public library must first be added to your account "
-            f"before you can address them by ID.")
+            t("elevenlabs.voice_not_found_title", voice_id=voice_id),
+            t("elevenlabs.voice_not_found_detail", status=resp.status_code,
+              message=meldung, account_hint=_konto_hinweis(api_key)))
 
     raise NetworkError(
-        f"The voice couldn't be loaded (HTTP {resp.status_code}).",
-        f"Server response:\n{meldung}")
+        t("elevenlabs.voice_load_failed_title", status=resp.status_code),
+        t("elevenlabs.voice_load_failed_detail", message=meldung))
 
 
 def search_bavarian_voices(api_key: str, limit: int = 30) -> List[ElevenVoice]:
@@ -495,18 +486,19 @@ def get_voice_settings(api_key: str, voice_id: str) -> Optional[Dict[str, Any]]:
 def describe_settings(settings: Optional[Dict[str, Any]]) -> str:
     """Kurzbeschreibung der Einstellungen für die Anzeige."""
     if not settings:
-        return "ElevenLabs defaults"
+        return t("elevenlabs.settings_defaults")
     teile = []
     if "stability" in settings:
         wert = float(settings["stability"])
-        art = "lively" if wert < 0.4 else ("balanced" if wert < 0.7
-                                             else "uniform")
-        teile.append(f"Stability {wert:.2f} ({art})")
+        art = (t("elevenlabs.stability_lively") if wert < 0.4 else
+               (t("elevenlabs.stability_balanced") if wert < 0.7
+                else t("elevenlabs.stability_uniform")))
+        teile.append(t("elevenlabs.stability_label", value=wert, kind=art))
     if settings.get("style"):
-        teile.append(f"Style {float(settings['style']):.2f}")
+        teile.append(t("elevenlabs.style_label", value=float(settings["style"])))
     if "speed" in settings:
-        teile.append(f"Rate {float(settings['speed']):.2f}")
-    return ", ".join(teile) or "custom settings"
+        teile.append(t("elevenlabs.rate_label", value=float(settings["speed"])))
+    return ", ".join(teile) or t("elevenlabs.settings_custom")
 
 
 def list_models(api_key: str) -> List[Dict[str, Any]]:
@@ -542,7 +534,7 @@ def add_shared_voice(api_key: str, voice: ElevenVoice,
         json={"new_name": name or voice.name})
     if resp.status_code not in (200, 201):
         raise NetworkError(
-            "The voice couldn't be added to the account.",
+            t("elevenlabs.add_voice_failed"),
             (resp.text or "")[:200])
     return resp.json().get("voice_id", voice.voice_id)
 
@@ -574,9 +566,9 @@ def synthesize(texts: Dict[int, str],
     cancelled = cancelled or (lambda: False)
 
     if not voice_id:
-        raise AudioError("No voice was selected.")
+        raise AudioError(t("elevenlabs.no_voice_selected"))
     if not texts:
-        raise AudioError("No texts were provided.")
+        raise AudioError(t("elevenlabs.no_texts_provided"))
 
     out_dir.mkdir(parents=True, exist_ok=True)
     result: Dict[int, Path] = {}
@@ -587,7 +579,7 @@ def synthesize(texts: Dict[int, str],
     if einstellungen is None and use_voice_settings:
         einstellungen = get_voice_settings(api_key, voice_id)
         if log:
-            log(f"Voice sound: {describe_settings(einstellungen)}")
+            log(t("elevenlabs.voice_sound_log", settings=describe_settings(einstellungen)))
 
     rumpf: Dict[str, Any] = {"model_id": model or MODEL}
     if einstellungen:
@@ -610,8 +602,7 @@ def synthesize(texts: Dict[int, str],
     if progress and result:
         progress(len(result), gesamt)
     if log and result:
-        log(f"{len(result)} announcements already exist and will be "
-            f"reused.")
+        log(t("elevenlabs.announcements_reused", count=len(result)))
 
     def _sprich(auftrag):
         """Eine einzelne Ansage anfordern. Läuft in einem eigenen Thread.
@@ -630,8 +621,8 @@ def synthesize(texts: Dict[int, str],
             return sound_id, None, exc
         if resp.status_code != 200:
             return sound_id, None, NetworkError(
-                f"Announcement {sound_id} couldn't be spoken "
-                f"(HTTP {resp.status_code}).", (resp.text or "")[:300])
+                t("elevenlabs.announcement_failed", id=sound_id,
+                  status=resp.status_code), (resp.text or "")[:300])
         try:
             ziel.write_bytes(resp.content)
         except OSError as exc:
@@ -678,26 +669,24 @@ def synthesize(texts: Dict[int, str],
                     gedrosselt.append((sound_id, text, ziel))
                     continue
                 fehler = NetworkError(
-                    "ElevenLabs throttled repeatedly.",
-                    f"Announcement {sound_id} couldn't be spoken even "
-                    f"after {MAX_VERSUCHE} attempts. Try again later - "
-                    f"what's already done stays saved.")
+                    t("elevenlabs.throttled_repeatedly_title"),
+                    t("elevenlabs.throttled_repeatedly_detail",
+                      id=sound_id, attempts=MAX_VERSUCHE))
 
-            if isinstance(fehler, NetworkError) and "quota" in fehler.message.lower():
+            if isinstance(fehler, KontingentAufgebraucht):
                 if allow_partial and result:
                     if log:
-                        log(f"Quota used up after {len(result)} of "
-                            f"{gesamt} announcements.")
-                        log("What's already done stays saved. The app "
-                            "picks up exactly here next time.")
+                        log(t("elevenlabs.quota_used_up_progress",
+                              done=len(result), total=gesamt))
+                        log(t("elevenlabs.quota_resume_note"))
                     return result
                 raise fehler
 
             if allow_partial and result:
                 if log:
-                    log(f"Aborted at announcement {sound_id}: {fehler}")
-                    log(f"{len(result)} announcements are done and stay "
-                        f"saved.")
+                    log(t("elevenlabs.aborted_at_announcement",
+                          id=sound_id, error=fehler))
+                    log(t("elevenlabs.announcements_done_saved", count=len(result)))
                 return result
             raise fehler
 
@@ -713,11 +702,9 @@ def synthesize(texts: Dict[int, str],
                 welle_gedrosselt += 1
                 if welle_gedrosselt > MAX_WELLEN_GEDROSSELT:
                     fehler = NetworkError(
-                        "ElevenLabs is throttling persistently.",
-                        f"Even after {MAX_WELLEN_GEDROSSELT} attempts with "
-                        f"fewer and fewer simultaneous requests, not a "
-                        f"single announcement got through. Try again "
-                        f"later - what's already done stays saved.")
+                        t("elevenlabs.throttled_persistent_title"),
+                        t("elevenlabs.throttled_persistent_detail",
+                          waves=MAX_WELLEN_GEDROSSELT))
                     if allow_partial and result:
                         if log:
                             log(str(fehler.message))
@@ -725,8 +712,7 @@ def synthesize(texts: Dict[int, str],
                     raise fehler
 
             if log and breite != vorher:
-                log(f"ElevenLabs is throttling - now running {breite} "
-                    f"announcements at once.")
+                log(t("elevenlabs.throttling_now_running", count=breite))
             # Schrittweise länger warten, aber nie ewig.
             time.sleep(min(0.5 * (2 ** min(welle_gedrosselt, 4)), 8.0))
         elif breite < MAX_GLEICHZEITIG:
@@ -736,12 +722,12 @@ def synthesize(texts: Dict[int, str],
         if progress:
             progress(len(result), gesamt)
         if log and len(result) % 20 < len(welle) and len(result) >= 20:
-            log(f"  {len(result)} of {gesamt} announcements spoken ...")
+            log(t("elevenlabs.progress_spoken", done=len(result), total=gesamt))
 
     if not result:
-        raise AudioError("Not a single announcement was generated.")
+        raise AudioError(t("elevenlabs.no_announcement_generated"))
     if log:
-        log(f"{len(result)} announcements received from ElevenLabs.")
+        log(t("elevenlabs.announcements_received", count=len(result)))
     return result
 
 

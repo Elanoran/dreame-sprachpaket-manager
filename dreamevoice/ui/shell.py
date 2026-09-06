@@ -26,6 +26,7 @@ from dataclasses import dataclass, field
 from tkinter import ttk
 from typing import Callable, Dict, List, Optional
 
+from ..i18n import t
 from .theme import Theme
 
 _LOG = logging.getLogger(__name__)
@@ -184,7 +185,8 @@ class NavShell(ttk.Frame):
             # will wissen, warum er grau ist.
             if eintrag.grund:
                 from .widgets import show_info
-                show_info(self, self.theme, f"{eintrag.label} isn't available yet",
+                show_info(self, self.theme,
+                          t("shell.not_available_title", label=eintrag.label),
                           eintrag.grund)
             return
         self.show(key)

@@ -23,6 +23,7 @@ from pathlib import Path
 from typing import Callable, Dict, List, Optional
 
 from .errors import AudioError
+from .i18n import t
 
 _LOG = logging.getLogger(__name__)
 
@@ -51,7 +52,7 @@ class Voice:
 
     @property
     def label(self) -> str:
-        geschlecht = "male" if self.is_male else "female"
+        geschlecht = t("tts.gender_male") if self.is_male else t("tts.gender_female")
         return f"{self.name} ({geschlecht})"
 
 
@@ -180,22 +181,20 @@ def synthesize(texts: Dict[int, str],
     """
     if not available():
         raise AudioError(
-            "Speech synthesis is only available on Windows.",
-            "No pack can be generated automatically on this system. "
-            "You can, however, record and assign announcements yourself.")
+            t("tts.err_windows_only_msg"),
+            t("tts.err_windows_only_hint"))
     if not texts:
-        raise AudioError("No texts were provided.")
+        raise AudioError(t("tts.err_no_texts"))
 
     chosen = pick_german_voice(voice)
     if chosen is None:
         raise AudioError(
-            "No German text-to-speech voice is installed.",
-            "Windows Settings > Time and Language > Language > German > "
-            "Options > Add speech. Then restart the app.")
+            t("tts.err_no_voice_msg"),
+            t("tts.err_no_voice_hint"))
 
     out_dir.mkdir(parents=True, exist_ok=True)
     if log:
-        log(f"Stimme: {chosen.label}")
+        log(t("tts.log_chosen_voice", voice=chosen.label))
 
     jobs = []
     for sound_id, text in sorted(texts.items()):
@@ -226,15 +225,15 @@ def synthesize(texts: Dict[int, str],
     try:
         proc = _powershell(script, timeout=max(120, len(jobs) * 6))
     except subprocess.TimeoutExpired as exc:
-        raise AudioError("Die Sprachsynthese hat zu lange gedauert.") from exc
+        raise AudioError(t("tts.err_timeout")) from exc
     except (OSError, subprocess.SubprocessError) as exc:
-        raise AudioError("Die Sprachsynthese konnte nicht gestartet werden.",
-                         f"Technische Details: {exc}") from exc
+        raise AudioError(t("tts.err_could_not_start_msg"),
+                         t("tts.err_technical_details", details=exc)) from exc
     finally:
         job_file.unlink(missing_ok=True)
 
     if proc.returncode != 0:
-        raise AudioError("Die Sprachsynthese ist fehlgeschlagen.",
+        raise AudioError(t("tts.err_failed_msg"),
                          (proc.stderr or "").strip()[:400])
 
     result: Dict[int, Path] = {}
@@ -248,11 +247,11 @@ def synthesize(texts: Dict[int, str],
 
     if not result:
         raise AudioError(
-            "Es wurde keine einzige Sprachdatei erzeugt.",
+            t("tts.err_no_files_produced"),
             (proc.stderr or proc.stdout or "").strip()[:400])
 
     if log:
-        log(f"{len(result)} von {total} Ansagen gesprochen.")
+        log(t("tts.log_spoken_summary", count=len(result), total=total))
     return result
 
 

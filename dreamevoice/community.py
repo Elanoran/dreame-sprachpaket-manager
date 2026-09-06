@@ -38,6 +38,7 @@ from typing import Callable, List, Optional
 import requests
 
 from .errors import NetworkError, PackError
+from .i18n import t
 from .official import md5_of_file
 from .paths import data_dir
 
@@ -95,7 +96,7 @@ class CommunityPack:
 
     def local_path(self) -> Path:
         suffix = ".zip" if self.archive_kind == "zip" else ".tar.gz"
-        folder = data_dir() / "Community Packs"
+        folder = data_dir() / t("community.packs_folder_name")
         folder.mkdir(parents=True, exist_ok=True)
         return folder / f"{self.key}{suffix}"
 
@@ -104,140 +105,150 @@ class CommunityPack:
 # Geprüft am 08.08.2026: Projekt vorhanden, Datei lädt, Format stimmt.
 # --------------------------------------------------------------------------
 
-PACKS: List[CommunityPack] = [
-    CommunityPack(
-        key="glados_zigerschlitz",
-        name="GLaDOS",
-        description=(
-            "The sarcastic AI from the game Portal. The best-maintained "
-            "GLaDOS set, as a ready-made archive with a published checksum."
+#: Cache for _packs() - see the comment there for why PACKS isn't a
+#: plain module-level list.
+_packs_cache: Optional[List[CommunityPack]] = None
+
+
+def _build_packs() -> List[CommunityPack]:
+    return [
+        CommunityPack(
+            key="glados_zigerschlitz",
+            name="GLaDOS",
+            description=t("community.desc_glados_zigerschlitz"),
+            language=t("community.language_english"),
+            url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
+                 "releases/download/0.1/glados.tar.gz"),
+            project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
+            author="Makers Im Zigerschlitz",
+            license=t("community.license_none"),
+            approx_sounds=155,
+            expected_size=4322744,
+            expected_md5="d79114b8b0b41e132dd0214f4922836c",
+            tags=[t("community.tag_funny"), t("community.tag_ai"), t("community.tag_game")],
         ),
-        language="English",
-        url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
-             "releases/download/0.1/glados.tar.gz"),
-        project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
-        author="Makers Im Zigerschlitz",
-        license="no license given",
-        approx_sounds=155,
-        expected_size=4322744,
-        expected_md5="d79114b8b0b41e132dd0214f4922836c",
-        tags=["funny", "AI", "game"],
-    ),
-    CommunityPack(
-        key="r2d2_zigerschlitz",
-        name="R2-D2",
-        description=(
-            "Just beeps and chirps from the Star Wars droid instead of "
-            "sentences. Very entertaining, but you no longer know what the "
-            "robot is actually reporting."
+        CommunityPack(
+            key="r2d2_zigerschlitz",
+            name="R2-D2",
+            description=t("community.desc_r2d2"),
+            language=t("community.language_no_speech"),
+            url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
+                 "releases/download/0.1/r2d2.tar.gz"),
+            project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
+            author="Makers Im Zigerschlitz",
+            license=t("community.license_none"),
+            approx_sounds=155,
+            expected_size=18808415,
+            expected_md5="bdd0b85996748e20037b20bbede258aa",
+            notes=t("community.notes_r2d2"),
+            tags=[t("community.tag_funny"), t("community.tag_movie"), t("community.tag_no_speech")],
         ),
-        language="no speech",
-        url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
-             "releases/download/0.1/r2d2.tar.gz"),
-        project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
-        author="Makers Im Zigerschlitz",
-        license="no license given",
-        approx_sounds=155,
-        expected_size=18808415,
-        expected_md5="bdd0b85996748e20037b20bbede258aa",
-        notes="Note: error messages are no longer intelligible after this.",
-        tags=["funny", "movie", "no speech"],
-    ),
-    CommunityPack(
-        key="memes_zigerschlitz",
-        name="Memes",
-        description="Internet meme sounds instead of the usual announcements.",
-        language="English / no speech",
-        url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
-             "releases/download/0.1/memes.tar.gz"),
-        project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
-        author="Makers Im Zigerschlitz",
-        license="no license given",
-        approx_sounds=155,
-        expected_size=4398965,
-        expected_md5="ba83696fe8e954983a9960a14825b6c5",
-        tags=["funny"],
-    ),
-    CommunityPack(
-        key="glados_findus23",
-        name="GLaDOS (15.ai variant)",
-        description=(
-            "Older GLaDOS version, generated with the 15.ai speech "
-            "synthesizer. Different intonation than the variant above."
+        CommunityPack(
+            key="memes_zigerschlitz",
+            name="Memes",
+            description=t("community.desc_memes"),
+            language=t("community.language_english_no_speech"),
+            url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
+                 "releases/download/0.1/memes.tar.gz"),
+            project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
+            author="Makers Im Zigerschlitz",
+            license=t("community.license_none"),
+            approx_sounds=155,
+            expected_size=4398965,
+            expected_md5="ba83696fe8e954983a9960a14825b6c5",
+            tags=[t("community.tag_funny")],
         ),
-        language="English",
-        url="https://github.com/Findus23/voice_pack_dreame/raw/main/voice_pack.tar.gz",
-        project_url="https://github.com/Findus23/voice_pack_dreame",
-        author="Findus23",
-        license="no license given",
-        approx_sounds=155,
-        expected_size=4325024,
-        expected_md5="8ebfabb9e23e169a5c9b867266f9d1ef",
-        tags=["funny", "AI", "game"],
-    ),
-    CommunityPack(
-        key="glados_x40_kokoro",
-        name="GLaDOS for X40 (514 announcements)",
-        description=(
-            "By far the most extensive set: all 514 announcements of the "
-            "X40 Ultra rewritten and spoken with Kokoro TTS. Since the X40 "
-            "and X50 share 513 numbers, this pack covers almost the "
-            "entire X50."
+        CommunityPack(
+            key="glados_findus23",
+            name=t("community.name_glados_findus23"),
+            description=t("community.desc_glados_findus23"),
+            language=t("community.language_english"),
+            url="https://github.com/Findus23/voice_pack_dreame/raw/main/voice_pack.tar.gz",
+            project_url="https://github.com/Findus23/voice_pack_dreame",
+            author="Findus23",
+            license=t("community.license_none"),
+            approx_sounds=155,
+            expected_size=4325024,
+            expected_md5="8ebfabb9e23e169a5c9b867266f9d1ef",
+            tags=[t("community.tag_funny"), t("community.tag_ai"), t("community.tag_game")],
         ),
-        language="English",
-        url="https://github.com/sproft/dreame-x40-glados-voice-pack/archive/refs/heads/main.zip",
-        project_url="https://github.com/sproft/dreame-x40-glados-voice-pack",
-        author="sproft",
-        license="see LICENSE in the project",
-        approx_sounds=514,
-        archive_kind="zip",
-        notes=("Downloaded as a project archive; the app extracts the "
-               "Ogg files from it. Size and checksum change with every "
-               "update to the project, so they aren't checked against a "
-               "fixed value."),
-        tags=["funny", "AI", "game", "extensive"],
-    ),
-    CommunityPack(
-        key="uk_female_pensive",
-        name="Ukrainian (female, calm)",
-        description="Ukrainian announcements, spoken calmly and matter-of-factly.",
-        language="Ukrainian",
-        url=("https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs/"
-             "raw/main/voice_packs/uk_female_pensive"),
-        project_url="https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs",
-        author="oleksandr-belei",
-        license="MIT",
-        approx_sounds=199,
-        expected_size=3585448,
-        # Selbst nachgerechnet: gzip-tar mit genau 199 .ogg-Dateien,
-        # ohne Steuerdateien. Ohne diese Angabe galt eine einmal
-        # geladene Datei für immer als gültig.
-        expected_md5="55bfe4272ce1e77d9bbafebf9ec99330",
-        tags=["language"],
-    ),
-    CommunityPack(
-        key="original_en_zigerschlitz",
-        name="Original English (backup)",
-        description=(
-            "The original English announcements of an older model. Mainly "
-            "useful as reference material."
+        CommunityPack(
+            key="glados_x40_kokoro",
+            name=t("community.name_glados_x40"),
+            description=t("community.desc_glados_x40"),
+            language=t("community.language_english"),
+            url="https://github.com/sproft/dreame-x40-glados-voice-pack/archive/refs/heads/main.zip",
+            project_url="https://github.com/sproft/dreame-x40-glados-voice-pack",
+            author="sproft",
+            license=t("community.license_see_project"),
+            approx_sounds=514,
+            archive_kind="zip",
+            notes=t("community.notes_x40"),
+            tags=[t("community.tag_funny"), t("community.tag_ai"), t("community.tag_game"),
+                  t("community.tag_extensive")],
         ),
-        language="English",
-        url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
-             "releases/download/0.1/original-en.tar.gz"),
-        project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
-        author="Makers Im Zigerschlitz",
-        license="no license given",
-        approx_sounds=155,
-        expected_size=3102855,
-        expected_md5="2a467cdb59f0ecff54ccb6931c81c0b3",
-        tags=["language", "reference"],
-    ),
-]
+        CommunityPack(
+            key="uk_female_pensive",
+            name=t("community.name_uk_female_pensive"),
+            description=t("community.desc_uk_female_pensive"),
+            language=t("community.language_ukrainian"),
+            url=("https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs/"
+                 "raw/main/voice_packs/uk_female_pensive"),
+            project_url="https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs",
+            author="oleksandr-belei",
+            license="MIT",
+            approx_sounds=199,
+            expected_size=3585448,
+            # Selbst nachgerechnet: gzip-tar mit genau 199 .ogg-Dateien,
+            # ohne Steuerdateien. Ohne diese Angabe galt eine einmal
+            # geladene Datei für immer als gültig.
+            expected_md5="55bfe4272ce1e77d9bbafebf9ec99330",
+            tags=[t("community.tag_language")],
+        ),
+        CommunityPack(
+            key="original_en_zigerschlitz",
+            name=t("community.name_original_en"),
+            description=t("community.desc_original_en"),
+            language=t("community.language_english"),
+            url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
+                 "releases/download/0.1/original-en.tar.gz"),
+            project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
+            author="Makers Im Zigerschlitz",
+            license=t("community.license_none"),
+            approx_sounds=155,
+            expected_size=3102855,
+            expected_md5="2a467cdb59f0ecff54ccb6931c81c0b3",
+            tags=[t("community.tag_language"), t("community.tag_reference")],
+        ),
+    ]
+
+
+def _packs() -> List[CommunityPack]:
+    """Builds PACKS on first use and caches it - see __getattr__ below."""
+    global _packs_cache
+    if _packs_cache is None:
+        _packs_cache = _build_packs()
+    return _packs_cache
+
+
+def __getattr__(name: str) -> List[CommunityPack]:
+    """PEP 562 module hook: resolves `community.PACKS` lazily.
+
+    A plain `PACKS = [...]` at module scope would run every t() call in
+    it the moment this module is first imported - which happens via
+    ui/tab_store.py's own top-of-file imports, before ui/app.py's
+    MainWindow ever calls i18n.set_language(). Deferring construction to
+    first real attribute access (which happens once the UI is actually
+    being built, after the language is set) keeps `community.PACKS`
+    working exactly as before for every caller.
+    """
+    if name == "PACKS":
+        return _packs()
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
 def get(key: str) -> Optional[CommunityPack]:
-    for pack in PACKS:
+    for pack in _packs():
         if pack.key == key:
             return pack
     return None
@@ -257,9 +268,8 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
 
     if not adresse_erlaubt(pack.url):
         raise NetworkError(
-            f"'{pack.name}''s source address isn't allowed.",
-            f"Third-party packs are only downloaded from GitHub.\n\n"
-            f"Address: {pack.url}")
+            t("community.source_not_allowed_message", name=pack.name),
+            t("community.source_not_allowed_hint", url=pack.url))
 
     tmp = target.with_suffix(target.suffix + ".part")
     try:
@@ -267,8 +277,8 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
                           headers={"User-Agent": "DreameSprachpakete/1.0"}) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"Download failed (HTTP {resp.status_code}).",
-                    f"Source: {pack.url}",
+                    t("community.download_failed_http", status=resp.status_code),
+                    t("community.download_failed_http_hint", url=pack.url),
                 )
             total = int(resp.headers.get("Content-Length") or pack.expected_size or 0)
             done = 0
@@ -280,15 +290,14 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
                     done += len(block)
                     if done > MAX_PAKET_BYTES:
                         raise NetworkError(
-                            f"'{pack.name}' is unexpectedly large.",
-                            "The download was aborted. A voice pack "
-                            "weighs about ten megabytes.")
+                            t("community.pack_too_large_message", name=pack.name),
+                            t("community.pack_too_large_hint"))
                     if progress:
                         progress(done, total)
     except requests.exceptions.RequestException as exc:
         tmp.unlink(missing_ok=True)
-        raise NetworkError(f"The pack '{pack.name}' couldn't be downloaded.",
-                           f"Technical details: {exc}") from exc
+        raise NetworkError(t("community.download_request_failed", name=pack.name),
+                           t("community.download_technical_details", details=exc)) from exc
     except BaseException:
         # Der Abbruch wegen Überlänge ist ein NetworkError und damit
         # keine RequestException - er liefe sonst an dieser Zeile vorbei
@@ -302,9 +311,9 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
         if actual != pack.expected_md5:
             tmp.unlink(missing_ok=True)
             raise PackError(
-                f"'{pack.name}''s checksum doesn't match.",
-                f"Expected {pack.expected_md5}, got {actual}. The download "
-                f"was discarded - the file won't be used.",
+                t("community.checksum_mismatch_message", name=pack.name),
+                t("community.checksum_mismatch_hint",
+                  expected=pack.expected_md5, actual=actual),
             )
 
     tmp.replace(target)
@@ -314,6 +323,6 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
 
 def all_tags() -> List[str]:
     tags = set()
-    for pack in PACKS:
+    for pack in _packs():
         tags.update(pack.tags)
     return sorted(tags)

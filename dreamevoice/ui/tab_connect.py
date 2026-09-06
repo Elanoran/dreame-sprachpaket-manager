@@ -11,6 +11,7 @@ from .. import __version__
 from ..cloud import (MARKEN, MARKEN_LABELS, REGION_LABELS, REGIONS,
                      DreameCloud, regionen_fuer)
 from ..errors import NoDeviceError
+from ..i18n import t
 from .state import AppState, error_text, run_async, to_main
 from .theme import Theme
 from .widgets import (Card, InfoBanner, ScrollablePage, StatusBadge, autowrap,
@@ -45,17 +46,12 @@ class ConnectTab(ttk.Frame):
 
         InfoBanner(
             outer, self.theme,
-            "The app signs in with the same credentials you use in your "
-            "phone app - Dreamehome, MOVA Home, or Trouver. You set which "
-            "one below under 'App'. The data goes exclusively to Dreame "
-            "(MOVA and Trouver belong to it), never to third parties. "
-            "Without signing in, the app knows neither your robot's model "
-            "nor can it send it anything.",
+            t("tab_connect.info_banner"),
         ).pack(fill="x", pady=(0, 14))
 
         # ---- Konto ----------------------------------------------------
-        account = Card(outer, self.theme, "Manufacturer Account",
-                       "Email and password, same as in your manufacturer app.")
+        account = Card(outer, self.theme, t("tab_connect.account_card_title"),
+                       t("tab_connect.account_card_desc"))
         account.pack(fill="x")
         body = account.content
 
@@ -76,13 +72,13 @@ class ConnectTab(ttk.Frame):
         self.combo_marke.grid(row=0, column=1, sticky="w", pady=6)
         self.combo_marke.bind("<<ComboboxSelected>>", self._on_marke)
 
-        ttk.Label(grid, text="Email", style="Surface.TLabel").grid(
+        ttk.Label(grid, text=t("tab_connect.email_label"), style="Surface.TLabel").grid(
             row=1, column=0, sticky="w", pady=6, padx=(0, 12))
         self.var_email = tk.StringVar()
         ttk.Entry(grid, textvariable=self.var_email).grid(
             row=1, column=1, sticky="ew", pady=6)
 
-        ttk.Label(grid, text="Password", style="Surface.TLabel").grid(
+        ttk.Label(grid, text=t("tab_connect.password_label"), style="Surface.TLabel").grid(
             row=2, column=0, sticky="w", pady=6, padx=(0, 12))
         pw_row = ttk.Frame(grid, style="Card.TFrame")
         pw_row.grid(row=2, column=1, sticky="ew", pady=6)
@@ -90,7 +86,7 @@ class ConnectTab(ttk.Frame):
         self.entry_password = ttk.Entry(pw_row, textvariable=self.var_password, show="•")
         self.entry_password.pack(side="left", fill="x", expand=True)
         self.var_show_pw = tk.BooleanVar(value=False)
-        ttk.Checkbutton(pw_row, text="show", variable=self.var_show_pw,
+        ttk.Checkbutton(pw_row, text=t("tab_connect.show_password_check"), variable=self.var_show_pw,
                         command=self._toggle_password).pack(side="left", padx=(10, 0))
 
         ttk.Label(grid, text="Region", style="Surface.TLabel").grid(
@@ -103,44 +99,44 @@ class ConnectTab(ttk.Frame):
             values=[REGION_LABELS[r] for r in REGIONS], width=42)
         self.combo_region.pack(side="left")
         self.var_autoregion = tk.BooleanVar(value=True)
-        ttk.Checkbutton(region_row, text="detect automatically",
+        ttk.Checkbutton(region_row, text=t("tab_connect.autoregion_check"),
                         variable=self.var_autoregion).pack(side="left", padx=(12, 0))
 
         options = ttk.Frame(body, style="Card.TFrame")
         options.pack(fill="x", pady=(10, 0))
         self.var_remember = tk.BooleanVar(value=False)
-        chk = ttk.Checkbutton(options, text="Remember password on this PC",
+        chk = ttk.Checkbutton(options, text=t("tab_connect.remember_password_check"),
                               variable=self.var_remember)
         chk.pack(side="left")
         if not self.state.config.can_remember_password():
             chk.configure(state="disabled")
-            ttk.Label(options, text="(only available on Windows)",
+            ttk.Label(options, text=t("tab_connect.remember_password_windows_only"),
                       style="Muted.TLabel").pack(side="left", padx=(8, 0))
         else:
             ttk.Label(options,
-                      text="(encrypted with your Windows account)",
+                      text=t("tab_connect.remember_password_encrypted"),
                       style="Muted.TLabel").pack(side="left", padx=(8, 0))
 
         actions = ttk.Frame(body, style="Card.TFrame")
         actions.pack(fill="x", pady=(16, 0))
-        self.btn_login = ttk.Button(actions, text="Sign In and Find Robot",
+        self.btn_login = ttk.Button(actions, text=t("tab_connect.login_button"),
                                     style="Accent.TButton", command=self._on_login)
         self.btn_login.pack(side="left")
         self.progress = ttk.Progressbar(actions, mode="indeterminate", length=160)
-        self.badge = StatusBadge(actions, self.theme, "Not signed in")
+        self.badge = StatusBadge(actions, self.theme, t("tab_connect.status_not_signed_in"))
         self.badge.pack(side="left", padx=(14, 0))
 
         # ---- Roboter ---------------------------------------------------
-        devices = Card(outer, self.theme, "Robots Found",
-                       "Choose the robot whose voice you want to change.")
+        devices = Card(outer, self.theme, t("tab_connect.devices_card_title"),
+                       t("tab_connect.devices_card_desc"))
         devices.pack(fill="both", expand=True, pady=(14, 0))
 
         self.tree = ttk.Treeview(devices.content,
                                  columns=("name", "model", "did"),
                                  show="headings", height=5, selectmode="browse")
         self.tree.heading("name", text="Name")
-        self.tree.heading("model", text="Model")
-        self.tree.heading("did", text="Device ID")
+        self.tree.heading("model", text=t("tab_connect.column_model"))
+        self.tree.heading("did", text=t("tab_connect.column_device_id"))
         self.tree.column("name", width=240, anchor="w")
         self.tree.column("model", width=210, anchor="w")
         self.tree.column("did", width=150, anchor="w")
@@ -149,32 +145,27 @@ class ConnectTab(ttk.Frame):
 
         self.lbl_empty = ttk.Label(
             devices.content,
-            text="No robots loaded yet - sign in above.",
+            text=t("tab_connect.no_robots_placeholder"),
             style="Muted.TLabel")
         self.lbl_empty.pack(anchor="w", pady=(8, 0))
 
         # ---- Details ---------------------------------------------------
-        details = Card(outer, self.theme, "Selected Robot")
+        details = Card(outer, self.theme, t("tab_connect.details_card_title"))
         details.pack(fill="x", pady=(14, 0))
         self.val_name = labeled_value(details.content, self.theme, "Name")
-        self.val_model = labeled_value(details.content, self.theme, "Model Identifier")
-        self.val_did = labeled_value(details.content, self.theme, "Device ID (did)")
-        self.val_mac = labeled_value(details.content, self.theme, "MAC Address")
-        self.val_voice = labeled_value(details.content, self.theme, "Active Voice Pack")
+        self.val_model = labeled_value(details.content, self.theme, t("tab_connect.model_identifier_label"))
+        self.val_did = labeled_value(details.content, self.theme, t("tab_connect.device_id_label"))
+        self.val_mac = labeled_value(details.content, self.theme, t("tab_connect.mac_address_label"))
+        self.val_voice = labeled_value(details.content, self.theme, t("tab_connect.active_voice_pack_label"))
 
         note = ttk.Frame(details.content, style="Card.TFrame")
         note.pack(fill="x", pady=(12, 0))
         ttk.Label(
             note,
-            text=("No local token? That's correct. Models running in the "
-                  "Dreamehome app - like the X50 Ultra - no longer offer "
-                  "direct access on the home network and don't hand out a "
-                  "32-character miio token either. Commands go through the "
-                  "Dreame cloud; the robot then fetches the voice pack "
-                  "itself, directly from this PC."),
+            text=t("tab_connect.no_token_note"),
             style="Muted.TLabel", wraplength=820, justify="left").pack(anchor="w")
 
-        link = ttk.Button(note, text="Open Dreame Help Page", style="Link.TButton",
+        link = ttk.Button(note, text=t("tab_connect.open_help_page_button"), style="Link.TButton",
                           command=lambda: webbrowser.open(DREAMEHOME_HELP))
         link.pack(anchor="w", pady=(6, 0))
 
@@ -188,44 +179,34 @@ class ConnectTab(ttk.Frame):
         # Steht seit Version 1.3.0 in einem eigenen Fenster, erreichbar
         # über den Knopf oben rechts. Hier bleibt nur ein Verweis für
         # alle, die es an dieser Stelle gewohnt sind.
-        akt = Card(outer, self.theme, "Updates",
-                   "Check whether a newer version is available")
+        akt = Card(outer, self.theme, t("tab_connect.updates_card_title"),
+                   t("tab_connect.updates_card_desc"))
         akt.pack(fill="x", pady=(14, 0))
 
         ttk.Label(
             akt.content,
-            text=(f"This version: {__version__}\n\n"
-                  "The check and the 'check on startup' switch now live "
-                  "top right under 'Updates'."),
+            text=t("tab_connect.updates_version_note", version=__version__),
             style="Surface.TLabel", wraplength=780, justify="left").pack(anchor="w")
 
-        ttk.Button(akt.content, text="Open Updates ...",
+        ttk.Button(akt.content, text=t("tab_connect.open_updates_button"),
                    command=self._on_update_oeffnen).pack(anchor="w", pady=(12, 0))
 
-        weiter = Card(outer, self.theme, "Share the App",
-                      "Remove personal traces before someone else gets it")
+        weiter = Card(outer, self.theme, t("tab_connect.share_card_title"),
+                      t("tab_connect.share_card_desc"))
         weiter.pack(fill="x", pady=(14, 0))
 
         ttk.Label(
             weiter.content,
-            text=("Your password and ElevenLabs key live in the Windows "
-                  "Credential Manager, not in a file - so they don't travel "
-                  "along when you copy things.\n\n"
-                  "The data folder still holds a fair bit that points to "
-                  "you: your email address, your robot's name, device ID, "
-                  "and MAC address, this PC's IP, the last-used ElevenLabs "
-                  "voice, and the log. This button removes exactly that."),
+            text=t("tab_connect.share_details_1"),
             style="Surface.TLabel", wraplength=780, justify="left").pack(anchor="w")
 
         ttk.Label(
             weiter.content,
-            text=("Your built voice packs, the dialect texts, and the "
-                  "bundled recordings are kept - there's nothing personal "
-                  "in those."),
+            text=t("tab_connect.share_details_2"),
             style="Muted.TLabel", wraplength=780, justify="left"
         ).pack(anchor="w", pady=(8, 0))
 
-        ttk.Button(weiter.content, text="Remove Personal Data ...",
+        ttk.Button(weiter.content, text=t("tab_connect.remove_personal_button"),
                    command=self._on_forget_personal).pack(anchor="w", pady=(12, 0))
 
 
@@ -247,17 +228,8 @@ class ConnectTab(ttk.Frame):
     def _on_forget_personal(self) -> None:
         """Räumt alles weg, was auf den bisherigen Benutzer zeigt."""
         if not messagebox.askyesno(
-                "Remove Personal Data?",
-                "This removes:\n\n"
-                "  • Email address and saved password\n"
-                "  • The ElevenLabs key\n"
-                "  • Your robot's name, device ID, and MAC address\n"
-                "  • This PC's IP address\n"
-                "  • The last-used ElevenLabs voice\n"
-                "  • The log\n\n"
-                "Your built voice packs and dialect texts stay.\n\n"
-                "You'll need to sign in again next time. "
-                "Continue?",
+                t("tab_connect.forget_confirm_title"),
+                t("tab_connect.forget_confirm_message"),
                 parent=self):
             return
 
@@ -271,20 +243,19 @@ class ConnectTab(ttk.Frame):
         self.var_password.set("")
         self.tree.delete(*self.tree.get_children())
         self.lbl_empty.pack(anchor="w", pady=(8, 0))
-        self.badge.set("Not signed in", "muted")
+        self.badge.set(t("tab_connect.status_not_signed_in"), "muted")
         self._load_from_config()
         self.state.notify("device_changed")
 
         # Bewusst zwei Zeilen statt eines Bedingungsausdrucks: Der bände
         # sonst an den ganzen Text und ließe ohne Treffer auch die
         # Erklärung verschwinden.
-        kopf = (f"{len(geleert)} items removed." if geleert
-                else "There was nothing to remove.")
-        einzelheiten = ("You can now share the app along with its data "
-                        "folder without anything about you tagging along.")
+        kopf = (t("tab_connect.forget_removed_count", count=len(geleert)) if geleert
+                else t("tab_connect.forget_nothing_removed"))
+        einzelheiten = t("tab_connect.forget_done_details")
         if geleert:
-            einzelheiten += "\n\nRemoved: " + ", ".join(geleert)
-        show_info(self, self.theme, "Done", kopf, einzelheiten)
+            einzelheiten += t("tab_connect.forget_removed_prefix") + ", ".join(geleert)
+        show_info(self, self.theme, t("tab_connect.forget_done_title"), kopf, einzelheiten)
 
     # ------------------------------------------------------------------
     def _toggle_password(self) -> None:
@@ -332,7 +303,7 @@ class ConnectTab(ttk.Frame):
             self.val_model.configure(text=cfg["device_model"] or "-")
             self.val_did.configure(text=cfg["device_id"])
             self.val_mac.configure(text=cfg["device_mac"] or "-")
-            self.badge.set("Last saved robot loaded", "muted")
+            self.badge.set(t("tab_connect.last_saved_robot_badge"), "muted")
 
     # ------------------------------------------------------------------
     def _busy(self, active: bool) -> None:
@@ -349,8 +320,8 @@ class ConnectTab(ttk.Frame):
         email = self.var_email.get().strip()
         password = self.var_password.get()
         if not email or not password:
-            messagebox.showwarning("Missing Information",
-                                   "Please enter email and password.",
+            messagebox.showwarning(t("tab_connect.missing_info_title"),
+                                   t("tab_connect.missing_info_message"),
                                    parent=self)
             return
 
@@ -358,7 +329,7 @@ class ConnectTab(ttk.Frame):
         auto = self.var_autoregion.get()
 
         self._busy(True)
-        self.badge.set("Signing in ...", "muted")
+        self.badge.set(t("tab_connect.signing_in_badge"), "muted")
 
         marke = self._marke_code()
         self.state.config["account_type"] = marke
@@ -416,22 +387,18 @@ class ConnectTab(ttk.Frame):
             if self.state.connected:
                 # Angemeldet, aber die Liste ist leer: Das kann nur ein
                 # Konto ohne Saugroboter sein.
-                self.badge.set("Signed in, but no vacuum robot found",
+                self.badge.set(t("tab_connect.no_vacuum_badge"),
                                "warn")
                 self.lbl_empty.configure(
-                    text=("No vacuum robot is registered in this account. "
-                          "Check that you're using the same email as in "
-                          "your manufacturer app and that the robot shows "
-                          "up there."))
+                    text=t("tab_connect.no_vacuum_message"))
             elif self.state.config["device_id"]:
                 # Nicht angemeldet, aber ein Roboter ist gemerkt. Das ist
                 # der Normalfall beim Start - und kein Fehler.
                 self.lbl_empty.configure(
-                    text=("The last-used robot is shown below. Sign in "
-                          "above for the full list."))
+                    text=t("tab_connect.last_used_robot_message"))
             else:
                 self.lbl_empty.configure(
-                    text="No robots loaded yet - sign in above.")
+                    text=t("tab_connect.no_robots_placeholder"))
             self.lbl_empty.pack(anchor="w", pady=(8, 0))
             return
 
@@ -441,7 +408,7 @@ class ConnectTab(ttk.Frame):
                              values=(device.name, device.model, device.did))
 
         wo = f" ({region.upper()})" if region else ""
-        self.badge.set(f"Signed in{wo} - {len(devices)} robots found", "ok")
+        self.badge.set(t("tab_connect.signed_in_count_badge", region=wo, count=len(devices)), "ok")
 
         # Zuletzt genutzten Roboter wieder auswählen, sonst den ersten.
         preferred = self.state.config["device_id"]
@@ -456,8 +423,8 @@ class ConnectTab(ttk.Frame):
 
     def _on_login_error(self, exc: Exception) -> None:
         message, hint = error_text(exc)
-        self.badge.set("Sign-in Failed", "error")
-        show_error(self, self.theme, "Sign-in Failed",
+        self.badge.set(t("tab_connect.login_failed"), "error")
+        show_error(self, self.theme, t("tab_connect.login_failed"),
                        message + (f"\n\n{hint}" if hint else ""))
 
     # ------------------------------------------------------------------
@@ -488,7 +455,7 @@ class ConnectTab(ttk.Frame):
         self.val_model.configure(text=device.model)
         self.val_did.configure(text=device.did)
         self.val_mac.configure(text=device.mac or "-")
-        self.val_voice.configure(text="checking ...")
+        self.val_voice.configure(text=t("tab_connect.device_checking"))
 
         self.state.notify("device_changed")
         self._refresh_voice_pack()
@@ -502,16 +469,16 @@ class ConnectTab(ttk.Frame):
             return cloud.current_voice_pack(device)
 
         def ok(value):
-            self.val_voice.configure(text=str(value) if value else "unknown")
+            self.val_voice.configure(text=str(value) if value else t("tab_connect.voice_unknown"))
 
         def fail(_exc):
-            self.val_voice.configure(text="not available (robot asleep?)")
+            self.val_voice.configure(text=t("tab_connect.voice_unavailable"))
 
         run_async(self, work, on_success=ok, on_error=fail)
 
     def require_device(self) -> None:
         if not self.state.connected:
             raise NoDeviceError(
-                "No robot is selected.",
-                "Sign in under 'Connection' and choose your robot.",
+                t("tab_connect.require_device_message"),
+                t("tab_connect.require_device_hint"),
             )

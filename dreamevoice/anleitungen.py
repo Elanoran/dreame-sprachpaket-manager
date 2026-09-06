@@ -26,6 +26,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional
 
 from . import PROJEKT_URL
+from .i18n import t
 from .paths import app_dir, resource_dir
 
 _LOG = logging.getLogger(__name__)
@@ -34,33 +35,44 @@ _LOG = logging.getLogger(__name__)
 ZWEIG = "main"
 
 
+#: Schlüsselwurzel je Datei, für die i18n-Tabelle in locale/anleitungen.py.
+#:
+#: `titel`/`inhalt` müssen bei jedem Zugriff neu nachgeschlagen werden,
+#: nicht einmalig beim Import - die Sprache steht erst fest, wenn
+#: MainWindow.__init__ läuft, und das ist später als der Import dieses
+#: Moduls in ui/app.py.
+_SCHLUESSEL = {
+    "Problemloesung.md": "problemloesung",
+    "Modelle.md": "modelle",
+    "Sicherheit.md": "sicherheit",
+    "Eigene-Stimmen.md": "eigene_stimmen",
+    "Technik.md": "technik",
+    "Entwicklung.md": "entwicklung",
+}
+
+
 class Anleitung(NamedTuple):
     """Eine Anleitung: Dateiname, Überschrift, ein Satz Inhalt."""
 
     datei: str
-    titel: str
-    inhalt: str
+
+    @property
+    def titel(self) -> str:
+        return t(f"anleitungen.{_SCHLUESSEL[self.datei]}_titel")
+
+    @property
+    def inhalt(self) -> str:
+        return t(f"anleitungen.{_SCHLUESSEL[self.datei]}_inhalt")
 
 
 #: Reihenfolge wie in der README - vom Häufigsten zum Seltensten.
 ANLEITUNGEN = (
-    Anleitung("Problemloesung.md", "When Something Doesn't Work",
-              "The robot doesn't pick up the pack, sign-in fails, the "
-              "voice is too quiet."),
-    Anleitung("Modelle.md", "Which Robots Work",
-              "Verified models and how to tell whether yours is one of "
-              "them."),
-    Anleitung("Sicherheit.md", "Why This Doesn't Damage the Robot",
-              "What the app touches, what it doesn't, and what the way "
-              "back looks like."),
-    Anleitung("Eigene-Stimmen.md", "Custom Voices and Dialects",
-              "Your own text, your own recordings, Windows text-to-speech "
-              "and ElevenLabs."),
-    Anleitung("Technik.md", "Technical Background",
-              "Package format, cloud commands, and what really happens "
-              "during install."),
-    Anleitung("Entwicklung.md", "Development",
-              "Running from source, self-test, building the EXE."),
+    Anleitung("Problemloesung.md"),
+    Anleitung("Modelle.md"),
+    Anleitung("Sicherheit.md"),
+    Anleitung("Eigene-Stimmen.md"),
+    Anleitung("Technik.md"),
+    Anleitung("Entwicklung.md"),
 )
 
 

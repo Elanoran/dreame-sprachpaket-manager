@@ -33,6 +33,7 @@ from typing import Callable, Dict, List, Optional
 
 from .audio import prepare
 from .errors import PackError
+from .i18n import t
 from .loudness import reference_levels, target_for
 from .paths import build_dir
 
@@ -59,7 +60,8 @@ class BuildResult:
 
     def summary(self) -> str:
         return (f"{self.path.name} - {self.size_mb:.1f} MB, "
-                f"{len(self.replaced)} of {self.total_members} announcements replaced")
+                + t("packer.summary_replaced", replaced=len(self.replaced),
+                    total=self.total_members))
 
 
 def _noop_log(_: str) -> None:
@@ -141,14 +143,13 @@ def build_pack(base_pack: Path,
 
     if not base_pack.is_file():
         raise PackError(
-            "The original pack is missing.",
-            "First download your robot's official pack under 'Individual "
-            "Announcements' - it serves as the safe foundation.",
+            t("packer.base_pack_missing_title"),
+            t("packer.base_pack_missing_hint"),
         )
     if not assignments:
         raise PackError(
-            "Not a single announcement has been replaced yet.",
-            "Assign at least one announcement an audio file of your own.",
+            t("packer.no_assignments_title"),
+            t("packer.no_assignments_hint"),
         )
 
     work_dir = work_dir or (build_dir() / "_arbeit")
@@ -156,7 +157,7 @@ def build_pack(base_pack: Path,
     out_path = build_dir() / out_name
 
     # ---- Schritt 1: Audiodateien vorbereiten ---------------------------
-    log("Preparing audio files ...")
+    log(t("packer.log_preparing_audio"))
     prepared: Dict[int, Path] = {}
     warnings: List[str] = []
 
@@ -172,17 +173,19 @@ def build_pack(base_pack: Path,
                                         target_lufs=target_for(pegel, sound_id))
         except Exception as exc:  # AudioError und alles Unerwartete
             raise PackError(
-                f"Announcement {sound_id}: {getattr(exc, 'message', str(exc))}",
+                t("packer.announcement_error", id=sound_id,
+                  message=getattr(exc, "message", str(exc))),
                 getattr(exc, "hint", ""),
             ) from exc
 
         prepared[sound_id] = usable
-        log(f"  {sound_id:>4}  {src.name}" + ("  (converted)" if converted else "  (used as-is)"))
+        log(f"  {sound_id:>4}  {src.name}"
+            + (t("packer.converted_suffix") if converted else t("packer.asis_suffix")))
         if progress:
             progress(index, len(items))
 
     # ---- Schritt 2: Archiv neu schreiben --------------------------------
-    log("Building the archive based on the original pack ...")
+    log(t("packer.log_building_archive"))
     replaced: List[int] = []
     total_members = 0
     tmp_path = out_path.with_suffix(".part")
@@ -226,23 +229,21 @@ def build_pack(base_pack: Path,
                 dst_tar.addfile(_tarinfo(f"{sound_id}.ogg", len(payload)), io.BytesIO(payload))
                 replaced.append(sound_id)
                 warnings.append(
-                    f"Announcement {sound_id} doesn't exist in the original "
-                    f"pack and was newly added. Whether the robot uses it "
-                    f"is open."
+                    t("packer.warning_new_announcement", id=sound_id)
                 )
     except tarfile.TarError as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("The archive couldn't be written.",
-                        f"Technical details: {exc}") from exc
+        raise PackError(t("packer.archive_write_failed_title"),
+                        t("packer.archive_write_failed_details", details=exc)) from exc
     except OSError as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("The pack couldn't be saved.",
-                        f"Technical details: {exc}") from exc
+        raise PackError(t("packer.pack_save_failed_title"),
+                        t("packer.pack_save_failed_details", details=exc)) from exc
 
     tmp_path.replace(out_path)
 
     md5, size = _md5_and_size(out_path)
-    log(f"Done: {size / (1024 * 1024):.1f} MB, MD5 {md5}")
+    log(t("packer.log_done_md5", size=size / (1024 * 1024), md5=md5))
 
     result = BuildResult(path=out_path, md5=md5, size=size,
                          replaced=sorted(replaced), warnings=warnings,
@@ -260,16 +261,15 @@ def _verify(result: BuildResult, base_pack: Path) -> None:
             base_names = {m.name for m in tf.getmembers() if m.isfile()}
     except tarfile.TarError as exc:
         raise PackError(
-            "The built pack couldn't be reopened.",
-            f"It won't be installed. Technical details: {exc}",
+            t("packer.reopen_failed_title"),
+            t("packer.reopen_failed_hint", details=exc),
         ) from exc
 
     missing = base_names - names
     if missing:
         raise PackError(
-            f"The built pack is missing {len(missing)} files from the original.",
-            "As a precaution, the pack won't be installed. "
-            "Please build it again.",
+            t("packer.missing_files_title", count=len(missing)),
+            t("packer.missing_files_hint"),
         )
 
 
@@ -282,31 +282,27 @@ def load_existing(path: Path) -> BuildResult:
     """
     path = Path(path)
     if not path.is_file():
-        raise PackError(f"The file wasn't found:\n{path}")
+        raise PackError(t("packer.file_not_found", path=path))
 
     try:
         with tarfile.open(path, "r:*") as tf:
             names = [m.name.rsplit("/", 1)[-1] for m in tf.getmembers() if m.isfile()]
     except tarfile.TarError as exc:
         raise PackError(
-            "That's not a readable voice pack.",
-            "A tar.gz archive with announcements as .ogg files is expected. "
-            f"Technical details: {exc}") from exc
+            t("packer.unreadable_pack_title"),
+            t("packer.unreadable_pack_hint", details=exc)) from exc
 
     sound_ids = sorted(int(n[:-4]) for n in names
                        if n.endswith(".ogg") and n[:-4].isdigit())
     if not sound_ids:
         raise PackError(
-            "This file contains no announcements.",
-            "A voice pack consists of files like 7.ogg, 12.ogg, and so on.")
+            t("packer.no_announcements_title"),
+            t("packer.no_announcements_hint"))
 
     md5, size = _md5_and_size(path)
     warnings: List[str] = []
     if not any(n in METADATA_HINT for n in names):
-        warnings.append(
-            "This pack is missing the original's control files. It "
-            "probably comes from a different model. It's safer to have "
-            "the pack adapted to your model under 'Custom Voices'.")
+        warnings.append(t("packer.warning_missing_metadata"))
 
     return BuildResult(path=path, md5=md5, size=size, replaced=sound_ids,
                        warnings=warnings, total_members=len(sound_ids))
@@ -343,8 +339,8 @@ def _read_ogg_archive(path: Path) -> Dict[str, bytes]:
                     if name and name not in result:
                         result[name] = zf.read(info)
         except (zipfile.BadZipFile, OSError) as exc:
-            raise PackError("Das Fremdpaket ist kein lesbares zip-Archiv.",
-                            f"Technische Details: {exc}") from exc
+            raise PackError(t("packer.foreign_pack_not_zip"),
+                            t("packer.technical_details", details=exc)) from exc
         return result
 
     try:
@@ -359,8 +355,8 @@ def _read_ogg_archive(path: Path) -> Dict[str, bytes]:
                         result[name] = extracted.read()
     except tarfile.TarError as exc:
         raise PackError(
-            "Das Fremdpaket ist weder ein lesbares tar.gz- noch ein zip-Archiv.",
-            f"Technische Details: {exc}") from exc
+            t("packer.foreign_pack_not_zip_or_targz"),
+            t("packer.technical_details", details=exc)) from exc
     return result
 
 
@@ -377,16 +373,16 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
     übernommen, alles andere kommt aus dem eigenen Originalpaket.
     """
     if not base_pack.is_file():
-        raise PackError("Your model's original pack is missing.",
-                        "Download it under 'Individual Announcements'.")
+        raise PackError(t("packer.overlay_base_missing_title"),
+                        t("packer.overlay_base_missing_hint"))
 
-    log("Reading the third-party pack ...")
+    log(t("packer.log_reading_overlay"))
     overlay = _read_ogg_archive(Path(overlay_pack_path))
 
     if not overlay:
-        raise PackError("The third-party pack contains no announcements (.ogg files).")
+        raise PackError(t("packer.overlay_empty"))
 
-    log(f"The third-party pack contains {len(overlay)} announcements.")
+    log(t("packer.log_overlay_count", count=len(overlay)))
 
     # Auch hier die Nummern-Umsetzung des Modells beachten.
     if mapping:
@@ -429,8 +425,8 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
                     progress(index, len(members))
     except (tarfile.TarError, OSError) as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("The adapted pack couldn't be built.",
-                        f"Technical details: {exc}") from exc
+        raise PackError(t("packer.overlay_build_failed_title"),
+                        t("packer.overlay_build_failed_details", details=exc)) from exc
 
     tmp_path.replace(out_path)
     md5, size = _md5_and_size(out_path)
@@ -439,10 +435,9 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
     unused = len(overlay) - len(used)
     if unused:
         warnings.append(
-            f"{unused} announcements from the third-party pack have no "
-            f"match in your model's original pack and were left out."
+            t("packer.warning_unused_overlay", count=unused)
         )
-    log(f"Done: {size / (1024 * 1024):.1f} MB, {len(replaced)} announcements taken over")
+    log(t("packer.log_overlay_done", size=size / (1024 * 1024), count=len(replaced)))
 
     result = BuildResult(path=out_path, md5=md5, size=size, replaced=sorted(replaced),
                          warnings=warnings, total_members=total_members)

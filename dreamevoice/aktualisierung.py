@@ -49,6 +49,7 @@ import requests
 
 from . import PROJEKT_URL, __version__
 from .errors import NetworkError
+from .i18n import t
 
 _LOG = logging.getLogger(__name__)
 
@@ -240,28 +241,28 @@ def pruefen(timeout: int = 12,
     """
     pfad = _repo_pfad(projekt_url)
     if not pfad:
-        raise NetworkError("No project address is configured.",
-                           "Without it, the app doesn't know where to look.")
+        raise NetworkError(t("aktualisierung.no_project_address"),
+                           t("aktualisierung.no_project_address_hint"))
     try:
         antwort = requests.get(
             API_URL.format(pfad=pfad), timeout=timeout,
             headers={"User-Agent": _kennung(),
                      "Accept": "application/vnd.github+json"})
     except requests.exceptions.RequestException as exc:
-        raise NetworkError("The search for updates failed.",
-                           f"Technical details: {exc}") from exc
+        raise NetworkError(t("aktualisierung.search_failed"),
+                           t("aktualisierung.search_failed_hint", exc=exc)) from exc
 
     if antwort.status_code == 404:
         return None
     if antwort.status_code != 200:
         raise NetworkError(
-            f"GitHub responded with HTTP {antwort.status_code}.",
-            "Try again later, or check the project page yourself.")
+            t("aktualisierung.github_http_error", status=antwort.status_code),
+            t("aktualisierung.github_http_error_hint"))
     try:
         release = antwort.json()
     except ValueError as exc:
-        raise NetworkError("GitHub's response was unreadable.",
-                           f"Technical details: {exc}") from exc
+        raise NetworkError(t("aktualisierung.github_unreadable"),
+                           t("aktualisierung.github_unreadable_hint", exc=exc)) from exc
 
     version = str(release.get("tag_name") or "").strip()
     if not version or not ist_neuer(version):
@@ -275,11 +276,9 @@ def pruefen(timeout: int = 12,
         # weil sie gerade hochgeladen wird. Früher meldete die App
         # daraufhin "du hast die neueste"; das stimmte nicht.
         raise NetworkError(
-            f"Version {version.lstrip('vV')} is available, but without "
-            f"a program file.",
-            f"It's probably still being uploaded. Check again in a few "
-            f"minutes, or get it here:\n"
-            f"{release.get('html_url') or projekt_url}")
+            t("aktualisierung.version_no_file", version=version.lstrip("vV")),
+            t("aktualisierung.version_no_file_hint",
+              url=release.get("html_url") or projekt_url))
 
     return Neuerung(
         version=version.lstrip("vV"),
@@ -331,24 +330,21 @@ def herunterladen(neuerung: Neuerung, ziel: Optional[Path] = None,
     cancelled = cancelled or (lambda: False)
     if not neuerung.pruefbar:
         raise NetworkError(
-            "No checksum is available for this version.",
-            "Nothing will be replaced without it. Download the file from "
-            "the project page and replace it manually.")
+            t("aktualisierung.no_checksum"),
+            t("aktualisierung.no_checksum_hint"))
 
     exe = eigene_exe()
     if ziel is None:
         if exe is None:
             raise NetworkError(
-                "The app is running from source.",
-                "Replacing the program file doesn't make sense here - "
-                "get the new version via git.")
+                t("aktualisierung.running_from_source"),
+                t("aktualisierung.running_from_source_hint"))
         ziel = exe.with_name(exe.stem + ENDUNG_NEU)
 
     if not _adresse_erlaubt(neuerung.url):
         raise NetworkError(
-            "The new version's source address isn't allowed.",
-            f"A secure GitHub address was expected, but got:\n"
-            f"{neuerung.url}\n\nNothing was downloaded.")
+            t("aktualisierung.source_not_allowed"),
+            t("aktualisierung.source_not_allowed_hint", url=neuerung.url))
 
     ziel.unlink(missing_ok=True)
     hasher = hashlib.sha256()
@@ -358,14 +354,14 @@ def herunterladen(neuerung: Neuerung, ziel: Optional[Path] = None,
                           headers={"User-Agent": _kennung()}) as antwort:
             if antwort.status_code != 200:
                 raise NetworkError(
-                    f"The download failed (HTTP "
-                    f"{antwort.status_code}).", f"Source: {neuerung.url}")
+                    t("aktualisierung.download_failed", status=antwort.status_code),
+                    t("aktualisierung.download_failed_hint", url=neuerung.url))
             gesamt = int(antwort.headers.get("Content-Length")
                          or neuerung.groesse or 0)
             with ziel.open("wb") as datei:
                 for block in antwort.iter_content(chunk_size=1 << 18):
                     if cancelled():
-                        raise NetworkError("Cancelled by the user.")
+                        raise NetworkError(t("aktualisierung.cancelled"))
                     if not block:
                         continue
                     datei.write(block)
@@ -373,14 +369,14 @@ def herunterladen(neuerung: Neuerung, ziel: Optional[Path] = None,
                     geladen += len(block)
                     if geladen > MAX_BYTES:
                         raise NetworkError(
-                            "The file is unexpectedly large.",
-                            "The download was aborted.")
+                            t("aktualisierung.file_too_large"),
+                            t("aktualisierung.file_too_large_hint"))
                     if progress:
                         progress(geladen, gesamt)
     except requests.exceptions.RequestException as exc:
         ziel.unlink(missing_ok=True)
-        raise NetworkError("The download was interrupted.",
-                           f"Technical details: {exc}") from exc
+        raise NetworkError(t("aktualisierung.download_interrupted"),
+                           t("aktualisierung.download_interrupted_hint", exc=exc)) from exc
     except BaseException:
         ziel.unlink(missing_ok=True)
         raise
@@ -389,9 +385,9 @@ def herunterladen(neuerung: Neuerung, ziel: Optional[Path] = None,
     if tatsaechlich != neuerung.sha256:
         ziel.unlink(missing_ok=True)
         raise NetworkError(
-            "The downloaded file doesn't match the checksum.",
-            f"Expected {neuerung.sha256[:16]}…, got {tatsaechlich[:16]}…. "
-            f"Nothing was replaced.")
+            t("aktualisierung.checksum_mismatch"),
+            t("aktualisierung.checksum_mismatch_hint",
+              expected=neuerung.sha256[:16], got=tatsaechlich[:16]))
     return ziel
 
 
@@ -431,9 +427,9 @@ def austauschen(neu: Path, exe: Optional[Path] = None,
     """
     exe = exe or eigene_exe()
     if exe is None:
-        raise NetworkError("There's no program file to replace.")
+        raise NetworkError(t("aktualisierung.no_exe_to_replace"))
     if not neu.is_file():
-        raise NetworkError("The new version wasn't found.", str(neu))
+        raise NetworkError(t("aktualisierung.new_version_not_found"), str(neu))
 
     # Noch einmal prüfen, unmittelbar vor dem Tausch. Zwischen
     # Herunterladen und Umbenennen liegt ein Zeitfenster, in dem
@@ -444,8 +440,8 @@ def austauschen(neu: Path, exe: Optional[Path] = None,
         if jetzt_summe != erwartet_sha256:
             neu.unlink(missing_ok=True)
             raise NetworkError(
-                "The prepared file has changed since it was checked.",
-                "It was discarded, nothing was replaced. Try again.")
+                t("aktualisierung.checksum_changed"),
+                t("aktualisierung.checksum_changed_hint"))
 
     alt = exe.with_name(exe.stem + ENDUNG_ALT)
     try:
@@ -455,11 +451,8 @@ def austauschen(neu: Path, exe: Optional[Path] = None,
         # Hinweis stünde dort nur ein roher WinError 32, und jede weitere
         # Aktualisierung schlüge dauerhaft fehl.
         raise NetworkError(
-            "The previous version can't be set aside.",
-            f"It's probably still running or held open by another "
-            f"program. Close it and try again - or delete the file "
-            f"manually:\n{alt}\n\n"
-            f"Technical details: {exc}") from exc
+            t("aktualisierung.old_version_locked"),
+            t("aktualisierung.old_version_locked_hint", path=alt, exc=exc)) from exc
 
     # Umbenennen darf man eine laufende EXE - überschreiben nicht.
     exe.rename(alt)
@@ -470,13 +463,10 @@ def austauschen(neu: Path, exe: Optional[Path] = None,
             alt.rename(exe)          # Rückwärts, damit nichts fehlt.
         except OSError as auch_das:
             raise TauschNotstand(
-                "The update got stuck in the middle of replacing the file.",
-                f"There is currently NO runnable program file in the "
-                f"usual place. Here's how to get it back: rename\n"
-                f"  {alt.name}\n"
-                f"back to\n  {exe.name}\n"
-                f"Both are in:\n{exe.parent}\n\n"
-                f"Technical details: {urspruenglich} / {auch_das}"
+                t("aktualisierung.swap_stuck"),
+                t("aktualisierung.swap_stuck_hint", alt_name=alt.name,
+                  exe_name=exe.name, parent=exe.parent,
+                  exc1=urspruenglich, exc2=auch_das)
             ) from urspruenglich
         raise
     return alt

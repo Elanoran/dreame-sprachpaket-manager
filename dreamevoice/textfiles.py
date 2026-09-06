@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from .dialect import DIALECTS, DialectPack, with_overrides
+from .i18n import t
 from .paths import data_dir
 from .sounds import SoundCatalog
 
@@ -49,54 +50,23 @@ def file_for(key: str) -> Path:
 # Schreiben
 # --------------------------------------------------------------------------
 
-KOPF = """\
-# {name} - voice pack for Dreame, MOVA, and Trouver vacuum robots
-# {anzahl} announcements.
-#
-# The numbers apply to all models: Dreame uses a shared numbering scheme,
-# verified against eight different models. Announcements your robot
-# doesn't recognize are skipped by the app when building.
-#
-# How to work with this:
-#   1. Copy this whole file and hand it to a language AI. A prompt that
-#      has worked well:
-#
-#        "Below are the announcements of a vacuum robot in {name}.
-#         Please rework only the third column so it sounds natural and
-#         consistent. Leave the number and meaning unchanged, keep the
-#         line structure, and return every line. Keep the sentences
-#         short - they're spoken, not read."
-#
-#   2. Paste the reply back in here and save the file.
-#   3. Click "Import Texts from File" in the app.
-#
-# Line format:   Number | Meaning in English | Dialect/custom text
-#
-# On import, only the number and everything after the second pipe
-# character counts. Lines starting with # and blank lines are ignored.
-# Lines you delete stay unchanged - so you can also have just a part
-# reworked.
-#
-# Keep the sentences short. The original announcements are two to six
-# seconds long; anything longer sounds chatty on the robot.
-"""
+# KOPF, ABSCHNITT_ANSAGEN and ABSCHNITT_SCHEMA are functions rather than
+# plain module constants: this module is imported (via app.py's
+# top-level `from .. import textfiles`) well before MainWindow calls
+# i18n.set_language() with the user's actual choice. A string built
+# with t() at import time would freeze to whatever language was active
+# at that moment, not the one the user picked.
 
-ABSCHNITT_ANSAGEN = """
-# ---------------------------------------------------------------------
-# Announcements
-# ---------------------------------------------------------------------
-"""
+def kopf_template() -> str:
+    return t("textfiles.kopf")
 
-ABSCHNITT_SCHEMA = """
-# ---------------------------------------------------------------------
-# Schematic announcements
-#
-# These are generated from two sentence templates (battery percentage,
-# per-room confirmation) and differ by only one word. They're usually
-# uninteresting for a wording rework - just leave this section as is or
-# delete it.
-# ---------------------------------------------------------------------
-"""
+
+def abschnitt_ansagen() -> str:
+    return t("textfiles.abschnitt_ansagen")
+
+
+def abschnitt_schema() -> str:
+    return t("textfiles.abschnitt_schema")
 
 
 def _schema_ids(pack: DialectPack) -> set:
@@ -129,7 +99,7 @@ def write_one(pack: DialectPack,
     catalog = catalog or SoundCatalog.load()
     schema = _schema_ids(pack)
 
-    zeilen: List[str] = [KOPF.format(name=pack.name, anzahl=aktuell.count)]
+    zeilen: List[str] = [kopf_template().format(name=pack.name, anzahl=aktuell.count)]
 
     def block(ids: List[int]) -> List[str]:
         raus = []
@@ -146,10 +116,10 @@ def write_one(pack: DialectPack,
     normal = sorted(i for i in aktuell.texts if i not in schema)
     schematisch = sorted(i for i in aktuell.texts if i in schema)
 
-    zeilen.append(ABSCHNITT_ANSAGEN)
+    zeilen.append(abschnitt_ansagen())
     zeilen.extend(block(normal))
     if schematisch:
-        zeilen.append(ABSCHNITT_SCHEMA)
+        zeilen.append(abschnitt_schema())
         zeilen.extend(block(schematisch))
 
     ziel = file_for(pack.key)
@@ -215,14 +185,14 @@ class ReadResult:
         return len(self.overrides)
 
     def summary(self) -> str:
-        teile = [f"{self.gelesen} lines read",
-                 f"{self.geaendert} texts differ from the built-in ones"]
+        teile = [t("textfiles.summary_lines_read", n=self.gelesen),
+                 t("textfiles.summary_changed", n=self.geaendert)]
         if self.unveraendert:
-            teile.append(f"{self.unveraendert} unchanged")
+            teile.append(t("textfiles.summary_unchanged", n=self.unveraendert))
         if self.leer:
-            teile.append(f"{self.leer} skipped without text")
+            teile.append(t("textfiles.summary_skipped_empty", n=self.leer))
         if self.unbekannt:
-            teile.append(f"{len(self.unbekannt)} unknown numbers")
+            teile.append(t("textfiles.summary_unknown", n=len(self.unbekannt)))
         return ", ".join(teile) + "."
 
 

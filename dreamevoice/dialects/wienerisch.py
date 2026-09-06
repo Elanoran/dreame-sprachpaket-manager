@@ -27,13 +27,11 @@ Feststecken, Blockaden.
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "wienerisch"
-NAME = "Viennese"
-BESCHREIBUNG = (
-    "Viennese, as spoken in the city: written phonetically and "
-    "slightly grumpy. Not Bavarian with a Viennese coat of paint."
-)
+NAME = t("wienerisch.name")
+BESCHREIBUNG = t("wienerisch.beschreibung")
 LANG_ID = "WIEN"
 
 TEXTE = {

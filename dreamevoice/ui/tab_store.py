@@ -13,24 +13,14 @@ from typing import Optional
 from .. import (community, custom, dialect, elevenlabs, importer, installer,
                 library, packer, textfiles, tts)
 from ..community import CommunityPack
+from ..config import Config
+from ..i18n import t
 from ..paths import build_dir
 from .state import AppState, error_text, run_async, to_main
 from .tab_builder import open_with_default_player
 from .theme import Theme
 from .widgets import (Card, InfoBanner, LogView, ScrollableList, ScrollablePage,
                       StatusBadge, show_error, show_info, show_warning)
-
-
-# Die beiden Wege zu eigenen Aufnahmen. Der ZIP-Fall steht zuerst und wird
-# beim Namen genannt: so heißen die Dateien auf der Projektseite.
-WAHL_ARCHIV = "ZIP file or ready-made pack (.tar.gz)"
-WAHL_ORDNER = "Folder with mp3, wav, or ogg files"
-
-# Was passiert, wenn der gewählte Name schon vergeben ist. Das Danebenlegen
-# steht zuerst und ist die Vorgabe - ein Paket, das Kontingent gekostet hat,
-# soll nicht mit einem Klick verschwinden.
-WAHL_DANEBEN = "Save alongside - the existing one stays"
-WAHL_ERSETZEN = "Replace the existing one"
 
 
 class PackCard(ttk.Frame):
@@ -49,7 +39,8 @@ class PackCard(ttk.Frame):
         head.grid(row=0, column=0, sticky="ew")
         ttk.Label(head, text=pack.name, style="Heading.TLabel").pack(side="left")
 
-        meta = f"{pack.language}  ·  approx. {pack.approx_sounds} announcements"
+        meta = t("tab_store.pack_card_meta", language=pack.language,
+                 count=pack.approx_sounds)
         if pack.size_mb:
             meta += f"  ·  {pack.size_mb:.1f} MB"
         ttk.Label(head, text=meta, style="Muted.TLabel").pack(side="left", padx=(12, 0))
@@ -58,7 +49,8 @@ class PackCard(ttk.Frame):
                   wraplength=700, justify="left").grid(row=1, column=0, sticky="ew",
                                                        pady=(4, 0))
 
-        source = f"Source: {pack.author}  ·  License: {pack.license}"
+        source = t("tab_store.pack_card_source", author=pack.author,
+                   license=pack.license)
         ttk.Label(self, text=source, style="Muted.TLabel").grid(
             row=2, column=0, sticky="w", pady=(4, 0))
 
@@ -70,12 +62,12 @@ class PackCard(ttk.Frame):
         buttons = ttk.Frame(self, style="Card.TFrame")
         buttons.grid(row=4, column=0, sticky="w", pady=(10, 0))
 
-        self.btn_use = ttk.Button(buttons, text="Download and Adapt",
+        self.btn_use = ttk.Button(buttons, text=t("tab_store.download_and_adapt_button"),
                                   style="Accent.TButton",
                                   command=lambda: tab.use_pack(pack))
         self.btn_use.pack(side="left")
 
-        ttk.Button(buttons, text="View Project Page", style="Small.TButton",
+        ttk.Button(buttons, text=t("tab_store.view_project_page_button"), style="Small.TButton",
                    command=lambda: webbrowser.open(pack.project_url)).pack(
             side="left", padx=(8, 0))
 
@@ -99,17 +91,12 @@ class StoreTab(ttk.Frame):
 
         InfoBanner(
             outer, self.theme,
-            "Honestly: there's no real store. What's here are the few "
-            "freely available fan projects that actually exist and whose "
-            "files have been checked. Every pack is verified against its "
-            "checksum on download and then laid over your model's "
-            "official pack - anything the third-party pack doesn't cover "
-            "stays on the German original voice.",
+            t("tab_store.store_disclaimer"),
         ).pack(fill="x", pady=(0, 14))
 
         self._build_dialect_card(outer)
 
-        listing = Card(outer, self.theme, "Available Packs")
+        listing = Card(outer, self.theme, t("tab_store.available_packs_heading"))
         listing.pack(fill="both", expand=True, pady=(14, 0))
 
         # Der ganze Tab scrollt bereits - hier kein zweiter Bildlaufbereich.
@@ -122,7 +109,7 @@ class StoreTab(ttk.Frame):
 
         status = ttk.Frame(listing.content, style="Card.TFrame")
         status.pack(fill="x", pady=(10, 0))
-        self.badge = StatusBadge(status, self.theme, "Ready")
+        self.badge = StatusBadge(status, self.theme, t("tab_store.status_ready"))
         self.badge.pack(side="left")
         self.progress = ttk.Progressbar(status, mode="determinate", maximum=100,
                                         length=220)
@@ -136,29 +123,20 @@ class StoreTab(ttk.Frame):
         umfaenge = sorted(p.count for p in dialect.DIALECTS)
         spanne = (f"{umfaenge[0]} bis {umfaenge[-1]}" if umfaenge[0] != umfaenge[-1]
                   else str(umfaenge[0]))
-        card = Card(outer, self.theme, "Generate Your Own: Dialect Packs",
-                    f"{len(dialect.DIALECTS)} dialects, {spanne} announcements - "
-                    f"nowhere can you download these ready-made.")
+        card = Card(outer, self.theme, t("tab_store.dialect_card_title"),
+                    t("tab_store.dialect_card_subtitle",
+                      count=len(dialect.DIALECTS), span=spanne))
         card.pack(fill="x")
 
         ttk.Label(
             card.content,
-            text=("Dialect packs don't exist for any vacuum robot to "
-                  "download - not for Dreame, Roborock, Xiaomi, or "
-                  "Valetudo. They've often been requested in forums, but "
-                  "nobody's built them; the only one out there is a Swiss "
-                  "German pack for the Roborock S5. So there's no "
-                  "third-party pack to adapt.\n\n"
-                  "This app therefore writes the announcements itself in "
-                  "each dialect and has them spoken. With the Windows "
-                  "voice this runs offline and free; for genuine dialect "
-                  "in the pronunciation, you can switch to ElevenLabs."),
+            text=t("tab_store.dialect_intro"),
             style="Surface.TLabel", wraplength=820, justify="left").pack(anchor="w")
 
         # --- Dialektauswahl ---------------------------------------------
         picker = ttk.Frame(card.content, style="Card.TFrame")
         picker.pack(fill="x", pady=(14, 0))
-        ttk.Label(picker, text="Dialect", style="Surface.TLabel").pack(side="left")
+        ttk.Label(picker, text=t("tab_store.dialect_label"), style="Surface.TLabel").pack(side="left")
 
         self.var_dialect = tk.StringVar()
         self.combo_dialect = ttk.Combobox(
@@ -173,30 +151,23 @@ class StoreTab(ttk.Frame):
         # --- Eigene Pakete verwalten ------------------------------------
         eigene = ttk.Frame(card.content, style="Card.TFrame")
         eigene.pack(fill="x", pady=(8, 0))
-        ttk.Button(eigene, text="Create Custom Pack ...",
+        ttk.Button(eigene, text=t("tab_store.create_pack_button"),
                    style="Small.TButton",
                    command=self._on_new_custom).pack(side="left")
-        self.btn_rename = ttk.Button(eigene, text="Rename",
+        self.btn_rename = ttk.Button(eigene, text=t("tab_store.rename_button"),
                                      style="Small.TButton",
                                      command=self._on_rename_custom)
         self.btn_rename.pack(side="left", padx=(8, 0))
-        self.btn_delete_custom = ttk.Button(eigene, text="Delete",
+        self.btn_delete_custom = ttk.Button(eigene, text=t("tab_store.delete_button"),
                                             style="Small.TButton",
                                             command=self._on_delete_custom)
         self.btn_delete_custom.pack(side="left", padx=(8, 0))
-        ttk.Button(eigene, text="Import Recordings ...",
+        ttk.Button(eigene, text=t("tab_store.import_recordings_button"),
                    style="Small.TButton",
                    command=self._on_import_ready).pack(side="left", padx=(8, 0))
 
         ttk.Label(card.content,
-                  text=("'Create Custom Pack' creates your own text "
-                        "collection - say, in the style of a movie "
-                        "character. It behaves like a dialect: preview, "
-                        "edit texts, generate with any voice, resume after "
-                        "the quota runs out. 'Import Recordings' takes "
-                        "already-spoken announcements: a ZIP file from the "
-                        "project page, a ready-made .tar.gz, or a folder "
-                        "full of mp3 and wav files."),
+                  text=t("tab_store.custom_pack_intro"),
                   style="Muted.TLabel", wraplength=820,
                   justify="left").pack(anchor="w", pady=(6, 0))
 
@@ -217,7 +188,7 @@ class StoreTab(ttk.Frame):
                                          wraplength=700, justify="left")
         self.lbl_fortschritt.pack(side="left")
         self.btn_verwerfen = ttk.Button(
-            fortschritt, text="Discard Progress", style="Small.TButton",
+            fortschritt, text=t("tab_store.discard_progress_button"), style="Small.TButton",
             command=self._on_discard_progress)
 
         self._build_engine_chooser(card.content)
@@ -226,16 +197,16 @@ class StoreTab(ttk.Frame):
         actions = ttk.Frame(card.content, style="Card.TFrame")
         actions.pack(fill="x", pady=(14, 0))
 
-        self.btn_preview = ttk.Button(actions, text="Listen to Sample",
+        self.btn_preview = ttk.Button(actions, text=t("tab_store.listen_sample_button"),
                                       command=self._on_preview_dialect)
         self.btn_preview.pack(side="left")
         self._dialect_buttons.append(self.btn_preview)
 
-        self.btn_texts = ttk.Button(actions, text="View and Edit Texts",
+        self.btn_texts = ttk.Button(actions, text=t("tab_store.view_edit_texts_button"),
                                     command=self._on_show_texts)
         self.btn_texts.pack(side="left", padx=(8, 0))
 
-        self.btn_generate = ttk.Button(actions, text="Generate Pack",
+        self.btn_generate = ttk.Button(actions, text=t("tab_store.generate_pack_button"),
                                        style="Accent.TButton",
                                        command=self._on_generate_selected)
         self.btn_generate.pack(side="left", padx=(8, 0))
@@ -243,7 +214,7 @@ class StoreTab(ttk.Frame):
 
         # Absichtlich NICHT in _dialect_buttons: dieser Knopf muss genau
         # dann bedienbar sein, wenn alle anderen gesperrt sind.
-        self.btn_abbrechen = ttk.Button(actions, text="Cancel",
+        self.btn_abbrechen = ttk.Button(actions, text=t("tab_store.cancel_button"),
                                         command=self._on_cancel_work,
                                         state="disabled")
         self.btn_abbrechen.pack(side="left", padx=(8, 0))
@@ -252,30 +223,17 @@ class StoreTab(ttk.Frame):
         dateien = ttk.Frame(card.content, style="Card.TFrame")
         dateien.pack(fill="x", pady=(8, 0))
 
-        ttk.Button(dateien, text="Export Texts as Files",
+        ttk.Button(dateien, text=t("tab_store.export_texts_button"),
                    style="Small.TButton",
                    command=self._on_export_texts).pack(side="left")
-        ttk.Button(dateien, text="Import Texts from File",
+        ttk.Button(dateien, text=t("tab_store.import_texts_button"),
                    style="Small.TButton",
                    command=self._on_import_texts).pack(side="left", padx=(8, 0))
-        ttk.Button(dateien, text="Open Folder", style="Small.TButton",
+        ttk.Button(dateien, text=t("tab_store.open_folder_button"), style="Small.TButton",
                    command=self._on_open_text_folder).pack(side="left", padx=(8, 0))
 
         ttk.Label(card.content,
-                  text=("The sample speaks three sentences with the "
-                        "currently chosen voice and plays them - so you "
-                        "can hear beforehand whether you like the result. "
-                        "With ElevenLabs it costs about 60 characters from "
-                        "the monthly quota.\n"
-                        "Under 'View and Edit Texts' you can reword any "
-                        "announcement. Your version stays saved; already-"
-                        "spoken recordings of changed announcements are "
-                        "discarded and re-recorded the next time you "
-                        "generate.\n"
-                        "For bigger rewrites, every dialect is also "
-                        "available as a text file in the data folder: "
-                        "copy it, have a language AI improve it, paste "
-                        "the result back in, and read it in again."),
+                  text=t("tab_store.sample_texts_info"),
                   style="Muted.TLabel", wraplength=800,
                   justify="left").pack(anchor="w", pady=(6, 0))
 
@@ -285,20 +243,13 @@ class StoreTab(ttk.Frame):
 
         ttk.Label(
             card.content,
-            text=("Recreating the voice of a real living person - say, "
-                  "from YouTube recordings or other voice packs - is "
-                  "legally sensitive (personality rights, and for actors "
-                  "there's also exploitation rights). This app "
-                  "deliberately offers no feature for that."),
+            text=t("tab_store.voice_cloning_legal_notice"),
             style="Muted.TLabel", wraplength=820, justify="left").pack(anchor="w",
                                                                        pady=(10, 0))
 
     # ------------------------------------------------------------------
     # Auswahlliste: mitgelieferte Dialekte und eigene Pakete
     # ------------------------------------------------------------------
-    VORSATZ_DIALEKT = "Dialect · "
-    VORSATZ_EIGEN = "Custom · "
-
     def _all_packs(self) -> list:
         """Alle wählbaren Pakete: erst die Dialekte, dann die eigenen."""
         try:
@@ -308,8 +259,8 @@ class StoreTab(ttk.Frame):
         return list(dialect.DIALECTS) + eigene
 
     def _label_for(self, pack) -> str:
-        vorsatz = (self.VORSATZ_EIGEN if self._is_custom(pack)
-                   else self.VORSATZ_DIALEKT)
+        vorsatz = (t("tab_store.prefix_custom") if self._is_custom(pack)
+                   else t("tab_store.prefix_dialect"))
         return f"{vorsatz}{pack.name}"
 
     def _is_custom(self, pack) -> bool:
@@ -360,14 +311,14 @@ class StoreTab(ttk.Frame):
         eigene = len(dialect.changed_ids(
             pack, self.state.config.dialect_overrides(pack.key)))
 
-        meta = f"{aktuell.count} announcements  ·  identifier {pack.lang_id}"
+        meta = t("tab_store.dialect_meta", count=aktuell.count, lang_id=pack.lang_id)
         if eigene:
-            meta += f"  ·  {eigene} custom edited"
+            meta += t("tab_store.dialect_meta_custom_edited", count=eigene)
         self.lbl_dialect_meta.configure(text=meta)
         self.lbl_dialect_desc.configure(text=pack.description)
         samples = "\n".join(f"   {line}"
                             for line in dialect.preview_texts(aktuell, 6))
-        self.lbl_samples.configure(text="Sample:\n" + samples)
+        self.lbl_samples.configure(text=t("tab_store.sample_prefix") + samples)
         self.refresh_progress()
 
     def _work_dir(self, pack=None) -> Path:
@@ -410,23 +361,21 @@ class StoreTab(ttk.Frame):
         fertig = len(passend) + len(uebernommen)
         if fertig == 0 and not veraltet:
             self.lbl_fortschritt.configure(
-                text="Progress: nothing spoken yet.",
+                text=t("tab_store.progress_nothing_yet"),
                 style="Muted.TLabel")
             self.btn_verwerfen.pack_forget()
             return
 
-        teile = [f"Progress: {fertig} of {pack.count} announcements spoken"]
+        teile = [t("tab_store.progress_summary", done=fertig, total=pack.count)]
         if uebernommen:
-            teile.append(f"of which {len(uebernommen)} taken over from "
-                         f"existing files")
+            teile.append(t("tab_store.progress_taken_over", count=len(uebernommen)))
         if veraltet:
-            teile.append(f"{len(veraltet)} belong to changed text and will "
-                         f"be redone")
+            teile.append(t("tab_store.progress_outdated", count=len(veraltet)))
         offen = pack.count - fertig
         if offen > 0:
-            teile.append(f"{offen} remaining - 'Generate Pack' continues from there")
+            teile.append(t("tab_store.progress_remaining", count=offen))
         else:
-            teile.append("everything's there, generating costs nothing more")
+            teile.append(t("tab_store.progress_complete"))
 
         self.lbl_fortschritt.configure(
             text="  ·  ".join(teile),
@@ -444,10 +393,8 @@ class StoreTab(ttk.Frame):
             return
 
         if not messagebox.askyesno(
-                "Discard Progress",
-                f"{fertig} already-spoken announcements will be deleted.\n\n"
-                f"Everything will be re-spoken next time you generate - "
-                f"with ElevenLabs that costs quota again.\n\nReally delete?",
+                t("tab_store.discard_progress_confirm_title"),
+                t("tab_store.discard_progress_confirm_message", count=fertig),
                 parent=self):
             return
 
@@ -457,7 +404,7 @@ class StoreTab(ttk.Frame):
         except OSError:
             pass
         self.refresh_progress()
-        self.log.append(f"Progress discarded ({fertig} recordings).", "warn")
+        self.log.append(t("tab_store.progress_discarded_log", count=fertig), "warn")
 
     # ------------------------------------------------------------------
     # Eigene Pakete anlegen, umbenennen, löschen
@@ -465,35 +412,26 @@ class StoreTab(ttk.Frame):
     def _on_new_custom(self) -> None:
         """Legt eine eigene Textsammlung an - meist als Kopie eines Dialekts."""
         name = simpledialog.askstring(
-            "Custom Voice Pack",
-            "What should the pack be called?\n\n"
-            "For example 'Bruce Willis', 'Pirate', or 'Butler'. The name "
-            "only appears in this app - the robot gets a short identifier "
-            "derived from it.",
+            t("tab_store.new_custom_title"),
+            t("tab_store.new_custom_prompt"),
             parent=self)
         if not name or not name.strip():
             return
 
-        vorlagen = [f"Copy of {p.name}" for p in dialect.DIALECTS]
-        vorlagen.append("Start Empty")
+        vorlagen = [t("tab_store.copy_of_template", name=p.name) for p in dialect.DIALECTS]
+        vorlagen.append(t("tab_store.start_empty_option"))
 
         wahl = self._ask_choice(
-            "Start with What?",
-            "A pack needs a text for every announcement.\n\n"
-            "The easiest way is to copy an existing dialect: then every "
-            "announcement is already there and you just reword it. Next "
-            "to each line is what it needs to mean.\n\n"
-            "Starting empty is only worth it if you just want to replace "
-            "a few individual announcements - the rest then stays on the "
-            "German original voice.",
+            t("tab_store.start_with_what_title"),
+            t("tab_store.start_with_what_prompt"),
             vorlagen, vorlagen[0])
         if wahl is None:
             return
 
         texte = {}
-        if wahl != "Start Empty":
+        if wahl != t("tab_store.start_empty_option"):
             quelle = next((p for p in dialect.DIALECTS
-                           if f"Copy of {p.name}" == wahl), None)
+                           if t("tab_store.copy_of_template", name=p.name) == wahl), None)
             if quelle is not None:
                 # Bewusst die wirksamen Texte: eigene Änderungen am Dialekt
                 # sollen in der Kopie erhalten bleiben.
@@ -504,30 +442,29 @@ class StoreTab(ttk.Frame):
         try:
             custom.save(neu)
         except OSError as exc:
-            show_error(self, self.theme, "Not Saved",
-                       "The custom pack couldn't be created.",
-                       f"Technical details: {exc}")
+            show_error(self, self.theme, t("tab_store.custom_not_saved_title"),
+                       t("tab_store.custom_pack_not_created_message"),
+                       t("tab_store.technical_details_new_custom", error=exc))
             return
 
-        self.log.append(f"Custom pack '{neu.name}' created "
-                        f"({neu.count} announcements, identifier {neu.lang_id}).", "ok")
+        self.log.append(t("tab_store.custom_pack_created_log", name=neu.name,
+                          count=neu.count, lang_id=neu.lang_id), "ok")
         self._refill_dialect_picker(self._label_for(neu))
         show_info(
-            self, self.theme, "Pack Created",
-            f"'{neu.name}' is now in the selection.",
-            f"{neu.count} announcements as a template, identifier {neu.lang_id}.\n\n"
-            f"Use 'View and Edit Texts' to rewrite them - or hand the file\n"
-            f"{custom.path_for(neu.key).name}\nfrom the '{custom.ORDNER}' "
-            f"folder to a language AI. Then click 'Generate Pack' as usual.")
+            self, self.theme, t("tab_store.pack_created_title"),
+            t("tab_store.pack_created_message", name=neu.name),
+            t("tab_store.pack_created_hint", count=neu.count, lang_id=neu.lang_id,
+              filename=custom.path_for(neu.key).name, folder=custom.ORDNER))
 
     def _on_rename_custom(self) -> None:
         pack = self._selected_dialect()
         if pack is None or not self._is_custom(pack):
-            show_warning(self, self.theme, "No Custom Pack",
-                         "Built-in dialects can't be renamed.",
-                         "Choose a pack above that starts with 'Custom'.")
+            show_warning(self, self.theme, t("tab_store.no_custom_pack_title"),
+                         t("tab_store.no_custom_pack_rename_message"),
+                         t("tab_store.no_custom_pack_hint"))
             return
-        neu = simpledialog.askstring("Rename", "New name:",
+        neu = simpledialog.askstring(t("tab_store.rename_dialog_title"),
+                                     t("tab_store.rename_dialog_prompt"),
                                      initialvalue=pack.name, parent=self)
         if not neu or not neu.strip():
             return
@@ -535,48 +472,44 @@ class StoreTab(ttk.Frame):
         try:
             custom.save(pack)
         except OSError as exc:
-            show_error(self, self.theme, "Not Saved", str(exc))
+            show_error(self, self.theme, t("tab_store.rename_not_saved_title"), str(exc))
             return
         self._refill_dialect_picker(self._label_for(pack))
-        self.log.append(f"Renamed to '{pack.name}'.", "ok")
+        self.log.append(t("tab_store.renamed_log", name=pack.name), "ok")
 
     def _on_delete_custom(self) -> None:
         pack = self._selected_dialect()
         if pack is None or not self._is_custom(pack):
-            show_warning(self, self.theme, "No Custom Pack",
-                         "Built-in dialects can't be deleted.",
-                         "Choose a pack above that starts with 'Custom'.")
+            show_warning(self, self.theme, t("tab_store.no_custom_pack_title"),
+                         t("tab_store.no_custom_pack_delete_message"),
+                         t("tab_store.no_custom_pack_hint"))
             return
         if not messagebox.askyesno(
-                "Really Delete?",
-                f"Delete '{pack.name}' with {pack.count} announcements?\n\n"
-                f"Already-spoken recordings and built packs are kept - "
-                f"only the text collection disappears.",
+                t("tab_store.really_delete_title"),
+                t("tab_store.really_delete_message", name=pack.name, count=pack.count),
                 parent=self):
             return
         custom.delete(pack.key)
-        self.log.append(f"'{pack.name}' deleted.", "warn")
+        self.log.append(t("tab_store.pack_deleted_log", name=pack.name), "warn")
         self._refill_dialect_picker()
 
     def _on_import_ready(self) -> None:
         """Ein fertiges Paket oder einen Ordner voller Aufnahmen übernehmen."""
+        WAHL_ARCHIV = t("tab_store.choice_archive")
+        WAHL_ORDNER = t("tab_store.choice_folder")
+        WAHL_DANEBEN = t("tab_store.choice_save_alongside")
+        WAHL_ERSETZEN = t("tab_store.choice_replace_existing")
+
         if not self.state.has_base_pack:
             show_warning(
-                self, self.theme, "Original Pack Missing",
-                "First download your robot's official voice pack under "
-                "'Individual Announcements'.",
-                "Every custom pack is built as a copy of it - otherwise "
-                "the robot would be missing every announcement you didn't "
-                "supply yourself.")
+                self, self.theme, t("tab_store.original_pack_missing_title"),
+                t("tab_store.original_pack_missing_import_message"),
+                t("tab_store.original_pack_missing_import_hint"))
             return
 
         art = self._ask_choice(
-            "What Should Be Imported?",
-            "The recordings from the project page are ZIP files like "
-            "'Bayerisch-Aufnahmen.zip'. Use the first option for those and "
-            "choose the ZIP directly - you don't need to unpack anything.\n\n"
-            "Either way ends up as a finished pack in your collection and "
-            "then shows up under 'Ready-Made Voices' for selection.",
+            t("tab_store.what_import_title"),
+            t("tab_store.what_import_prompt"),
             [WAHL_ARCHIV, WAHL_ORDNER],
             WAHL_ARCHIV)
         if art is None:
@@ -588,11 +521,11 @@ class StoreTab(ttk.Frame):
 
         if art == WAHL_ARCHIV:
             quelle = filedialog.askopenfilename(
-                parent=self, title="Choose a ZIP or Pack File",
+                parent=self, title=t("tab_store.choose_zip_title"),
                 initialdir=start if Path(start).is_dir() else str(Path.home()),
-                filetypes=[("Recordings and packs",
+                filetypes=[(t("tab_store.filetype_recordings_packs"),
                             "*.zip *.tar.gz *.tgz *.tar"),
-                           ("All files", "*.*")])
+                           (t("tab_store.filetype_all_files"), "*.*")])
             if not quelle:
                 return
             try:
@@ -604,7 +537,7 @@ class StoreTab(ttk.Frame):
                 return
         else:
             quelle = filedialog.askdirectory(
-                parent=self, title="Choose the Folder with the Recordings",
+                parent=self, title=t("tab_store.choose_folder_recordings_title"),
                 initialdir=start if Path(start).is_dir() else str(Path.home()),
                 mustexist=True)
             if not quelle:
@@ -624,17 +557,14 @@ class StoreTab(ttk.Frame):
         zuordnung = gefunden.assigned
         if not zuordnung:
             show_warning(
-                self, self.theme, "Nothing Found",
-                f"{Path(quelle).name} contains no assignable recording.",
-                "Files need the announcement number in their name, so "
-                "7.ogg, 7.wav, or 7.mp3. A correctly-named template folder "
-                "can be created under 'Individual Announcements'.")
+                self, self.theme, t("tab_store.nothing_found_title"),
+                t("tab_store.nothing_found_import_message", name=Path(quelle).name),
+                t("tab_store.nothing_found_import_hint"))
             return
 
         name = simpledialog.askstring(
-            "Name for This Pack",
-            f"{len(zuordnung)} announcements found.\n\n"
-            f"What name should the finished pack be saved under?",
+            t("tab_store.name_for_pack_title"),
+            t("tab_store.name_for_pack_import_prompt", count=len(zuordnung)),
             initialvalue=library.safe_name(Path(quelle).stem or "custom_pack"),
             parent=self)
         if name is None:
@@ -652,17 +582,14 @@ class StoreTab(ttk.Frame):
         else:
             alt = library.read_info(schon_da)
             wahl = self._ask_choice(
-                "This Pack Already Exists",
-                f"Existing:\n{alt.label}\n\n"
-                f"Replacing overwrites it permanently. The new pack is "
-                f"built completely first - if that fails, the existing "
-                f"one stays untouched.",
+                t("tab_store.pack_exists_title"),
+                t("tab_store.pack_exists_message", label=alt.label),
                 [WAHL_DANEBEN, WAHL_ERSETZEN], WAHL_DANEBEN)
             if wahl is None:
                 return
             if wahl == WAHL_ERSETZEN:
                 ziel = schon_da
-                self.log.append(f"Replacing {schon_da.name}.", "warn")
+                self.log.append(t("tab_store.replacing_log", name=schon_da.name), "warn")
             else:
                 ziel = library.unique_path(build_dir(), sicher)
 
@@ -676,9 +603,9 @@ class StoreTab(ttk.Frame):
         mapping = self.state.voice_mapping()
 
         self.log.clear()
-        self.log.append(f"Building pack from {len(zuordnung)} recordings ...", "step")
+        self.log.append(t("tab_store.building_pack_log", count=len(zuordnung)), "step")
         self._busy(True)
-        self.badge.set("Converting and building ...", "muted")
+        self.badge.set(t("tab_store.converting_building_badge"), "muted")
 
         def work_fn(_task):
             return packer.build_pack(
@@ -689,7 +616,7 @@ class StoreTab(ttk.Frame):
 
         def ok(build) -> None:
             library.write_info(build.path, dialect=name.strip() or ziel.stem,
-                               engine="Custom Recordings",
+                               engine=t("tab_store.engine_custom_recordings"),
                                voice=Path(quelle).name,
                                lang_id=(kennung or "CUSTOM").strip().upper(),
                                replaced=len(build.replaced),
@@ -700,22 +627,21 @@ class StoreTab(ttk.Frame):
             self.state.config["custom_lang_id"] = (kennung or "CUSTOM").strip().upper()
             self.state.save()
             self.state.notify("assignments_changed")
-            self.badge.set(f"Done - {len(build.replaced)} announcements", "ok")
+            self.badge.set(t("tab_store.import_done_badge", count=len(build.replaced)), "ok")
             self.log.append(build.summary(), "ok")
             for warnung in build.warnings:
                 self.log.append(warnung, "warn")
-            show_info(self, self.theme, "Pack Is Ready",
-                      f"{len(build.replaced)} announcements taken over.",
-                      f"Saved as:\n{build.path.name}\n\n"
-                      f"Choose it for install under 'Ready-Made Voices'.")
+            show_info(self, self.theme, t("tab_store.pack_ready_title"),
+                      t("tab_store.pack_ready_message", count=len(build.replaced)),
+                      t("tab_store.pack_ready_hint", filename=build.path.name))
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            self.badge.set("Failed", "error")
+            self.badge.set(t("tab_store.import_failed_badge"), "error")
             self.log.append(message, "error")
             if hint:
                 self.log.append(hint, "warn")
-            show_error(self, self.theme, "Pack Not Built", message, hint)
+            show_error(self, self.theme, t("tab_store.pack_not_built_title"), message, hint)
 
         run_async(self, work_fn, on_success=ok, on_error=fail,
                   on_finally=lambda: self._busy(False))
@@ -723,7 +649,7 @@ class StoreTab(ttk.Frame):
     def _on_import_error(self, exc: Exception) -> None:
         message, hint = error_text(exc)
         self.log.append(message, "error")
-        show_error(self, self.theme, "Import Failed", message, hint)
+        show_error(self, self.theme, t("tab_store.import_failed_title"), message, hint)
 
     def _ask_choice(self, titel: str, frage: str, optionen: list,
                     vorgabe: str = "") -> Optional[str]:
@@ -754,9 +680,9 @@ class StoreTab(ttk.Frame):
 
         knoepfe = ttk.Frame(card.content, style="Card.TFrame")
         knoepfe.pack(fill="x", pady=(16, 0))
-        ttk.Button(knoepfe, text="Apply", style="Accent.TButton",
+        ttk.Button(knoepfe, text=t("tab_store.ask_choice_apply_button"), style="Accent.TButton",
                    command=uebernehmen).pack(side="left")
-        ttk.Button(knoepfe, text="Cancel",
+        ttk.Button(knoepfe, text=t("tab_store.ask_choice_cancel_button"),
                    command=fenster.destroy).pack(side="left", padx=(8, 0))
 
         fenster.wait_window()
@@ -770,26 +696,24 @@ class StoreTab(ttk.Frame):
         try:
             pfade = textfiles.write_all(self.state.config.dialect_overrides)
         except OSError as exc:
-            show_error(self, self.theme, "Files Not Written",
-                       "The text files couldn't be created.",
-                       f"Technical details: {exc}")
+            show_error(self, self.theme, t("tab_store.files_not_written_title"),
+                       t("tab_store.text_files_not_created_message"),
+                       t("tab_store.technical_details_export", error=exc))
             return
 
-        self.log.append(f"{len(pfade)} dialect text files written.", "ok")
+        self.log.append(t("tab_store.dialect_files_written_log", count=len(pfade)), "ok")
         show_info(
-            self, self.theme, "Text Files Created",
-            f"{len(pfade)} files are now in:\n{textfiles.folder()}",
-            "Copy a whole file, have a language AI rework it, paste the "
-            "result back in and save. Then click 'Import Texts from File' "
-            "here.\n\n"
-            "Note: existing files were overwritten with the current state.")
+            self, self.theme, t("tab_store.text_files_created_title"),
+            t("tab_store.text_files_created_message", count=len(pfade),
+              folder=textfiles.folder()),
+            t("tab_store.text_files_created_hint"))
 
     def _on_open_text_folder(self) -> None:
         try:
             open_with_default_player(textfiles.folder())
         except Exception as exc:                       # noqa: BLE001
-            show_error(self, self.theme, "Folder Not Opened",
-                       str(exc), f"The folder is here:\n{textfiles.folder()}")
+            show_error(self, self.theme, t("tab_store.folder_not_opened_title"),
+                       str(exc), t("tab_store.folder_here_hint", folder=textfiles.folder()))
 
     def _on_import_texts(self) -> None:
         """Liest eine überarbeitete Textdatei ein."""
@@ -798,10 +722,11 @@ class StoreTab(ttk.Frame):
 
         pfad = filedialog.askopenfilename(
             parent=self,
-            title="Import Revised Dialect Texts",
+            title=t("tab_store.import_revised_texts_title"),
             initialdir=str(textfiles.folder()),
             initialfile=vorschlag.name if vorschlag else "",
-            filetypes=[("Text files", "*.txt"), ("All files", "*.*")])
+            filetypes=[(t("tab_store.filetype_text_files"), "*.txt"),
+                       (t("tab_store.filetype_all_files"), "*.*")])
         if not pfad:
             return
 
@@ -811,28 +736,24 @@ class StoreTab(ttk.Frame):
         ziel = next((p for p in self._all_packs() if p.key == pfad.stem), None)
         if ziel is None:
             show_warning(
-                self, self.theme, "Pack Not Recognized",
-                f"There's no matching pack for '{pfad.name}'.",
-                "The file must be named like the pack, e.g. "
-                "'wienerisch.txt'. Rename it and try again.")
+                self, self.theme, t("tab_store.pack_not_recognized_title"),
+                t("tab_store.pack_not_recognized_message", name=pfad.name),
+                t("tab_store.pack_not_recognized_hint"))
             return
 
         try:
             ergebnis = textfiles.read_one(pfad, ziel)
         except (OSError, UnicodeError) as exc:
-            show_error(self, self.theme, "File Not Readable",
-                       f"{pfad.name} couldn't be read.",
-                       f"Technical details: {exc}")
+            show_error(self, self.theme, t("tab_store.file_not_readable_title"),
+                       t("tab_store.file_not_readable_message", name=pfad.name),
+                       t("tab_store.technical_details_import_texts", error=exc))
             return
 
         if not ergebnis.gelesen:
             show_warning(
-                self, self.theme, "Nothing Found",
-                f"{pfad.name} doesn't contain a single usable line.",
-                "Every line needs the form\n"
-                "  Number | Meaning | Dialect text\n\n"
-                "If the AI changed the format, hand it the file again with "
-                "a note to keep the line structure.")
+                self, self.theme, t("tab_store.nothing_found_title"),
+                t("tab_store.nothing_found_lines_message", name=pfad.name),
+                t("tab_store.nothing_found_lines_hint"))
             return
 
         hinweise = []
@@ -841,18 +762,17 @@ class StoreTab(ttk.Frame):
             if len(ergebnis.unbekannt) > 8:
                 zeige += " ..."
             hinweise.append(
-                f"{len(ergebnis.unbekannt)} numbers don't exist for this "
-                f"dialect and were skipped: {zeige}")
+                t("tab_store.unknown_numbers_hint", count=len(ergebnis.unbekannt),
+                  list=zeige))
         if ergebnis.leer:
             hinweise.append(
-                f"{ergebnis.leer} lines had no text - these announcements "
-                f"stay as they were.")
+                t("tab_store.empty_lines_hint", count=ergebnis.leer))
 
         if not messagebox.askyesno(
-                "Apply Texts?",
+                t("tab_store.apply_texts_title"),
                 f"{pfad.name}\n\n{ergebnis.summary()}\n\n"
                 + ("\n".join(hinweise) + "\n\n" if hinweise else "")
-                + f"Apply these texts for {ziel.name}?",
+                + t("tab_store.apply_texts_question", name=ziel.name),
                 parent=self):
             return
 
@@ -869,18 +789,16 @@ class StoreTab(ttk.Frame):
         self._on_dialect_changed()
 
         self.log.append(
-            f"{ziel.name}: {ergebnis.geaendert} texts taken over from "
-            f"{pfad.name}.", "ok")
+            t("tab_store.texts_taken_over_log", name=ziel.name,
+              count=ergebnis.geaendert, filename=pfad.name), "ok")
 
         zusatz = ""
         if verworfen:
-            zusatz = (f"\n\n{verworfen} already-spoken recordings were "
-                      f"discarded so they're re-created with the new text. "
-                      f"All the rest stay and cost no quota.")
-        show_info(self, self.theme, "Texts Applied",
-                  f"{ergebnis.geaendert} of {ziel.count} announcements now "
-                  f"differ from the built-in text.",
-                  "The changes are kept, even after a restart."
+            zusatz = t("tab_store.discarded_recordings_note", count=verworfen)
+        show_info(self, self.theme, t("tab_store.texts_applied_title"),
+                  t("tab_store.texts_applied_message", count=ergebnis.geaendert,
+                    total=ziel.count),
+                  t("tab_store.changes_kept_note")
                   + zusatz)
 
     def _on_show_texts(self) -> None:
@@ -893,19 +811,18 @@ class StoreTab(ttk.Frame):
         aktuell = self._effective_dialect(pack)   # mit eigenen Änderungen
 
         window = tk.Toplevel(self)
-        window.title(f"{pack.name} - Edit {pack.count} Announcements")
+        window.title(t("tab_store.edit_texts_window_title", name=pack.name, count=pack.count))
         window.configure(bg=self.theme.color("bg"))
         window.geometry("900x700")
         window.transient(self.winfo_toplevel())
 
-        card = Card(window, self.theme, f"Customize {pack.name}",
-                    "Change the texts to however you want to hear them. "
-                    "What you leave empty stays on the German original voice.")
+        card = Card(window, self.theme, t("tab_store.customize_pack_title", name=pack.name),
+                    t("tab_store.customize_pack_subtitle"))
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         suche_zeile = ttk.Frame(card.content, style="Card.TFrame")
         suche_zeile.pack(fill="x", pady=(0, 8))
-        ttk.Label(suche_zeile, text="Search", style="Surface.TLabel").pack(side="left")
+        ttk.Label(suche_zeile, text=t("tab_store.search_label"), style="Surface.TLabel").pack(side="left")
         var_suche = tk.StringVar()
         eingabe = ttk.Entry(suche_zeile, textvariable=var_suche, width=30)
         eingabe.pack(side="left", padx=(8, 0))
@@ -921,7 +838,7 @@ class StoreTab(ttk.Frame):
         def aufbauen() -> None:
             # Fast 600 Zeilen mit je vier Bausteinen brauchen gut zwei
             # Sekunden. Ohne Rückmeldung wirkt das wie ein Absturz.
-            lbl_zahl.configure(text="Building the list ...")
+            lbl_zahl.configure(text=t("tab_store.building_list_status"))
             window.configure(cursor="watch")
             window.update_idletasks()
             try:
@@ -962,14 +879,14 @@ class StoreTab(ttk.Frame):
                            ).grid(row=0, column=2, sticky="e", padx=(6, 0))
 
                 geaendert = text_jetzt != basis.texts.get(sound_id, "")
-                hinweis = bedeutung + ("   ·  edited" if geaendert else "")
+                hinweis = bedeutung + (t("tab_store.edited_marker") if geaendert else "")
                 ttk.Label(zeile, text=hinweis, style="Muted.TLabel",
                           anchor="w").grid(row=1, column=1, sticky="ew",
                                            pady=(1, 4))
                 gezeigt += 1
 
             liste.scroll_to_top()
-            lbl_zahl.configure(text=f"{gezeigt} of {basis.count} announcements")
+            lbl_zahl.configure(text=t("tab_store.shown_count", shown=gezeigt, total=basis.count))
 
         eingabe.bind("<KeyRelease>", lambda _e: aufbauen())
         aufbauen()
@@ -1001,19 +918,17 @@ class StoreTab(ttk.Frame):
             self._on_dialect_changed()
             zusatz = ""
             if verworfen:
-                zusatz = (f"\n\n{verworfen} already-spoken recordings were "
-                          f"discarded so they're re-created with your text.")
-            show_info(self, self.theme, "Texts Saved",
-                      f"{len(geaendert)} of {basis.count} announcements now "
-                      f"differ from the built-in text.",
-                      "The changes are kept, even after a restart."
+                zusatz = t("tab_store.discarded_recordings_note_own_text", count=verworfen)
+            show_info(self, self.theme, t("tab_store.texts_saved_title"),
+                      t("tab_store.texts_saved_message", count=len(geaendert),
+                        total=basis.count),
+                      t("tab_store.changes_kept_note")
                       + zusatz)
 
         def zuruecksetzen() -> None:
             if not messagebox.askyesno(
-                    "Reset",
-                    f"Discard all custom changes to {pack.name} and restore "
-                    f"the built-in texts?", parent=window):
+                    t("tab_store.reset_confirm_title"),
+                    t("tab_store.reset_confirm_message", name=pack.name), parent=window):
                 return
             alt = self.state.config.dialect_overrides(pack.key)
             dialect.forget_cached_audio(basis, dialect.changed_ids(basis, alt))
@@ -1022,19 +937,19 @@ class StoreTab(ttk.Frame):
             window.destroy()
             self._on_dialect_changed()
 
-        ttk.Button(knoepfe, text="Save", style="Accent.TButton",
+        ttk.Button(knoepfe, text=t("tab_store.save_button"), style="Accent.TButton",
                    command=speichern).pack(side="left")
-        ttk.Button(knoepfe, text="Reset to Default",
+        ttk.Button(knoepfe, text=t("tab_store.reset_to_default_button"),
                    command=zuruecksetzen).pack(side="left", padx=(8, 0))
-        ttk.Button(knoepfe, text="Cancel",
+        ttk.Button(knoepfe, text=t("tab_store.text_editor_cancel_button"),
                    command=window.destroy).pack(side="right")
 
     def _speak_text(self, text: str) -> None:
         """Spricht einen einzelnen Satz mit der gerade gewählten Stimme."""
         text = (text or "").strip()
         if not text:
-            show_warning(self, self.theme, "No Text",
-                         "This line has nothing to read out.")
+            show_warning(self, self.theme, t("tab_store.no_text_title"),
+                         t("tab_store.no_text_message"))
             return
 
         engine = self.var_engine.get()
@@ -1047,16 +962,15 @@ class StoreTab(ttk.Frame):
             gewaehlt = self._selected_eleven_voice()
             if not api_key or gewaehlt is None:
                 show_warning(
-                    self, self.theme, "Connect First",
-                    "ElevenLabs needs a key and a voice.",
-                    "The sentence can't be spoken without both. With the "
-                    "Windows voice it works right away.")
+                    self, self.theme, t("tab_store.connect_first_title"),
+                    t("tab_store.connect_first_message"),
+                    t("tab_store.connect_first_hint"))
                 return
             voice_id = gewaehlt.voice_id
         else:
             if not tts.german_voices():
-                show_warning(self, self.theme, "No German Voice",
-                             "No German text-to-speech voice is installed.")
+                show_warning(self, self.theme, t("tab_store.no_german_voice_title"),
+                             t("tab_store.no_german_voice_message"))
                 return
             win_voice = self._selected_win_voice()
 
@@ -1073,12 +987,12 @@ class StoreTab(ttk.Frame):
             try:
                 open_with_default_player(pfad)
             except OSError as exc:
-                show_error(self, self.theme, "Playback Not Possible",
-                           f"The recording is here:\n{pfad}", str(exc))
+                show_error(self, self.theme, t("tab_store.playback_not_possible_title"),
+                           t("tab_store.recording_here_hint", path=pfad), str(exc))
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            show_error(self, self.theme, "Reading Aloud Failed", message, hint)
+            show_error(self, self.theme, t("tab_store.reading_aloud_failed_title"), message, hint)
 
         run_async(self, work, on_success=ok, on_error=fail)
 
@@ -1106,17 +1020,15 @@ class StoreTab(ttk.Frame):
             chosen = self._selected_eleven_voice()
             if not api_key or chosen is None:
                 messagebox.showinfo(
-                    "Connect First",
-                    "Enter your ElevenLabs key, click 'Connect and Load "
-                    "Voices', and choose a voice. Then you can preview it "
-                    "here.", parent=self)
+                    t("tab_store.connect_first_title"),
+                    t("tab_store.connect_first_preview_message"), parent=self)
                 return
             voice_id = chosen.voice_id
         else:
             if not tts.german_voices():
                 messagebox.showwarning(
-                    "No German Voice",
-                    "No German text-to-speech voice is installed.",
+                    t("tab_store.no_german_voice_title"),
+                    t("tab_store.no_german_voice_message"),
                     parent=self)
                 return
             win_voice = self._selected_win_voice()
@@ -1130,7 +1042,7 @@ class StoreTab(ttk.Frame):
         work = build_dir() / "_kostprobe" / f"{pack.key}_{engine}_{stempel}"
 
         self._busy(True)
-        self.badge.set("Speaking the sample ...", "muted")
+        self.badge.set(t("tab_store.speaking_sample_badge"), "muted")
         self.log.clear()
         for line in dialect.preview_texts(pack, 3):
             self.log.append(line, "info")
@@ -1148,23 +1060,24 @@ class StoreTab(ttk.Frame):
                 log=lambda m: self._log(m))
 
         def ok(files) -> None:
-            self.badge.set(f"Sample Ready - {len(files)} Sentences", "ok")
-            self.log.append("Playing ...", "ok")
+            self.badge.set(t("tab_store.sample_ready_badge", count=len(files)), "ok")
+            self.log.append(t("tab_store.playing_log"), "ok")
             for path in files:
                 try:
                     open_with_default_player(path)
                 except OSError as exc:
-                    self.log.append(f"Couldn't play {path.name}: {exc}",
+                    self.log.append(t("tab_store.couldnt_play_log", filename=path.name,
+                                      error=exc),
                                     "warn")
                     break
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            self.badge.set("Sample Failed", "error")
+            self.badge.set(t("tab_store.sample_failed_badge"), "error")
             self.log.append(message, "error")
             if hint:
                 self.log.append(hint, "warn")
-            show_error(self, self.theme, "Sample Failed",
+            show_error(self, self.theme, t("tab_store.sample_failed_title"),
                        message + (f"\n\n{hint}" if hint else ""))
 
         run_async(self, work_fn, on_success=ok, on_error=fail,
@@ -1178,14 +1091,14 @@ class StoreTab(ttk.Frame):
 
         ttk.Frame(frame, style="Separator.TFrame", height=1).pack(fill="x",
                                                                    pady=(0, 12))
-        ttk.Label(frame, text="Who Speaks?", style="Heading.TLabel").pack(anchor="w")
+        ttk.Label(frame, text=t("tab_store.who_speaks_heading"), style="Heading.TLabel").pack(anchor="w")
 
         self.var_engine = tk.StringVar(value=self.state.config["tts_engine"])
 
         # --- Windows ---------------------------------------------------
         win_row = ttk.Frame(frame, style="Card.TFrame")
         win_row.pack(fill="x", pady=(8, 0))
-        ttk.Radiobutton(win_row, text="Windows Text-to-Speech",
+        ttk.Radiobutton(win_row, text=t("tab_store.windows_tts_radio"),
                         variable=self.var_engine, value=dialect.ENGINE_WINDOWS,
                         command=self._on_engine_changed).pack(side="left")
         self.combo_winvoice = ttk.Combobox(win_row, state="readonly", width=30,
@@ -1194,16 +1107,13 @@ class StoreTab(ttk.Frame):
 
         self.lbl_voice = ttk.Label(
             frame,
-            text=("   Offline, free, ready to use right away - but standard "
-                  "German pronunciation. The dialect only lives in the "
-                  "wording. Stefan is the only male German voice; System.Speech doesn't "
-                  "know it, the app fetches it via the Windows Runtime."),
+            text=t("tab_store.windows_voice_info"),
             style="Muted.TLabel", wraplength=800, justify="left")
         self.lbl_voice.pack(anchor="w", pady=(2, 0))
 
         # --- Regler für die Windows-Stimme --------------------------------
         self.win_regler = ttk.Frame(frame, style="Card.TFrame")
-        ttk.Label(self.win_regler, text="   Rate",
+        ttk.Label(self.win_regler, text=t("tab_store.rate_label"),
                   style="Surface.TLabel").pack(side="left")
         self.var_rate = tk.IntVar(value=int(self.state.config["tts_rate"]))
         ttk.Scale(self.win_regler, from_=-6, to=6, orient="horizontal",
@@ -1213,7 +1123,7 @@ class StoreTab(ttk.Frame):
         self.lbl_rate = ttk.Label(self.win_regler, text="", style="Muted.TLabel")
         self.lbl_rate.pack(side="left")
 
-        ttk.Label(self.win_regler, text="   Pitch",
+        ttk.Label(self.win_regler, text=t("tab_store.pitch_label"),
                   style="Surface.TLabel").pack(side="left", padx=(16, 0))
         self.var_pitch = tk.IntVar(value=int(self.state.config["tts_pitch"]))
         ttk.Scale(self.win_regler, from_=-6, to=6, orient="horizontal",
@@ -1223,13 +1133,13 @@ class StoreTab(ttk.Frame):
         self.lbl_pitch = ttk.Label(self.win_regler, text="", style="Muted.TLabel")
         self.lbl_pitch.pack(side="left")
 
-        ttk.Button(self.win_regler, text="Reset", style="Small.TButton",
+        ttk.Button(self.win_regler, text=t("tab_store.reset_button"), style="Small.TButton",
                    command=self._on_win_reset).pack(side="left", padx=(16, 0))
 
         # --- ElevenLabs -------------------------------------------------
         el_row = ttk.Frame(frame, style="Card.TFrame")
         el_row.pack(fill="x", pady=(12, 0))
-        ttk.Radiobutton(el_row, text="ElevenLabs - genuine dialect pronunciation",
+        ttk.Radiobutton(el_row, text=t("tab_store.elevenlabs_radio"),
                         variable=self.var_engine, value=dialect.ENGINE_ELEVENLABS,
                         command=self._on_engine_changed).pack(side="left")
 
@@ -1237,35 +1147,25 @@ class StoreTab(ttk.Frame):
                       for p in dialect.DIALECTS), default=0)
         self.lbl_eleven_info = ttk.Label(
             frame,
-            text=("   No freely available dialect speech model exists - "
-                  "checked: Piper only has standard German, Thorsten-Voice "
-                  "only Hessian, and the only Bavarian speech corpus "
-                  "belongs to Bayerischer Rundfunk. ElevenLabs, on the "
-                  "other hand, explicitly offers dialects, with 10,000 "
-                  f"free characters a month. A dialect pack needs at "
-                  f"least {bedarf} characters; full coverage more like "
-                  f"double that. If the quota runs out, the app picks up "
-                  f"there next time.\n"
-                  "   You need your own (free) account. The app doesn't "
-                  "create one. Only the announcement texts are transmitted."),
+            text=t("tab_store.elevenlabs_info", needed=bedarf),
             style="Muted.TLabel", wraplength=800, justify="left")
         self.lbl_eleven_info.pack(anchor="w", pady=(2, 0))
 
         key_row = ttk.Frame(frame, style="Card.TFrame")
         key_row.pack(fill="x", pady=(8, 0))
-        ttk.Label(key_row, text="   Access Key", style="Surface.TLabel").pack(
+        ttk.Label(key_row, text=t("tab_store.access_key_label"), style="Surface.TLabel").pack(
             side="left")
         self.var_key = tk.StringVar(value=self.state.config.elevenlabs_key)
         self.entry_key = ttk.Entry(key_row, textvariable=self.var_key, width=34,
                                    show="•")
         self.entry_key.pack(side="left", padx=(8, 8))
-        self.btn_connect = ttk.Button(key_row, text="Connect and Load Voices",
+        self.btn_connect = ttk.Button(key_row, text=t("tab_store.connect_load_voices_button"),
                                       style="Small.TButton",
                                       command=self._on_connect_elevenlabs)
         self.btn_connect.pack(side="left")
-        ttk.Button(key_row, text="Get a Key", style="Link.TButton",
+        ttk.Button(key_row, text=t("tab_store.get_key_button"), style="Link.TButton",
                    command=self._open_api_key_page).pack(side="left", padx=(8, 0))
-        ttk.Button(key_row, text="Forget Key", style="Link.TButton",
+        ttk.Button(key_row, text=t("tab_store.forget_key_button"), style="Link.TButton",
                    command=self._on_forget_key).pack(side="left", padx=(8, 0))
 
         self.lbl_key_ort = ttk.Label(frame, text="", style="Muted.TLabel",
@@ -1274,13 +1174,13 @@ class StoreTab(ttk.Frame):
 
         voice_row = ttk.Frame(frame, style="Card.TFrame")
         voice_row.pack(fill="x", pady=(8, 0))
-        ttk.Label(voice_row, text="   Voice", style="Surface.TLabel").pack(side="left")
+        ttk.Label(voice_row, text=t("tab_store.voice_label"), style="Surface.TLabel").pack(side="left")
         self.combo_elvoice = ttk.Combobox(voice_row, state="readonly", width=44,
                                           values=[])
         self.combo_elvoice.pack(side="left", padx=(8, 8))
         self.combo_elvoice.bind(
             "<<ComboboxSelected>>", lambda _e: self._on_elvoice_changed())
-        self.btn_search = ttk.Button(voice_row, text="Search Voice Library",
+        self.btn_search = ttk.Button(voice_row, text=t("tab_store.search_voice_library_button"),
                                      style="Small.TButton",
                                      command=self._on_search_bavarian)
         self.btn_search.pack(side="left")
@@ -1289,38 +1189,38 @@ class StoreTab(ttk.Frame):
         # lässt sich jede Stimme direkt ansprechen.
         id_row = ttk.Frame(frame, style="Card.TFrame")
         id_row.pack(fill="x", pady=(8, 0))
-        ttk.Label(id_row, text="   Custom Voice ID",
+        ttk.Label(id_row, text=t("tab_store.custom_voice_id_label"),
                   style="Surface.TLabel").pack(side="left")
         self.var_voice_id = tk.StringVar(
             value=self.state.config["elevenlabs_voice_id"])
         self.entry_voice_id = ttk.Entry(id_row, textvariable=self.var_voice_id,
                                         width=28)
         self.entry_voice_id.pack(side="left", padx=(8, 8))
-        self.btn_add_id = ttk.Button(id_row, text="Apply",
+        self.btn_add_id = ttk.Button(id_row, text=t("tab_store.add_id_apply_button"),
                                      style="Small.TButton",
                                      command=self._on_add_voice_id)
         self.btn_add_id.pack(side="left")
         ttk.Label(id_row,
-                  text="(in ElevenLabs: three dots on the voice > Copy Voice ID)",
+                  text=t("tab_store.copy_voice_id_hint"),
                   style="Muted.TLabel").pack(side="left", padx=(10, 0))
 
         # --- Klang -------------------------------------------------------
         klang = ttk.Frame(frame, style="Card.TFrame")
         klang.pack(fill="x", pady=(8, 0))
-        ttk.Label(klang, text="   Model", style="Surface.TLabel").pack(side="left")
+        ttk.Label(klang, text=t("tab_store.model_label"), style="Surface.TLabel").pack(side="left")
         self.combo_model = ttk.Combobox(klang, state="readonly", width=34,
                                         values=[])
         self.combo_model.pack(side="left", padx=(8, 16))
-        self.combo_model.set("Default (eleven_multilingual_v2)")
+        self.combo_model.set(t("tab_store.default_model_label", model="eleven_multilingual_v2"))
 
         self.var_own_settings = tk.BooleanVar(
             value=bool(self.state.config["elevenlabs_use_voice_settings"]))
-        ttk.Checkbutton(klang, text="Use the voice's own sound",
+        ttk.Checkbutton(klang, text=t("tab_store.use_voice_settings_checkbox"),
                         variable=self.var_own_settings,
                         command=self._on_settings_mode).pack(side="left")
 
         self.regler = ttk.Frame(frame, style="Card.TFrame")
-        ttk.Label(self.regler, text="   Liveliness",
+        ttk.Label(self.regler, text=t("tab_store.liveliness_label"),
                   style="Surface.TLabel").pack(side="left")
         self.var_stability = tk.DoubleVar(
             value=float(self.state.config["elevenlabs_stability"]))
@@ -1330,7 +1230,7 @@ class StoreTab(ttk.Frame):
         self.lbl_stability = ttk.Label(self.regler, text="", style="Muted.TLabel")
         self.lbl_stability.pack(side="left")
 
-        ttk.Label(self.regler, text="   Expression",
+        ttk.Label(self.regler, text=t("tab_store.expression_label"),
                   style="Surface.TLabel").pack(side="left", padx=(16, 0))
         self.var_style = tk.DoubleVar(
             value=float(self.state.config["elevenlabs_style"]))
@@ -1342,11 +1242,7 @@ class StoreTab(ttk.Frame):
 
         ttk.Label(
             frame,
-            text=("   'Use the voice's own sound' uses exactly the "
-                  "settings you've set on the voice in ElevenLabs - so it "
-                  "sounds like the preview there. Without the checkbox you "
-                  "control it yourself: lower stability means more life, "
-                  "higher stability means more uniform."),
+            text=t("tab_store.voice_settings_info"),
             style="Muted.TLabel", wraplength=800, justify="left").pack(
             anchor="w", pady=(4, 0))
 
@@ -1378,10 +1274,14 @@ class StoreTab(ttk.Frame):
         """Beschriftet die Regler der Windows-Stimme."""
         tempo = self.var_rate.get()
         hoehe = self.var_pitch.get()
-        self.lbl_rate.configure(
-            text=f"{tempo * 10:+d} %  ({'normal' if tempo == 0 else 'slower' if tempo < 0 else 'faster'})")
-        self.lbl_pitch.configure(
-            text=f"{hoehe * 10:+d} %  ({'normal' if hoehe == 0 else 'lower' if hoehe < 0 else 'higher'})")
+        rate_word = ("normal" if tempo == 0 else
+                     t("tab_store.rate_slower") if tempo < 0 else
+                     t("tab_store.rate_faster"))
+        pitch_word = ("normal" if hoehe == 0 else
+                      t("tab_store.pitch_lower") if hoehe < 0 else
+                      t("tab_store.pitch_higher"))
+        self.lbl_rate.configure(text=f"{tempo * 10:+d} %  ({rate_word})")
+        self.lbl_pitch.configure(text=f"{hoehe * 10:+d} %  ({pitch_word})")
         self.state.config["tts_rate"] = int(tempo)
         self.state.config["tts_pitch"] = int(hoehe)
 
@@ -1404,9 +1304,10 @@ class StoreTab(ttk.Frame):
 
     def _on_regler(self) -> None:
         stab = self.var_stability.get()
-        art = ("very lively" if stab < 0.3 else
-               "lively" if stab < 0.5 else
-               "balanced" if stab < 0.7 else "uniform")
+        art = (t("tab_store.liveliness_very_lively") if stab < 0.3 else
+               t("tab_store.liveliness_lively") if stab < 0.5 else
+               t("tab_store.liveliness_balanced") if stab < 0.7 else
+               t("tab_store.liveliness_uniform"))
         self.lbl_stability.configure(text=f"{stab:.2f}  ({art})")
         self.lbl_style.configure(text=f"{self.var_style.get():.2f}")
 
@@ -1460,9 +1361,7 @@ class StoreTab(ttk.Frame):
         else:
             self.combo_winvoice.configure(values=[])
             self.lbl_voice.configure(
-                text=("   No German text-to-speech voice is installed. "
-                      "Windows Settings > Time and Language > Language > "
-                      "German > Options > Add speech, then restart the app."),
+                text=t("tab_store.no_german_voice_full_message"),
                 style="Warning.TLabel")
 
         # Dasselbe für die ElevenLabs-Stimme: Solange keine Verbindung
@@ -1486,45 +1385,34 @@ class StoreTab(ttk.Frame):
     # ------------------------------------------------------------------
     def _refresh_key_location(self) -> None:
         """Zeigt, wo der Zugangsschlüssel abgelegt ist."""
-        ort = self.state.config.elevenlabs_key_location
-        if "Credential Manager" in ort:
-            text = ("   Key is stored in the Windows Credential Manager - "
-                    "viewable under Control Panel > Credential Manager > "
-                    "Windows Credentials > “DreameSprachpaket:ElevenLabs”. "
-                    "config.json doesn't contain it.")
+        code = self.state.config.elevenlabs_key_location_code
+        if code == Config.LOCATION_CREDENTIAL_MANAGER:
+            text = t("tab_store.key_location_credential_manager")
             stil = "Success.TLabel"
-        elif "config.json" in ort:
-            text = ("   Key is stored encrypted in config.json "
-                    "(the Windows Credential Manager wasn't reachable).")
+        elif code == Config.LOCATION_CONFIG_ENCRYPTED:
+            text = t("tab_store.key_location_config_json")
             stil = "Muted.TLabel"
         else:
-            text = "   Key isn't saved."
+            text = t("tab_store.key_location_none")
             stil = "Muted.TLabel"
         self.lbl_key_ort.configure(text=text, style=stil)
 
     def _on_forget_key(self) -> None:
         if not messagebox.askyesno(
-                "Forget Key",
-                "The saved ElevenLabs key will be removed - from the "
-                "Windows Credential Manager and from config.json.\n\n"
-                "Continue?", parent=self):
+                t("tab_store.forget_key_confirm_title"),
+                t("tab_store.forget_key_confirm_message"), parent=self):
             return
         self.state.config.forget_elevenlabs_key()
         self.state.save()
         self.var_key.set("")
         self._refresh_key_location()
-        self.lbl_eleven.configure(text="   Key removed.",
+        self.lbl_eleven.configure(text=t("tab_store.key_removed_status"),
                                   style="Muted.TLabel")
 
     def _open_api_key_page(self) -> None:
         messagebox.showinfo(
-            "Get an Access Key",
-            "The page where ElevenLabs generates the key will open.\n\n"
-            "Click 'Create API Key' there. The key is only shown in full "
-            "once - copy it immediately and paste it here.\n\n"
-            "If the page doesn't open directly: bottom left on your "
-            "profile, then Settings > API Keys.\n\n"
-            "This is included in the free plan (10,000 characters a month).",
+            t("tab_store.get_access_key_title"),
+            t("tab_store.get_access_key_message"),
             parent=self)
         webbrowser.open(elevenlabs.API_KEY_URL)
 
@@ -1532,24 +1420,19 @@ class StoreTab(ttk.Frame):
         key = self.var_key.get().strip()
         if not key:
             show_warning(
-                self, self.theme, "Access Key Missing",
-                "Create a free ElevenLabs account and paste the access "
-                "key in here.",
-                "Found under elevenlabs.io/app/settings/api-keys > "
-                "Create API Key. The app doesn't create an account for you.")
+                self, self.theme, t("tab_store.access_key_missing_title"),
+                t("tab_store.access_key_missing_connect_message"),
+                t("tab_store.access_key_missing_connect_hint"))
             return
 
         if not elevenlabs.looks_like_key(key):
             show_warning(
-                self, self.theme, "Key Looks Unusual",
-                "The entered access key doesn't start with 'sk_'.",
-                f"What's entered is {len(key)} characters starting with "
-                f"'{key[:6]}…'. If this is a voice ID: that belongs in "
-                f"the field below.\n\nThe connection will be attempted "
-                f"anyway - maybe ElevenLabs changed the format.")
+                self, self.theme, t("tab_store.key_unusual_title"),
+                t("tab_store.key_unusual_connect_message"),
+                t("tab_store.key_unusual_connect_hint", count=len(key), prefix=key[:6]))
 
         self.btn_connect.configure(state="disabled")
-        self.lbl_eleven.configure(text="Connecting ...", style="Muted.TLabel")
+        self.lbl_eleven.configure(text=t("tab_store.connecting_status"), style="Muted.TLabel")
 
         def work(_task):
             quota = elevenlabs.check_key(key)
@@ -1573,24 +1456,23 @@ class StoreTab(ttk.Frame):
             gewaehlt = self._effective_dialect()
             needed = (elevenlabs.estimate_characters(gewaehlt.texts)
                       if gewaehlt else 0)
-            wofuer = f"the pack '{gewaehlt.name}'" if gewaehlt else "a pack"
+            wofuer = (t("tab_store.quota_for_pack", name=gewaehlt.name) if gewaehlt
+                      else t("tab_store.quota_for_generic_pack"))
             enough = quota.left >= needed
             self.lbl_eleven.configure(
-                text=(f"   Connected. Quota: {quota.describe()}. "
-                      f"{wofuer} needs about {needed} characters - " +
-                      ("that's enough." if enough else "that's not enough right now.")),
+                text=t("tab_store.quota_connected_status", quota=quota.describe(),
+                       target=wofuer, needed=needed,
+                       enough=(t("tab_store.quota_enough") if enough
+                               else t("tab_store.quota_not_enough"))),
                 style="Success.TLabel" if enough else "Warning.TLabel")
 
             eigene = [v for v in voices if v.is_own_creation]
             bavarian = [v for v in voices if v.is_bavarian]
-            zusatz = f"\n   {len(voices)} voices in the account"
+            zusatz = t("tab_store.voices_in_account", count=len(voices))
             if eigene:
-                zusatz += f", {len(eigene)} of them self-created (listed above)"
+                zusatz += t("tab_store.voices_self_created", count=len(eigene))
             elif not bavarian:
-                zusatz += (". None of them are labeled Bavarian - library "
-                           "voices tend to be poor at it. Better: build your "
-                           "own with Voice Design in ElevenLabs and enter "
-                           "its ID below.")
+                zusatz += t("tab_store.no_bavarian_in_library")
             self.lbl_eleven.configure(text=self.lbl_eleven.cget("text") + zusatz)
 
         def fail(exc):
@@ -1627,7 +1509,7 @@ class StoreTab(ttk.Frame):
                         for m in models]
         if not self._models:
             self._models = [{"id": elevenlabs.MODEL,
-                             "label": f"Default ({elevenlabs.MODEL})"}]
+                             "label": t("tab_store.default_model_label", model=elevenlabs.MODEL)}]
 
         self.combo_model.configure(values=[m["label"] for m in self._models])
         gespeichert = self.state.config["elevenlabs_model"] or elevenlabs.MODEL
@@ -1650,40 +1532,33 @@ class StoreTab(ttk.Frame):
         voice_id = self.var_voice_id.get().strip()
 
         if not key:
-            show_warning(self, self.theme, "Access Key Missing",
-                         "First enter your ElevenLabs key.")
+            show_warning(self, self.theme, t("tab_store.access_key_missing_title"),
+                         t("tab_store.access_key_missing_add_id_message"))
             return
         if not voice_id:
             show_warning(
-                self, self.theme, "No ID Entered",
-                "Copy your voice's ID from ElevenLabs in here.",
-                "You'll find it in the voice overview: click the three "
-                "dots on the voice and choose 'Copy Voice ID'. It's about "
-                "20 characters long.")
+                self, self.theme, t("tab_store.no_id_entered_title"),
+                t("tab_store.no_id_entered_message"),
+                t("tab_store.no_id_entered_hint"))
             return
 
         # Vertauschte Felder sind der häufigste Stolperstein - lieber vorher
         # erkennen als eine unverständliche Serverantwort zeigen.
         if voice_id.startswith("sk_"):
             show_warning(
-                self, self.theme, "Fields Swapped?",
-                "The voice ID field has an access key in it.",
-                "Keys start with 'sk_', voice IDs don't. The key belongs "
-                "in the field above, the voice ID here.")
+                self, self.theme, t("tab_store.fields_swapped_title"),
+                t("tab_store.fields_swapped_message"),
+                t("tab_store.fields_swapped_hint"))
             return
         if not elevenlabs.looks_like_key(key):
             show_warning(
-                self, self.theme, "Key Looks Unusual",
-                f"The entered access key doesn't start with 'sk_'.",
-                f"What's entered is {len(key)} characters starting with "
-                f"'{key[:6]}…'. An ElevenLabs key looks like this: "
-                f"sk_ followed by about 45 more characters.\n\n"
-                f"Get a new key: elevenlabs.io/app/settings/api-keys "
-                f"> Create API Key. It's only shown in full once.")
+                self, self.theme, t("tab_store.key_unusual_title"),
+                t("tab_store.key_unusual_addid_message"),
+                t("tab_store.key_unusual_addid_hint", count=len(key), prefix=key[:6]))
             return
 
         self.btn_add_id.configure(state="disabled")
-        self.lbl_eleven.configure(text="   Fetching the voice ...", style="Muted.TLabel")
+        self.lbl_eleven.configure(text=t("tab_store.fetching_voice_status"), style="Muted.TLabel")
 
         def work(_task):
             voice = elevenlabs.get_voice(key, voice_id)
@@ -1702,15 +1577,14 @@ class StoreTab(ttk.Frame):
             self.state.save()
 
             self.lbl_eleven.configure(
-                text=f"   '{voice.name}' is selected. Preview it with "
-                     f"'Listen to Sample'.",
+                text=t("tab_store.voice_selected_status", name=voice.name),
                 style="Success.TLabel")
 
         def fail(exc):
             message, hint = error_text(exc)
             self.lbl_eleven.configure(text=f"   {message} {hint}".strip(),
                                       style="Danger.TLabel")
-            show_error(self, self.theme, "Voice Not Found",
+            show_error(self, self.theme, t("tab_store.voice_not_found_title"),
                        message + (f"\n\n{hint}" if hint else ""))
 
         run_async(self, work, on_success=ok, on_error=fail,
@@ -1720,13 +1594,13 @@ class StoreTab(ttk.Frame):
     def _on_search_bavarian(self) -> None:
         key = self.var_key.get().strip() or self.state.config.elevenlabs_key
         if not key:
-            messagebox.showinfo("Access Key Missing",
-                                "First enter your ElevenLabs key.",
+            messagebox.showinfo(t("tab_store.access_key_missing_title"),
+                                t("tab_store.access_key_missing_search_message"),
                                 parent=self)
             return
 
         self.btn_search.configure(state="disabled")
-        self.lbl_eleven.configure(text="   Searching the voice library ...",
+        self.lbl_eleven.configure(text=t("tab_store.searching_library_status"),
                                   style="Muted.TLabel")
 
         def work(_task):
@@ -1735,9 +1609,7 @@ class StoreTab(ttk.Frame):
         def ok(found):
             if not found:
                 self.lbl_eleven.configure(
-                    text=("   No voice labeled Bavarian was found in the "
-                          "library right now. Best to build your own in "
-                          "ElevenLabs (Voice Design) and enter its ID below."),
+                    text=t("tab_store.no_bavarian_found_status"),
                     style="Warning.TLabel")
                 webbrowser.open(elevenlabs.LIBRARY_URL)
                 return
@@ -1754,15 +1626,14 @@ class StoreTab(ttk.Frame):
     def _show_voice_chooser(self, key: str, found: list) -> None:
         """Lässt den Nutzer auswählen, welche Stimme übernommen wird."""
         window = tk.Toplevel(self)
-        window.title("Choose a Voice")
+        window.title(t("tab_store.choose_voice_window_title"))
         window.configure(bg=self.theme.color("bg"))
         window.geometry("760x560")
         window.transient(self)
         window.grab_set()
 
-        card = Card(window, self.theme, f"{len(found)} Voices Found",
-                    "Choose the voice to add to your ElevenLabs account. "
-                    "You can preview it afterward with 'Listen to Sample'.")
+        card = Card(window, self.theme, t("tab_store.voices_found_title", count=len(found)),
+                    t("tab_store.voices_found_subtitle"))
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         liste = ScrollableList(card.content, self.theme)
@@ -1776,7 +1647,7 @@ class StoreTab(ttk.Frame):
                             value=voice.voice_id).pack(anchor="w")
             if voice.preview_url:
                 ttk.Button(
-                    block, text="Listen on ElevenLabs", style="Link.TButton",
+                    block, text=t("tab_store.listen_on_elevenlabs_button"), style="Link.TButton",
                     command=lambda u=voice.preview_url: webbrowser.open(u)
                 ).pack(anchor="w", padx=(24, 0))
             ttk.Frame(block, style="Separator.TFrame", height=1).pack(
@@ -1791,14 +1662,12 @@ class StoreTab(ttk.Frame):
             if voice is not None:
                 self._add_voice(key, voice)
 
-        ttk.Button(buttons, text="Add Selected Voice",
+        ttk.Button(buttons, text=t("tab_store.add_selected_voice_button"),
                    style="Accent.TButton", command=uebernehmen).pack(side="left")
-        ttk.Button(buttons, text="Cancel",
+        ttk.Button(buttons, text=t("tab_store.voice_chooser_cancel_button"),
                    command=window.destroy).pack(side="left", padx=(8, 0))
         ttk.Label(buttons,
-                  text=("None of these fit? Build your own in ElevenLabs "
-                        "with Voice Design and enter its ID in the field "
-                        "below."),
+                  text=t("tab_store.none_fit_hint"),
                   style="MutedBg.TLabel", wraplength=380,
                   justify="left").pack(side="left", padx=(16, 0))
 
@@ -1810,7 +1679,7 @@ class StoreTab(ttk.Frame):
         def ok(voices):
             self._set_eleven_voices(voices)
             self.lbl_eleven.configure(
-                text=f"   '{voice.name}' is now in your account and selected.",
+                text=t("tab_store.voice_added_status", name=voice.name),
                 style="Success.TLabel")
 
         def fail(exc):
@@ -1825,9 +1694,8 @@ class StoreTab(ttk.Frame):
         """Spricht ein Dialektpaket und baut es auf das Originalpaket."""
         if not self.state.has_base_pack:
             messagebox.showwarning(
-                "Original Pack Missing",
-                "First download your robot's official voice pack under "
-                "'Individual Announcements' - it's the foundation of every pack.",
+                t("tab_store.original_pack_missing_title"),
+                t("tab_store.original_pack_missing_generate_message"),
                 parent=self)
             return
 
@@ -1841,43 +1709,36 @@ class StoreTab(ttk.Frame):
             chosen = self._selected_eleven_voice()
             if not api_key:
                 messagebox.showwarning(
-                    "Access Key Missing",
-                    "Enter your ElevenLabs key and click 'Connect and Load "
-                    "Voices'.", parent=self)
+                    t("tab_store.access_key_missing_title"),
+                    t("tab_store.access_key_missing_generate_message"), parent=self)
                 return
             if chosen is None:
                 messagebox.showwarning(
-                    "No Voice Chosen",
-                    "Click 'Connect and Load Voices' and then choose a "
-                    "voice - preferably a Bavarian one.", parent=self)
+                    t("tab_store.no_voice_chosen_title"),
+                    t("tab_store.no_voice_chosen_message"), parent=self)
                 return
             voice_id = chosen.voice_id
             # Bei selbst erzeugten Stimmen sagen die Merkmale nichts über den
             # Dialekt aus - da weiß der Nutzer besser Bescheid als die Labels.
             if (not chosen.is_bavarian and not chosen.is_own_creation
                     and not messagebox.askyesno(
-                        "No Bavarian Voice",
-                        f"'{chosen.name}' isn't labeled Bavarian. The result "
-                        f"won't sound like the dialect then.\n\nContinue "
-                        f"anyway?", parent=self)):
+                        t("tab_store.no_bavarian_voice_title"),
+                        t("tab_store.no_bavarian_voice_message", name=chosen.name),
+                        parent=self)):
                 return
         else:
             if not tts.german_voices():
                 messagebox.showwarning(
-                    "No German Voice",
-                    "No German text-to-speech voice is installed.\n\n"
-                    "Windows Settings > Time and Language > Language > "
-                    "German > Options > Add speech. Then restart the app.",
+                    t("tab_store.no_german_voice_title"),
+                    t("tab_store.no_german_voice_generate_message"),
                     parent=self)
                 return
             win_voice = self._selected_win_voice()
 
         if not self.state.ffmpeg:
             messagebox.showwarning(
-                "ffmpeg Missing",
-                "ffmpeg is needed to convert the spoken announcements.\n\n"
-                "Briefly switch to 'Individual Announcements' - the app "
-                "sets it up there.",
+                t("tab_store.ffmpeg_missing_title"),
+                t("tab_store.ffmpeg_missing_message"),
                 parent=self)
             return
 
@@ -1903,44 +1764,34 @@ class StoreTab(ttk.Frame):
             except Exception:
                 pass
 
-            question = (f"Already spoken: {schon_da} of {pack.count} "
-                        f"announcements.\nStill open: {len(offen)} "
-                        f"({chars} characters).\n\n")
+            question = t("tab_store.question_already_spoken", done=schon_da,
+                         total=pack.count, remaining=len(offen), chars=chars)
 
             if rest is not None:
-                question += f"Your quota: {rest} characters free.\n"
+                question += t("tab_store.question_quota_free", rest=rest)
                 if rest < chars:
                     passt = 0
                     verbraucht = 0
-                    for _i, t in sorted(offen.items()):
-                        if verbraucht + len(t) > rest:
+                    for _i, t_text in sorted(offen.items()):
+                        if verbraucht + len(t_text) > rest:
                             break
-                        verbraucht += len(t)
+                        verbraucht += len(t_text)
                         passt += 1
-                    question += (
-                        f"\nTHAT'S NOT ENOUGH FOR EVERYTHING: about {passt} of "
-                        f"the {len(offen)} remaining announcements are "
-                        f"doable.\n\n"
-                        f"The app won't abort because of this. It speaks as "
-                        f"much as possible, builds the pack with that, and "
-                        f"the rest stays in standard German. Next month just "
-                        f"click 'Generate Pack' again - it picks up exactly "
-                        f"here and only speaks what's missing.\n")
+                    question += t("tab_store.question_not_enough", doable=passt,
+                                  remaining=len(offen))
                 else:
-                    question += "\nThat's enough for everything remaining.\n"
+                    question += t("tab_store.question_enough_for_all")
 
-            question += ("\nOnly the announcement texts are transmitted, no "
-                         "personal data.\n\nContinue?")
+            question += t("tab_store.question_privacy_continue")
         else:
-            question = (
-                f"The app will now speak {len(offen)} announcements for "
-                f"{pack.name} and build a voice pack from them."
-                + (f"\n\n{schon_da} are already spoken and will be "
-                   f"skipped." if schon_da else "")
-                + f"\n\nThis takes a few minutes and happens entirely on "
-                  f"this PC - nothing gets uploaded.\n\nContinue?")
+            question = t("tab_store.question_windows_intro", count=len(offen),
+                         name=pack.name)
+            if schon_da:
+                question += t("tab_store.question_already_spoken_skipped", count=schon_da)
+            question += t("tab_store.question_windows_local_continue")
 
-        if not messagebox.askyesno(f"Generate {pack.name}?", question, parent=self):
+        if not messagebox.askyesno(t("tab_store.generate_confirm_title", name=pack.name),
+                                   question, parent=self):
             return
 
         # ---- Name des Pakets -------------------------------------------
@@ -1955,11 +1806,8 @@ class StoreTab(ttk.Frame):
         vorschlag = library.suggest_name(pack.name, engine, stimmen_label)
 
         gewuenscht = simpledialog.askstring(
-            "Name for This Pack",
-            "What name should the pack be saved under?\n\n"
-            "The suggestion includes dialect and voice, so several "
-            "versions can exist side by side. An existing pack is never "
-            "overwritten - the app appends a number if needed.",
+            t("tab_store.name_for_pack_generate_title"),
+            t("tab_store.name_for_pack_generate_prompt"),
             initialvalue=vorschlag, parent=self)
         if gewuenscht is None:
             return
@@ -1988,10 +1836,10 @@ class StoreTab(ttk.Frame):
         ffmpeg = self.state.ffmpeg
 
         self.log.clear()
-        self.log.append(f"Generating dialect pack: {pack.name}", "step")
+        self.log.append(t("tab_store.generating_dialect_log", name=pack.name), "step")
         # Das Sprechen hört auf den Abbruch - hier darf der Knopf mitspielen.
         self._busy(True, abbrechbar=True)
-        self.badge.set("Speaking the announcements ...", "muted")
+        self.badge.set(t("tab_store.speaking_announcements_badge"), "muted")
 
         modell, klang, eigene = self._eleven_klang()
 
@@ -2027,32 +1875,26 @@ class StoreTab(ttk.Frame):
             library.write_info(
                 build.path, dialect=pack.name, engine=(
                     "ElevenLabs" if engine == dialect.ENGINE_ELEVENLABS
-                    else "Windows Text-to-Speech"),
+                    else t("tab_store.engine_windows_tts")),
                 voice=stimmen_label, lang_id=pack.lang_id,
                 replaced=len(build.replaced), total=pack.count)
 
             vollstaendig = len(build.replaced) >= pack.count
-            self.badge.set(f"Done - {len(build.replaced)} announcements for "
-                           f"{pack.name}", "ok" if vollstaendig else "warn")
+            self.badge.set(t("tab_store.generate_done_badge", count=len(build.replaced),
+                             name=pack.name), "ok" if vollstaendig else "warn")
             self.log.append(build.summary(), "ok")
             for warnung in build.warnings:
                 self.log.append(warnung, "warn")
 
             hinweis = ""
             if not vollstaendig:
-                hinweis = (f"\n\n{pack.count - len(build.replaced)} announcements are "
-                           f"still missing - the ElevenLabs quota was "
-                           f"probably used up. What's spoken is saved: just "
-                           f"start generating again next month, and the app "
-                           f"picks up exactly there.")
+                hinweis = t("tab_store.generate_missing_hint",
+                            count=pack.count - len(build.replaced))
 
             messagebox.showinfo(
-                f"{pack.name} Is Ready",
-                f"{len(build.replaced)} announcements now speak {pack.name}, "
-                f"the rest stays in standard German.{hinweis}\n\n"
-                f"Saved as:\n{build.path.name}\n\n"
-                f"Earlier packs are kept. Switch to 'Ready-Made Voices' - "
-                f"there you choose which one gets installed.",
+                t("tab_store.generate_ready_title", name=pack.name),
+                t("tab_store.generate_ready_message", count=len(build.replaced),
+                  name=pack.name, hint=hinweis, filename=build.path.name),
                 parent=self)
 
         def fail(exc: Exception) -> None:
@@ -2060,26 +1902,23 @@ class StoreTab(ttk.Frame):
             # auch nicht so anfühlen.
             if getattr(self, "_task", None) is not None and self._task.cancelled:
                 gesprochen = dialect.spoken_count(work)
-                self.badge.set("Cancelled", "warn")
-                self.log.append("Operation cancelled.", "warn")
+                self.badge.set(t("tab_store.cancelled_badge"), "warn")
+                self.log.append(t("tab_store.operation_cancelled_log"), "warn")
                 show_info(
-                    self, self.theme, "Cancelled",
-                    f"No pack was built.",
-                    f"{gesprochen} of {pack.count} announcements are spoken "
-                    f"and stay saved."
-                    + (" The ElevenLabs quota spent on those is gone, but "
-                       "next time the app picks up exactly here and only "
-                       "requests what's missing."
+                    self, self.theme, t("tab_store.cancelled_title"),
+                    t("tab_store.no_pack_built_message"),
+                    t("tab_store.cancelled_spoken_info", count=gesprochen, total=pack.count)
+                    + (t("tab_store.cancelled_quota_note_eleven")
                        if engine == dialect.ENGINE_ELEVENLABS else
-                       " Next time the app picks up exactly here."))
+                       t("tab_store.cancelled_quota_note_windows")))
                 return
 
             message, hint = error_text(exc)
-            self.badge.set("Failed", "error")
+            self.badge.set(t("tab_store.generate_failed_badge"), "error")
             self.log.append(message, "error")
             if hint:
                 self.log.append(hint, "warn")
-            show_error(self, self.theme, "Error",
+            show_error(self, self.theme, t("tab_store.error_title"),
                        message + (f"\n\n{hint}" if hint else ""))
 
         self._task = run_async(self, work_fn, on_success=ok, on_error=fail,
@@ -2100,9 +1939,8 @@ class StoreTab(ttk.Frame):
             return
         task.cancel()
         self.btn_abbrechen.configure(state="disabled")
-        self.badge.set("Cancelling ...", "warn")
-        self.log.append("Cancellation requested - the current announcement "
-                        "will still finish being spoken.", "warn")
+        self.badge.set(t("tab_store.cancelling_badge"), "warn")
+        self.log.append(t("tab_store.cancel_requested_log"), "warn")
 
     def _busy(self, active: bool, abbrechbar: bool = False) -> None:
         """Sperrt die Bedienung während der Arbeit.
@@ -2134,27 +1972,23 @@ class StoreTab(ttk.Frame):
     def use_pack(self, pack: CommunityPack) -> None:
         if not self.state.has_base_pack:
             messagebox.showwarning(
-                "Original Pack Missing",
-                "First download your robot's official voice pack under "
-                "'Individual Announcements'. Only then can a third-party "
-                "pack be safely adapted to your model.",
+                t("tab_store.original_pack_missing_title"),
+                t("tab_store.original_pack_missing_use_message"),
                 parent=self)
             return
 
         if not messagebox.askyesno(
-                f"Use '{pack.name}'?",
-                f"The pack will be downloaded from this source:\n\n{pack.url}\n\n"
-                f"It'll then be laid over your model's official pack. "
-                f"After that you can install it under 'Build and "
-                f"Install'.\n\nContinue?",
+                t("tab_store.use_pack_confirm_title", name=pack.name),
+                t("tab_store.use_pack_confirm_message", url=pack.url),
                 parent=self):
             return
 
         base = self.state.base_pack_path
         self.log.clear()
-        self.log.append(f"Downloading '{pack.name}' from {pack.project_url}", "step")
+        self.log.append(t("tab_store.downloading_log", name=pack.name,
+                          url=pack.project_url), "step")
         self._busy(True)
-        self.badge.set("Downloading ...", "muted")
+        self.badge.set(t("tab_store.downloading_badge"), "muted")
 
         def report(done: int, total: int) -> None:
             percent = (done / total * 100) if total else 0
@@ -2162,8 +1996,8 @@ class StoreTab(ttk.Frame):
 
         def work(_task):
             archive = community.download(pack, progress=report)
-            self._log(f"Downloaded: {archive.name}", "ok")
-            self._log("Adapting the pack to your model ...", "step")
+            self._log(t("tab_store.downloaded_log", filename=archive.name), "ok")
+            self._log(t("tab_store.adapting_pack_log"), "step")
             return packer.overlay_pack(
                 base_pack=base,
                 overlay_pack_path=archive,
@@ -2183,7 +2017,7 @@ class StoreTab(ttk.Frame):
 
             covered = len(build.replaced)
             total = build.total_members or covered
-            self.badge.set(f"Ready - {covered} of {total} announcements replaced", "ok")
+            self.badge.set(t("tab_store.use_pack_ready_badge", covered=covered, total=total), "ok")
             self.log.append(build.summary(), "ok")
             for warning in build.warnings:
                 self.log.append(warning, "warn")
@@ -2192,21 +2026,18 @@ class StoreTab(ttk.Frame):
             self.state.save()
 
             messagebox.showinfo(
-                "Pack Prepared",
-                f"'{pack.name}' has been adapted to your model.\n\n"
-                f"{covered} of {total} announcements get the new voice, the "
-                f"rest stays in German.\n\nNow switch to "
-                f"'Build and Install' and click "
-                f"'Install Voice Pack on Robot'.",
+                t("tab_store.pack_prepared_title"),
+                t("tab_store.pack_prepared_message", name=pack.name, covered=covered,
+                  total=total),
                 parent=self)
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            self.badge.set("Failed", "error")
+            self.badge.set(t("tab_store.use_pack_failed_badge"), "error")
             self.log.append(message, "error")
             if hint:
                 self.log.append(hint, "warn")
-            show_error(self, self.theme, "Error",
+            show_error(self, self.theme, t("tab_store.use_pack_error_title"),
                        message + (f"\n\n{hint}" if hint else ""))
 
         run_async(self, work, on_success=ok, on_error=fail,

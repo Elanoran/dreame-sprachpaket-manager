@@ -1,4 +1,4 @@
-﻿"""Das Hauptfenster: Seitenleiste links, jeweils eine Seite rechts."""
+"""Das Hauptfenster: Seitenleiste links, jeweils eine Seite rechts."""
 
 from __future__ import annotations
 
@@ -14,6 +14,7 @@ from tkinter import messagebox, ttk
 from .. import (APP_NAME, AUTOR, HAFTUNG, LIZENZ, PROJEKT_URL, SPENDEN_URL,
                 __version__, textfiles)
 from .. import aktualisierung, anleitungen, i18n
+from ..i18n import t
 from ..paths import data_dir, icon_file, log_file
 from .page_start import StartPage
 from .page_voice import VoicePage
@@ -217,8 +218,7 @@ class MainWindow(tk.Tk):
         left.pack(side="left")
         ttk.Label(left, text=APP_NAME, style="Title.TLabel").pack(anchor="w")
         ttk.Label(left,
-                  text=("Custom voices for Dreame vacuum robots - built and "
-                        "tested on the X50 Ultra Complete"),
+                  text=t("app.subtitle"),
                   style="MutedBg.TLabel").pack(anchor="w", pady=(2, 0))
 
         right = ttk.Frame(header, style="TFrame")
@@ -232,7 +232,7 @@ class MainWindow(tk.Tk):
         language_box.pack(side="left", padx=(0, 12))
         language_box.bind("<<ComboboxSelected>>", self._toggle_language)
         self.var_dark = tk.BooleanVar(value=bool(self.state_obj.config["dark_mode"]))
-        ttk.Checkbutton(right, text="Dark mode", style="Bg.TCheckbutton",
+        ttk.Checkbutton(right, text=t("app.dark_mode_checkbox"), style="Bg.TCheckbutton",
                         variable=self.var_dark,
                         command=self._toggle_theme).pack(side="left", padx=(0, 12))
         # Kein "Vollbild"-Knopf mehr: Er tat nichts anderes als das
@@ -244,11 +244,11 @@ class MainWindow(tk.Tk):
         # App selbst. Früher lag sie auf der Seite "Verbindung", unter
         # Konto und Roboterliste - dort sucht sie niemand, und der
         # Schalter "beim Start nachsehen" war damit ebenso versteckt.
-        ttk.Button(right, text="Updates", style="Small.TButton",
+        ttk.Button(right, text=t("app.updates_button"), style="Small.TButton",
                    command=self._show_update).pack(side="left", padx=(0, 8))
-        ttk.Button(right, text="Help", style="Small.TButton",
+        ttk.Button(right, text=t("app.help_button"), style="Small.TButton",
                    command=self._show_help).pack(side="left")
-        ttk.Button(right, text="About", style="Small.TButton",
+        ttk.Button(right, text=t("app.about_button"), style="Small.TButton",
                    command=self._show_about).pack(side="left", padx=(8, 0))
 
         self.bind("<F11>", lambda _e: self._toggle_maximize())
@@ -271,25 +271,25 @@ class MainWindow(tk.Tk):
         # und Tab 3 (aufspielen) verteilt war - siehe page_voice.py.
         self.shell.add("start", "Start", "🏠", self.page_start,
                        beim_zeigen=self.page_start.refresh)
-        self.shell.add("stimme", "Ready-Made Voices", "🔊", self.page_voice,
+        self.shell.add("stimme", t("app.nav_ready_made_voices"), "🔊", self.page_voice,
                        beim_zeigen=self.page_voice.refresh)
-        self.shell.add("eigene", "Custom Voices", "🎙",
+        self.shell.add("eigene", t("app.nav_custom_voices"), "🎙",
                        bauen=lambda: StoreTab(buehne, self.theme,
                                               self.state_obj),
-                       section="Advanced", beim_zeigen=self._beim_eigene)
-        self.shell.add("ansagen", "Individual Announcements", "🧩",
+                       section=t("app.section_advanced"), beim_zeigen=self._beim_eigene)
+        self.shell.add("ansagen", t("app.nav_individual_announcements"), "🧩",
                        bauen=lambda: BuilderTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Advanced", beim_zeigen=self._beim_ansagen)
-        self.shell.add("aufspielen", "Build and Install", "⬆",
+                       section=t("app.section_advanced"), beim_zeigen=self._beim_ansagen)
+        self.shell.add("aufspielen", t("app.nav_build_install"), "⬆",
                        bauen=lambda: InstallTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Advanced",
+                       section=t("app.section_advanced"),
                        beim_zeigen=lambda: self.tab_install.refresh_summary())
-        self.shell.add("verbindung", "Connection", "🔌",
+        self.shell.add("verbindung", t("app.nav_connection"), "🔌",
                        bauen=lambda: ConnectTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Advanced",
+                       section=t("app.section_advanced"),
                        beim_zeigen=lambda: self.tab_connect.beim_zeigen())
 
         self.shell.show("start")
@@ -305,10 +305,10 @@ class MainWindow(tk.Tk):
         # wissen, WO die Dateien liegen, sondern hinkommen. Also ein
         # Knopf statt einer Zeile Text; den Pfad zeigt der Hinweis beim
         # Darüberfahren.
-        ttk.Button(status, text="Open data folder", style="Link.TButton",
+        ttk.Button(status, text=t("app.open_data_folder_button"), style="Link.TButton",
                    command=self._datenordner_oeffnen).pack(side="left")
         ttk.Label(status,
-                  text="settings, packages, and recordings live here",
+                  text=t("app.data_folder_hint"),
                   style="MutedBg.TLabel").pack(side="left", padx=(10, 0))
 
         # Die beiseitegelegte Vorgängerfassung kann erst jetzt weg -
@@ -388,11 +388,9 @@ class MainWindow(tk.Tk):
     def _update_melden(self, neuerung) -> None:
         """Fragt einmal nach - und merkt sich ein Nein."""
         antwort = messagebox.askyesnocancel(
-            f"Version {neuerung.version} is available",
-            f"You have {__version__}, {neuerung.version} is new.\n\n"
-            f"Take a look now?\n\n"
-            f"'No' will ask again next time, 'Cancel' skips this "
-            f"version.",
+            t("app.update_available_title", version=neuerung.version),
+            t("app.update_available_body", current=__version__,
+              new=neuerung.version),
             parent=self)
         if antwort is None:
             self.state_obj.config["update_uebersprungen"] = neuerung.version
@@ -423,10 +421,8 @@ class MainWindow(tk.Tk):
 
         self.shell.set_dot("verbindung", "ok" if verbunden else "warn")
 
-        ohne_anmeldung = ("The app first needs to know your robot's model. "
-                          "Sign in on the Start page.")
-        ohne_basis = ("Your robot's official voice pack is still missing. "
-                      "It's fetched once, on the Start page.")
+        ohne_anmeldung = t("app.disabled_hint_no_login")
+        ohne_basis = t("app.disabled_hint_no_basepack")
 
         for key in ("stimme", "eigene", "ansagen", "aufspielen"):
             self.shell.set_enabled(key, verbunden and basis,
@@ -434,10 +430,8 @@ class MainWindow(tk.Tk):
 
     def _toggle_theme(self) -> None:
         messagebox.showinfo(
-            "Switch theme",
-            "The dark theme takes effect the next time the app starts.\n\n"
-            "Switching it live would rebuild every view and lose any "
-            "unsaved input.",
+            t("app.theme_switch_title"),
+            t("app.theme_switch_body"),
             parent=self)
         self.state_obj.config["dark_mode"] = self.var_dark.get()
         self.state_obj.save()
@@ -457,13 +451,13 @@ class MainWindow(tk.Tk):
     def _show_about(self) -> None:
         """Lizenz, Haftungsausschluss und - falls hinterlegt - die Links."""
         window = tk.Toplevel(self)
-        window.title(f"About {APP_NAME}")
+        window.title(t("app.about_window_title", app_name=APP_NAME))
         window.configure(bg=self.theme.color("bg"))
         window.geometry("640x440")
         window.transient(self)
 
         card = Card(window, self.theme, f"{APP_NAME} {__version__}",
-                    f"by {AUTOR} · {LIZENZ} license")
+                    t("app.about_subtitle", autor=AUTOR, lizenz=LIZENZ))
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         # Text und Bildlaufleiste nebeneinander in einem eigenen Rahmen.
@@ -502,24 +496,23 @@ class MainWindow(tk.Tk):
         knoepfe.pack(fill="x")
 
         if PROJEKT_URL:
-            ttk.Button(knoepfe, text="Open project page",
+            ttk.Button(knoepfe, text=t("app.open_project_button"),
                        command=lambda: webbrowser.open(PROJEKT_URL)
                        ).pack(side="left")
         if SPENDEN_URL:
             ttk.Button(
-                knoepfe, text="Leave a tip (optional)",
+                knoepfe, text=t("app.leave_tip_button"),
                 command=lambda: webbrowser.open(SPENDEN_URL)
             ).pack(side="left", padx=(8, 0))
 
-        ttk.Button(knoepfe, text="Close", style="Accent.TButton",
+        ttk.Button(knoepfe, text=t("app.about_close_button"), style="Accent.TButton",
                    command=window.destroy).pack(side="right")
 
         # Der Hinweis steht unter den Knöpfen, nicht daneben: dazwischen
         # gequetscht brach er mitten im Satz um.
         if SPENDEN_URL:
             ttk.Label(unten,
-                      text=("Optional, no strings attached - the app stays "
-                            "the same for everyone."),
+                      text=t("app.tip_note"),
                       style="MutedBg.TLabel").pack(anchor="w", pady=(10, 0))
 
     # ------------------------------------------------------------------
@@ -539,9 +532,9 @@ class MainWindow(tk.Tk):
                 subprocess.Popen(["xdg-open", str(ordner)])
         except OSError as exc:
             _LOG.warning("Datenordner ließ sich nicht öffnen: %s", exc)
-            show_warning(self, self.theme, "Folder not opened",
-                         "The data folder couldn't be opened.",
-                         f"You can find it here:\n{ordner}")
+            show_warning(self, self.theme, t("app.folder_not_opened_title"),
+                         t("app.folder_not_opened_message"),
+                         t("app.folder_not_opened_hint", path=ordner))
 
     # ------------------------------------------------------------------
     def _show_update(self, neuerung=None):
@@ -565,7 +558,7 @@ class MainWindow(tk.Tk):
     # ------------------------------------------------------------------
     def _show_help(self) -> None:
         window = tk.Toplevel(self)
-        window.title("Help and Safety Notes")
+        window.title(t("app.help_window_title"))
         window.configure(bg=self.theme.color("bg"))
         window.geometry("760x740")
         window.minsize(560, 420)
@@ -576,11 +569,11 @@ class MainWindow(tk.Tk):
         # den Rest. Andersherum schob er beide aus dem Fenster - auf
         # einem kleineren Bildschirm war das Fenster dann ohne
         # sichtbaren Ausgang.
-        ttk.Button(window, text="Close", style="Accent.TButton",
+        ttk.Button(window, text=t("app.help_close_button"), style="Accent.TButton",
                    command=window.destroy).pack(side="bottom", pady=(0, 16))
         self._bau_anleitungen(window)
 
-        card = Card(window, self.theme, "How It Works")
+        card = Card(window, self.theme, t("app.how_it_works_title"))
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         text = tk.Text(card.content, wrap="word", relief="flat", borderwidth=0,
@@ -592,7 +585,7 @@ class MainWindow(tk.Tk):
         text.pack(side="left", fill="both", expand=True)
         scroll.pack(side="right", fill="y")
 
-        text.insert("1.0", HELP_TEXT)
+        text.insert("1.0", t("app.help_text"))
         text.configure(state="disabled")
 
     # ------------------------------------------------------------------
@@ -604,7 +597,7 @@ class MainWindow(tk.Tk):
         mehrere Seiten gibt. Der Knopf sagt vorher, was er tut: Datei
         oder Browser, je nachdem, was wirklich da ist.
         """
-        karte = Card(fenster, self.theme, "Read the Full Guides")
+        karte = Card(fenster, self.theme, t("app.guides_card_title"))
         karte.pack(side="bottom", fill="x", padx=16, pady=(0, 12))
         inhalt = karte.content
 
@@ -618,14 +611,13 @@ class MainWindow(tk.Tk):
             # ehrlicher Satz als sechs Knöpfe, die nichts tun.
             ttk.Label(inhalt, style="Muted.TLabel", justify="left",
                       wraplength=660,
-                      text=("The full guides live in the 'docs' folder "
-                            "alongside the project's source code.")).pack(anchor="w")
+                      text=t("app.guides_missing_note")).pack(anchor="w")
             return
 
         ttk.Label(inhalt, style="Muted.TLabel", justify="left", wraplength=660,
-                  text=("Opens in your browser."
+                  text=(t("app.guides_open_browser")
                         if online and len(online) == len(art)
-                        else "Opens as a text file on this PC.")
+                        else t("app.guides_open_textfile"))
                   ).pack(anchor="w", pady=(0, 8))
 
         # Raster statt nebeneinander gepackter Zeilen: Sonst beginnt
@@ -652,11 +644,9 @@ class MainWindow(tk.Tk):
         if anleitungen.oeffnen(datei) != "nein":
             return
         show_warning(
-            self, self.theme, "Guide Not Reachable",
-            f"'{datei}' couldn't be opened.",
-            "The file lives in the 'docs' folder alongside the project's "
-            "source code. If no program is set up for .md files, any "
-            "text editor will open it.")
+            self, self.theme, t("app.guide_not_reachable_title"),
+            t("app.guide_not_reachable_message", file=datei),
+            t("app.guide_not_reachable_hint"))
 
     # ------------------------------------------------------------------
     def _on_unhandled(self, art, wert, spur) -> None:
@@ -672,12 +662,9 @@ class MainWindow(tk.Tk):
         _LOG.error("Unbehandelter Fehler in der Oberfläche:\n%s", text)
         try:
             show_error(
-                self, self.theme, "Unexpected Error",
+                self, self.theme, t("app.unexpected_error_title"),
                 f"{art.__name__}: {wert}",
-                "That shouldn't have happened. The app keeps running, but "
-                "the operation was cancelled.\n\n"
-                "Technical details (share these using 'Copy text'):\n\n"
-                + text)
+                t("app.unexpected_error_hint") + text)
         except Exception:      # pragma: no cover - Notnagel
             pass
 
@@ -690,155 +677,7 @@ class MainWindow(tk.Tk):
         self.destroy()
 
 
-HELP_TEXT = """\
-THE SHORT PATH
-
-If all you want is a robot that speaks Bavarian, you need exactly
-two pages:
-
-1. Start
-   The first time, this shows the sign-in form - the same credentials
-   as the Dreamehome app. The app then fetches your robot's official
-   voice pack once; that's the foundation for everything else and
-   stays saved.
-   From the second start on, this page just shows what the robot is
-   currently saying.
-
-2. Ready-Made Voices
-   Pick Bavarian, Hessian, Viennese, or Berlin dialect, preview four
-   typical announcements with "Listen", then "Install". The dialect
-   voices are built into the program file - nothing gets downloaded.
-
-That's it. Everything else lives under "Advanced" and is only needed
-if you want more:
-
-- Custom Voices: your own text, other dialects, speech synthesis via
-  Windows or ElevenLabs
-- Individual Announcements: assign your own file to each announcement
-  one by one
-- Build and Install: the detailed path with every switch, network
-  setting, and the way back to the original voice
-- Connection: switch account or region
-
-Greyed-out entries in the sidebar aren't broken - they just need you
-to sign in first. Clicking one tells you what's missing.
-
-
-WHY THIS DOESN'T DAMAGE YOUR ROBOT
-
-- No firmware is touched. Switching voice packs is a perfectly normal,
-  manufacturer-provided function - the Dreamehome app does exactly the
-  same thing when you change the language.
-
-- Your pack is a copy of the official pack. Only the announcements you
-  assign yourself get replaced. Every control file and every other
-  announcement stays unchanged - the robot never goes silent anywhere.
-
-- The robot checks it itself. Along with the URL, it gets the size and
-  MD5 checksum. If anything doesn't match, it discards the pack and
-  keeps its current voice.
-
-- There's a way back. The "Restore Original Voice" button has the
-  robot load the official pack straight from Dreame - exactly what
-  happens when you switch languages in the phone app.
-
-- Identifier. Your pack always lands under CUSTOM, so it never
-  overwrites the built-in German voice. This is fixed on purpose: the
-  robot creates its own folder per identifier, and there's no way to
-  delete those via the cloud. A single identifier just overwrites
-  itself.
-
-
-THE PACK DOESN'T SHOW UP IN THE DREAMEHOME APP
-
-That's normal, not a bug. Under "Voice", the Dreamehome app only shows
-languages from Dreame's own catalog. The CUSTOM identifier isn't in
-it - so the app can't display it.
-
-If the app reports on opening that the robot and app have different
-language settings, that's exactly the sign your pack is running: the
-robot is reporting an identifier the app doesn't recognize.
-
-Two things to keep in mind:
-
-- Don't pick a language in the Dreamehome app while you want your pack
-  running. Doing so makes the robot re-download the official pack and
-  overwrite yours.
-- It can't appear in the list. The identifier is fixed as CUSTOM, and
-  Dreame's catalog doesn't know it. That's intentional: the robot
-  creates its own folder per identifier, and there's no way to delete
-  it via the cloud.
-- You can go back to the original voice any time via "Build and
-  Install" > "Restore Original Voice".
-
-Whether your pack is running is revealed by the "Check on Robot"
-button on the Start page - under "Build and Install" the same button
-is called "Check Voice Pack on Robot". The answer comes straight from
-the device, not from the app.
-
-
-IF THE ROBOT DOESN'T PICK UP THE PACK
-
-This is the most common snag. The robot needs to be able to reach this
-PC on the network:
-
-- The Windows Firewall must allow incoming connections. Windows asks
-  the first time you run this - tick "Private network" there.
-- The PC and robot must be on the same network. A separate IoT or
-  guest Wi-Fi prevents the connection.
-- An active VPN on the PC routes the reply into a void. Disconnect it
-  briefly.
-- The robot mustn't be in deep sleep - wake it in the Dreamehome app.
-
-Alternatively, upload the built pack to your own web space and enter
-its public address in the "Custom URL" field.
-
-
-CUSTOM VOICES AND DIALECTS
-
-Seven dialects, each with all 593 spoken announcements: Bavarian,
-Hessian, Swabian, Saxon, Berlin dialect, Viennese, and Cologne dialect.
-Only non-verbal sounds - the startup chime, beeps, animal noises -
-stay original. Nothing like this exists ready-made anywhere - no
-vacuum robot has dialect packs available.
-
-You choose who speaks:
-
-- Windows text-to-speech: offline and free. The dialect only lives in
-  the wording though - the pronunciation stays standard German. Male
-  and female voices are available.
-- ElevenLabs: genuine dialect in the pronunciation too, needs your own
-  account. A complete dialect pack costs 22,700 to 25,000 characters
-  depending on the dialect - the free monthly allowance of 10,000
-  isn't enough for that, a paid plan is. Individual announcements also
-  work for free: one costs 40 characters on average.
-
-Before generating, it's worth using "Listen to Sample": three
-sentences in the currently chosen voice, so you know what you're
-getting into.
-
-If the ElevenLabs quota runs out mid-generation, nothing is lost.
-What's already spoken stays saved, the pack gets built with the
-finished part, and the app picks up exactly where it left off next
-time.
-
-
-AUDIO FILES
-
-The robot only understands OGG Vorbis, mono, 16000 Hz. mp3 and wav
-files get converted automatically when building.
-
-ffmpeg is needed for that - and it's built into the program file. The
-app unpacks it into the data folder once, the first time it's needed;
-after that it's just there. You don't need to worry about it.
-
-Only if you run the app from source is it not included automatically:
-then it looks for an ffmpeg.exe next to the app, in the data folder,
-or on the system PATH, and otherwise offers to download it.
-
-Keep announcements short - the originals are mostly two to six seconds
-long.
-"""
+HELP_TEXT = t("app.help_text")
 
 
 def run() -> None:

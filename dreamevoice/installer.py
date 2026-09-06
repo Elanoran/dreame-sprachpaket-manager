@@ -25,6 +25,7 @@ from typing import Any, Callable, Optional
 
 from .cloud import DreameCloud, Device
 from .errors import InstallError, LoginError, NetworkError
+from .i18n import t
 from .official import VoicePackInfo
 from .packer import BuildResult
 from .server import PackServer, reachability_hint
@@ -87,17 +88,11 @@ def validate_lang_id(lang_id: str) -> tuple[str, str]:
         return DEFAULT_CUSTOM_LANG_ID, ""
     if not cleaned.isalnum() or len(cleaned) > 8:
         raise InstallError(
-            f"The pack identifier '{lang_id}' is invalid.",
-            "Up to 8 letters or digits are allowed, e.g. CUSTOM or BAYERN.",
+            t("installer.err_invalid_lang_id_title", lang_id=lang_id),
+            t("installer.err_invalid_lang_id_hint"),
         )
     if cleaned in OFFICIAL_LANG_IDS:
-        return cleaned, (
-            f"'{cleaned}' is an official Dreame identifier. Your pack "
-            f"overwrites the built-in language with it. To switch back, "
-            f"you'll need to reinstall the original pack - this app can "
-            f"do that, but a custom identifier like CUSTOM is more "
-            f"convenient."
-        )
+        return cleaned, t("installer.warn_official_lang_id", cleaned=cleaned)
     return cleaned, ""
 
 
@@ -177,9 +172,9 @@ def refresh_volume(cloud: DreameCloud, device: Device, wert: Optional[int],
         # App nicht. Ein früherer Text hier lautete "kein Neustart
         # nötig" und redete dem Nutzer damit genau das aus, was als
         # einziges nachweislich hilft.
-        log(f"Volume confirmed: {wert}.")
+        log(t("installer.log_volume_confirmed", value=wert))
     else:
-        log("Note: the volume couldn't be confirmed.")
+        log(t("installer.log_volume_not_confirmed"))
     return ok
 
 
@@ -446,13 +441,13 @@ class _Beobachter:
 #: Lautstärke laufen auseinander. Die App kann das nicht beheben. Was
 #: sie kann, ist den Nutzer richtig informieren - deshalb steht der
 #: Hinweis sichtbar im Fertig-Fenster und nicht nur im Protokoll.
-NEUSTART_HINWEIS = (
-    "If the robot sounds quieter than usual afterward: that's due to its "
-    "firmware, not the recordings - they're at the same level as the "
-    "original announcements. After switching languages it sometimes only "
-    "applies its volume again after a restart. Turn it off and on again "
-    "at the device; that fixes it."
-)
+#:
+#: A function rather than a module constant: this module is imported
+#: well before the user's language choice is applied via
+#: i18n.set_language(), so a string built with t() at import time would
+#: freeze to whatever language was active at that moment.
+def _neustart_hinweis() -> str:
+    return t("installer.restart_hint")
 
 
 def install_pack(cloud: DreameCloud,
@@ -478,28 +473,27 @@ def install_pack(cloud: DreameCloud,
     cancelled = cancelled or (lambda: False)
     lang_id = DEFAULT_CUSTOM_LANG_ID
 
-    log(f"Pack:  {build.path.name}")
-    log(f"Size: {build.size} bytes ({build.size_mb:.1f} MB)")
+    log(t("installer.log_pack_name", name=build.path.name))
+    log(t("installer.log_pack_size", size=build.size, size_mb=build.size_mb))
     log(f"MD5:    {build.md5}")
-    log(f"Identifier: {lang_id}")
+    log(t("installer.log_pack_identifier", lang_id=lang_id))
 
     server: Optional[PackServer] = None
     try:
         # ---- 1. Auslieferung vorbereiten -------------------------------
         if public_url:
             url = public_url.strip()
-            log(f"Using custom URL: {url}")
-            step("Using custom URL", 0.15)
+            log(t("installer.log_using_custom_url", url=url))
+            step(t("installer.step_using_custom_url"), 0.15)
         else:
-            step("Starting web server", 0.05)
+            step(t("installer.step_starting_server"), 0.05)
             server = PackServer(build.path, port=port, host_ip=host_ip, log=log)
             url = server.start()
-            step("Web server running", 0.15)
+            step(t("installer.step_server_running"), 0.15)
 
         # ---- 2. Auftrag senden ------------------------------------------
-        step("Checking the robot", 0.20)
-        log("Asking the robot whether it accepts voice packs the usual "
-            "way ...")
+        step(t("installer.step_checking_robot"), 0.20)
+        log(t("installer.log_asking_robot"))
         try:
             kennt_sprachpakete = cloud.supports_voice_service(device)
         except (NetworkError, LoginError) as exc:
@@ -509,60 +503,48 @@ def install_pack(cloud: DreameCloud,
             # den Fehler bei seinem Gerät.
             return InstallOutcome(
                 False,
-                "The robot didn't respond to the query.",
-                hint=("Nothing was sent. Most often it's because it's "
-                      "asleep: wake it in the Dreamehome app - tapping "
-                      "'Find Robot' is enough - and try again.\n\n"
-                      f"Technical details: {exc}"))
+                t("installer.err_no_response_title"),
+                hint=t("installer.err_no_response_hint", reason=exc))
 
         if not kennt_sprachpakete:
             return InstallOutcome(
                 False,
-                "This robot doesn't report a voice-pack service.",
-                hint=("The app cautiously sent nothing. The install order "
-                      "always goes to the same spot on Dreame and MOVA "
-                      "vacuum robots (MIoT siid 7, piid 4); your device "
-                      "isn't responding there. That suggests it doesn't "
-                      "know voice packs at all - for example on mowing "
-                      "robots or very old Mi-Home models.\n\n"
-                      "Check whether you can even choose a language under "
-                      "'Voice' in the Dreamehome app. If that doesn't work "
-                      "there, this app can't do it either."),
+                t("installer.err_no_voice_service_title"),
+                hint=t("installer.err_no_voice_service_hint"),
             )
-        log("The robot knows the voice-pack service.")
+        log(t("installer.log_knows_service"))
 
         # Jetzt merken, nicht später: Nach dem Wechsel wollen wir genau
         # den Wert wiederherstellen, den der Benutzer eingestellt hatte.
         lautstaerke = cloud.voice_volume(device)
         if lautstaerke is not None:
-            log(f"Configured volume: {lautstaerke}")
+            log(t("installer.log_configured_volume", value=lautstaerke))
 
         beobachter = _Beobachter(cloud, device, lang_id)
         if beobachter.schon_aktiv:
-            log(f"There's already a pack under '{lang_id}' - it will be "
-                f"overwritten.")
+            log(t("installer.log_pack_exists", lang_id=lang_id))
 
-        step("Sending the order to the robot", 0.25)
-        log("Sending install order via the Dreame cloud ...")
+        step(t("installer.step_sending_order"), 0.25)
+        log(t("installer.log_sending_order"))
         try:
             cloud.install_voice_pack(device, lang_id, url, build.md5, build.size)
         except NetworkError as exc:
             return InstallOutcome(
                 False,
-                "The robot didn't accept the order.",
+                t("installer.err_order_rejected_title"),
                 hint=str(exc),
             )
-        log("Order accepted.")
+        log(t("installer.log_order_accepted"))
 
         # ---- 3. Auf den Download warten ---------------------------------
         if server is not None:
-            step("Robot downloading the pack", 0.4)
-            log(f"Waiting up to {int(download_timeout)} seconds for the download ...")
+            step(t("installer.step_downloading"), 0.4)
+            log(t("installer.log_waiting_download", seconds=int(download_timeout)))
 
             deadline = time.time() + download_timeout
             while time.time() < deadline and not server.was_downloaded:
                 if cancelled():
-                    return InstallOutcome(False, "Cancelled by the user.")
+                    return InstallOutcome(False, t("installer.msg_cancelled"))
                 server.wait_for_download(1.0)
 
             if not server.was_downloaded:
@@ -579,21 +561,15 @@ def install_pack(cloud: DreameCloud,
                 if angeklopft:
                     return InstallOutcome(
                         False,
-                        "The robot started downloading and then stopped.",
-                        hint=("It reached this PC - so it's not a firewall "
-                              "or separate networks. The connection dropped "
-                              "midway. Most common reasons: weak Wi-Fi "
-                              "where the robot currently is, or it went "
-                              "into standby. Move it closer to the router, "
-                              "wake it in the Dreamehome app, and try "
-                              "again."),
+                        t("installer.err_download_stopped_title"),
+                        hint=t("installer.err_download_stopped_hint"),
                     )
                 return InstallOutcome(
                     False,
-                    "The robot didn't pick up the voice pack.",
+                    t("installer.err_not_picked_up_title"),
                     hint=reachability_hint(server.port),
                 )
-            log("Download confirmed by the robot.")
+            log(t("installer.log_download_confirmed"))
             # Der stärkste Beleg, den wir haben - und der einzige, der
             # nicht vom Roboter selbst kommt: Er hat die Datei gerade
             # von diesem PC geholt. Damit zählt seine Erfolgsmeldung
@@ -601,21 +577,21 @@ def install_pack(cloud: DreameCloud,
             # gefallen ist. Ohne diesen Beleg meldete die App
             # "Nicht aufgespielt", obwohl alles geklappt hatte.
             beobachter.beleg_download()
-            step("Pack transferred", 0.6)
+            step(t("installer.step_pack_transferred"), 0.6)
         else:
-            step("Waiting for the robot", 0.4)
+            step(t("installer.step_waiting_robot"), 0.4)
             time.sleep(5)
 
         # ---- 4. Installation beobachten ---------------------------------
-        step("Robot installing the pack", 0.7)
-        log("Waiting for the robot's response ...")
+        step(t("installer.step_installing"), 0.7)
+        log(t("installer.log_waiting_response"))
 
         beobachter.los()
         deadline = time.time() + install_timeout
 
         while time.time() < deadline:
             if cancelled():
-                return InstallOutcome(False, "Cancelled by the user.",
+                return InstallOutcome(False, t("installer.msg_cancelled"),
                                       downloaded=True)
             time.sleep(TAKT)
 
@@ -624,58 +600,42 @@ def install_pack(cloud: DreameCloud,
             if ergebnis == _Beobachter.FEHLER:
                 return InstallOutcome(
                     False,
-                    "The robot reports that the installation failed.",
+                    t("installer.err_install_failed_title"),
                     downloaded=True,
                     final_status=str(beobachter.letzter_zustand),
-                    hint=("Usually the file doesn't match on MD5 or size, "
-                          "or the robot didn't get all the way through it. "
-                          "The current voice stays untouched - you can "
-                          "just try again."),
+                    hint=t("installer.err_install_failed_hint"),
                 )
 
             if ergebnis == _Beobachter.WIDERSPRUCH:
                 return InstallOutcome(
                     False,
-                    f"The robot reports '{beobachter.aktiv_text}' as the "
-                    f"active language, not '{lang_id}'.",
+                    t("installer.err_lang_mismatch_title",
+                      active=beobachter.aktiv_text, target=lang_id),
                     downloaded=beobachter.download_beleg,
                     final_status=(str(beobachter.letzter_zustand)
                                   if beobachter.letzter_zustand is not None
                                   else None),
-                    hint=("The device's state reports success, but the "
-                          "active language doesn't match it. Most likely a "
-                          "language was selected under 'Voice' in the "
-                          "Dreamehome app in the meantime - this makes the "
-                          "robot re-download the official pack and "
-                          "overwrite the custom one. Try again and leave "
-                          "the language selection in the phone app alone."),
+                    hint=t("installer.err_lang_mismatch_hint_install"),
                 )
 
             if ergebnis in (_Beobachter.FERTIG, _Beobachter.WAHRSCHEINLICH):
                 sicher = ergebnis == _Beobachter.FERTIG
-                log(f"The robot reports '{beobachter.aktiv_text}' as the "
-                    f"active voice pack.")
+                log(t("installer.log_active_pack", active=beobachter.aktiv_text))
                 refresh_volume(cloud, device, lautstaerke, log)
                 if sicher:
-                    meldung = (f"The voice pack '{lang_id}' is "
-                               f"installed and active.")
-                    hinweis = NEUSTART_HINWEIS
+                    meldung = t("installer.msg_installed_active", lang_id=lang_id)
+                    hinweis = _neustart_hinweis()
                 else:
                     # Der Roboter hat die Datei nachweislich geholt und
                     # meldet Erfolg - aber seine Zustandsmeldung ist
                     # wortgleich mit der von vorher. Damit ist der
                     # Wechsel nicht belegt, nur wahrscheinlich. Das
                     # gehört dem Nutzer gesagt, statt es zu glätten.
-                    meldung = (f"The voice pack '{lang_id}' was "
-                               f"transferred.")
-                    hinweis = (
-                        "The robot has provably picked up the pack and "
-                        "reports 'successful' - but no state change was "
-                        "observed, because the same message was already "
-                        "there before. Listen: if the robot speaks in the "
-                        "new voice, everything worked.\n\n") + NEUSTART_HINWEIS
+                    meldung = t("installer.msg_pack_transferred", lang_id=lang_id)
+                    hinweis = (t("installer.hint_probably_installed")
+                               + _neustart_hinweis())
                 log(hinweis)
-                step("Done", 1.0)
+                step(t("installer.step_done"), 1.0)
                 return InstallOutcome(
                     True, meldung,
                     downloaded=True,
@@ -687,34 +647,29 @@ def install_pack(cloud: DreameCloud,
 
             progress = 0.7 + min(0.25, (time.time() - beobachter.start)
                                  / install_timeout * 0.25)
-            step("Robot installing the pack", progress)
+            step(t("installer.step_installing"), progress)
 
         # Zeit abgelaufen, aber der Download hat geklappt.
         return InstallOutcome(
             False,
-            "The robot didn't confirm the installation within the wait time.",
+            t("installer.err_timeout_title"),
             downloaded=True,
             final_status=(str(beobachter.letzter_zustand)
                           if beobachter.letzter_zustand is not None else None),
             # Bei einer eigenen URL liefert nicht dieser PC aus - dann
             # ist über den Download nichts bekannt, und die Meldung
             # darf ihn auch nicht behaupten.
-            hint=(("The pack was provably fetched completely. "
+            hint=((t("installer.hint_timeout_prefix_downloaded")
                    if beobachter.download_beleg else
-                   "Whether the robot picked up the pack can't be seen "
-                   "from here with a custom URL. ")
-                  + "It's very likely that the installation is still "
-                    "running or is already done. On success the robot "
-                    "says 'language switched successfully'. Check the "
-                    "voice on the device; if it's unchanged, just start "
-                    "the process again."),
+                   t("installer.hint_timeout_prefix_custom_url"))
+                  + t("installer.hint_timeout_suffix")),
         )
 
     except InstallError:
         raise
     except Exception as exc:  # pragma: no cover - unerwartete Fälle
         _LOG.exception("Installation fehlgeschlagen")
-        return InstallOutcome(False, "Unexpected error during installation.",
+        return InstallOutcome(False, t("installer.err_unexpected"),
                               hint=str(exc))
     finally:
         if server is not None:
@@ -733,9 +688,9 @@ def restore_official(cloud: DreameCloud,
     lädt also direkt beim Hersteller, ganz ohne PC im Spiel. Das ist
     derselbe Vorgang, den die Dreamehome-App beim Sprachwechsel auslöst.
     """
-    log(f"Restoring the official pack '{pack.label}'.")
-    log(f"Source: {pack.url}")
-    log(f"Size: {pack.size} bytes, MD5: {pack.md5}")
+    log(t("installer.log_restoring_pack", label=pack.label))
+    log(t("installer.log_source", url=pack.url))
+    log(t("installer.log_size_md5", size=pack.size, md5=pack.md5))
 
     # Wie beim eigenen Paket: erst die Lautstärke merken, dann den
     # Zustand vor dem Auftrag festhalten. Aus dem Forum kam der Bericht,
@@ -743,21 +698,20 @@ def restore_official(cloud: DreameCloud,
     # leise blieb - dieser Weg braucht also dieselbe Behandlung.
     lautstaerke = cloud.voice_volume(device)
     if lautstaerke is not None:
-        log(f"Configured volume: {lautstaerke}")
+        log(t("installer.log_configured_volume", value=lautstaerke))
     beobachter = _Beobachter(cloud, device, pack.id)
     if beobachter.schon_aktiv:
-        log(f"'{pack.id}' is already the active identifier - the pack "
-            f"will be reloaded.")
+        log(t("installer.log_already_active", id=pack.id))
 
-    step("Sending the order", 0.2)
+    step(t("installer.step_sending_order_short"), 0.2)
     try:
         cloud.install_voice_pack(device, pack.id, pack.url, pack.md5, pack.size)
     except NetworkError as exc:
-        return InstallOutcome(False, "The robot didn't accept the order.",
+        return InstallOutcome(False, t("installer.err_order_rejected_title"),
                               hint=str(exc))
 
-    log("Order accepted. The robot is now downloading directly from Dreame.")
-    step("Robot downloading from Dreame", 0.5)
+    log(t("installer.log_order_accepted_direct"))
+    step(t("installer.step_downloading_from_dreame"), 0.5)
 
     beobachter.los()
     beobachter.beleg_endzustand()
@@ -769,26 +723,20 @@ def restore_official(cloud: DreameCloud,
         if ergebnis == _Beobachter.FEHLER:
             return InstallOutcome(
                 False,
-                "The robot reports that restoring it failed.",
+                t("installer.err_restore_failed_title"),
                 final_status=str(beobachter.letzter_zustand),
-                hint=("The current voice stays untouched. Try again, or "
-                      "switch the language in the Dreamehome app under "
-                      "Settings > Voice Pack."))
+                hint=t("installer.err_restore_failed_hint"))
 
         if ergebnis == _Beobachter.WIDERSPRUCH:
             return InstallOutcome(
                 False,
-                f"The robot reports '{beobachter.aktiv_text}' as the "
-                f"active language, not '{pack.id}'.",
-                hint=("The device's state message doesn't match the "
-                      "active language. Switch the language in the "
-                      "Dreamehome app under 'Voice' - that's the same "
-                      "process, and you'll see immediately what the robot "
-                      "does."))
+                t("installer.err_lang_mismatch_title",
+                  active=beobachter.aktiv_text, target=pack.id),
+                hint=t("installer.err_lang_mismatch_hint_restore"))
 
         if ergebnis in (_Beobachter.FERTIG, _Beobachter.WAHRSCHEINLICH):
             refresh_volume(cloud, device, lautstaerke, log)
-            hinweis = NEUSTART_HINWEIS
+            hinweis = _neustart_hinweis()
             if not beobachter.bewegung:
                 # Der Roboter führte diese Sprache schon vorher, und es
                 # war keine Veränderung zu beobachten. Die Meldung
@@ -796,20 +744,14 @@ def restore_official(cloud: DreameCloud,
                 # nicht über den Vorgang. Wer aber wiederherstellt,
                 # WEIL etwas kaputt ist, darf davon nicht in Sicherheit
                 # gewiegt werden.
-                hinweis = (
-                    f"Note: '{pack.id}' was already the active language "
-                    f"before, and the robot didn't report a fresh install. "
-                    f"If you wanted to renew the pack because something's "
-                    f"wrong: switch to a different language in the "
-                    f"Dreamehome app under 'Voice' and back again - that "
-                    f"guarantees the robot reloads it.\n\n"
-                ) + NEUSTART_HINWEIS
+                hinweis = (t("installer.hint_no_movement", id=pack.id)
+                           + _neustart_hinweis())
                 log(hinweis)
             else:
-                log(NEUSTART_HINWEIS)
-            step("Done", 1.0)
+                log(_neustart_hinweis())
+            step(t("installer.step_done"), 1.0)
             return InstallOutcome(
-                True, f"The original pack '{pack.id}' is active again.",
+                True, t("installer.msg_original_active", id=pack.id),
                 # Hier lädt der Roboter direkt bei Dreame - von hier
                 # aus wurde nichts übertragen, das dürfen wir auch
                 # nicht behaupten.
@@ -819,9 +761,6 @@ def restore_official(cloud: DreameCloud,
 
     return InstallOutcome(
         False,
-        "No confirmation within the wait time.",
-        hint=("The order was accepted. Check the voice on the robot - "
-              "the installation often went through anyway. Alternatively, "
-              "the language can be changed any time in the Dreamehome "
-              "app under Settings > Voice Pack."),
+        t("installer.err_no_confirmation_title"),
+        hint=t("installer.err_no_confirmation_hint"),
     )

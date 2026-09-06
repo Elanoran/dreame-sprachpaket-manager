@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "schwaebisch"
-NAME = "Swabian"
-BESCHREIBUNG = (
-    "Stuttgart-style Swabian. Diligent, thorough, and with due "
-    "respect for the cleaning rota."
-)
+NAME = t("schwaebisch.name")
+BESCHREIBUNG = t("schwaebisch.beschreibung")
 LANG_ID = "SCHWABE"
 
 TEXTE = {

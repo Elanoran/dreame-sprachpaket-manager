@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "saechsisch"
-NAME = "Saxon"
-BESCHREIBUNG = (
-    "Saxon dialect with soft consonants and a hearty 'Nu'. Always "
-    "sounds a bit friendlier than it's meant."
-)
+NAME = t("saechsisch.name")
+BESCHREIBUNG = t("saechsisch.beschreibung")
 LANG_ID = "SACHSE"
 
 TEXTE = {

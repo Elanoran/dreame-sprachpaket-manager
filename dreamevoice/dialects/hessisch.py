@@ -29,13 +29,11 @@ trotzdem klar.
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "hessisch"
-NAME = "Hessian"
-BESCHREIBUNG = (
-    "Frankfurt-style Hessian from the Rhine-Main area: written "
-    "phonetically, good-humored and chatty. Ei gude, wie?"
-)
+NAME = t("hessisch.name")
+BESCHREIBUNG = t("hessisch.beschreibung")
 LANG_ID = "HESSEN"
 
 TEXTE = {

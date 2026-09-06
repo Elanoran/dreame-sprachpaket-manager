@@ -17,6 +17,7 @@ from urllib.parse import unquote
 from typing import Callable, List, Optional, Tuple
 
 from .errors import InstallError
+from .i18n import t
 
 _LOG = logging.getLogger(__name__)
 
@@ -147,7 +148,7 @@ class PackServer:
                  host_ip: str = "", log: Optional[LogFn] = None) -> None:
         self.file_path = Path(file_path)
         if not self.file_path.is_file():
-            raise InstallError(f"Die Paketdatei fehlt:\n{self.file_path}")
+            raise InstallError(t("server.pack_file_missing", path=self.file_path))
 
         self.port = port or free_port()
         self.host_ip = host_ip or local_ip_for_internet()
@@ -167,11 +168,11 @@ class PackServer:
     def _record_hit(self, client: str, what: str) -> None:
         self.hits.append((client, what))
         if what == "vollstaendig":
-            self._log(f"Robot ({client}) has fully downloaded the pack.")
+            self._log(t("server.log_download_complete", client=client))
             # Nur das ist ein Download. Alles davor ist eine Anfrage.
             self._hit_event.set()
         else:
-            self._log(f"Robot ({client}) is requesting the pack [{what}]")
+            self._log(t("server.log_request", client=client, what=what))
 
     def start(self) -> str:
         handler = type("_BoundHandler", (_Handler,), {
@@ -184,9 +185,8 @@ class PackServer:
             self._server = ThreadingHTTPServer(("0.0.0.0", self.port), handler)
         except OSError as exc:
             raise InstallError(
-                f"The web server couldn't start on port {self.port}.",
-                "The port is probably in use. Choose a different port in "
-                f"the settings. Technical details: {exc}",
+                t("server.start_failed_title", port=self.port),
+                t("server.start_failed_hint", details=exc),
             ) from exc
 
         self._server.daemon_threads = True
@@ -194,7 +194,7 @@ class PackServer:
                                         kwargs={"poll_interval": 0.2},
                                         daemon=True)
         self._thread.start()
-        self._log(f"Web server running at {self.url}")
+        self._log(t("server.log_running", url=self.url))
         return self.url
 
     def wait_for_download(self, timeout: float) -> bool:
@@ -213,7 +213,7 @@ class PackServer:
         if self._thread is not None:
             self._thread.join(timeout=5)
             self._thread = None
-        self._log("Web server stopped.")
+        self._log(t("server.log_stopped"))
 
     def __enter__(self) -> "PackServer":
         self.start()
@@ -225,14 +225,4 @@ class PackServer:
 
 def reachability_hint(port: int) -> str:
     """Hinweistext, wenn der Roboter den PC nicht erreicht."""
-    return (
-        "The robot didn't pick up the pack. The most common reasons:\n\n"
-        f"1. The Windows Firewall is blocking incoming connections on port {port}. "
-        "Windows asks the first time you run this - 'Private network' "
-        "must be allowed there.\n"
-        "2. The PC and robot are on different networks (e.g. guest Wi-Fi, "
-        "separate IoT Wi-Fi, or the PC is connected via VPN).\n"
-        "3. The robot is in standby. Wake it in the Dreamehome app.\n\n"
-        "Alternative: upload the pack to your own web space and enter the "
-        "public URL in the 'Custom URL' field."
-    )
+    return t("server.reachability_hint", port=port)

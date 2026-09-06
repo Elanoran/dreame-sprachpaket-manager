@@ -3,13 +3,11 @@
 from __future__ import annotations
 
 from . import muster
+from ..i18n import t
 
 KEY = "koelsch"
-NAME = "Kölsch"
-BESCHREIBUNG = (
-    "Cologne's Kölsch dialect: good-humored, doesn't take anything "
-    "too seriously. Et hätt noch immer joot jejange."
-)
+NAME = t("koelsch.name")
+BESCHREIBUNG = t("koelsch.beschreibung")
 LANG_ID = "KOELN"
 
 TEXTE = {

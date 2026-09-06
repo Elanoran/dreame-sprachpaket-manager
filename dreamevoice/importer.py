@@ -29,6 +29,7 @@ from typing import Callable, Dict, Iterable, List, Optional
 
 from .audio import SUPPORTED_INPUT
 from .errors import PackError
+from .i18n import t
 from .sounds import SoundCatalog
 
 #: Obergrenzen beim Einlesen fremder Archive.
@@ -73,10 +74,12 @@ _KENNZEICHEN = (
 )
 
 #: Wie diese Typen im Klartext heißen.
-_TYPNAME = {"rar": "RAR archive", "7z": "7z archive", "bzip2": "bzip2 archive",
-            "xz": "xz archive", "ogg": "audio file (OGG)",
-            "riff": "audio file (WAV)", "mp3": "audio file (MP3)",
-            "flac": "audio file (FLAC)", "pdf": "PDF document"}
+#:
+#: Lazily resolved via t() at call time (not built into a plain dict at
+#: import time), since the module loads before the user's language
+#: choice is applied.
+def _typname(art: str) -> str:
+    return t(f"importer.type_{art}")
 
 #: Tondateien - die kommen erfahrungsgemäß am häufigsten aus Versehen
 #: hier an, weil jemand statt des Archivs eine einzelne Ansage wählt.
@@ -129,11 +132,11 @@ class ImportResult:
         return len(self.assigned)
 
     def summary(self) -> str:
-        teile = [f"{self.count} announcements taken over"]
+        teile = [t("importer.summary_count", count=self.count)]
         if self.unknown_ids:
-            teile.append(f"{len(self.unknown_ids)} numbers your model doesn't recognize")
+            teile.append(t("importer.summary_unknown", count=len(self.unknown_ids)))
         if self.skipped:
-            teile.append(f"{len(self.skipped)} files skipped")
+            teile.append(t("importer.summary_skipped", count=len(self.skipped)))
         return ", ".join(teile)
 
 
@@ -154,7 +157,7 @@ def scan_folder(folder: Path, known_ids: Optional[Iterable[int]] = None,
     """Durchsucht einen Ordner nach Audiodateien mit Nummern im Namen."""
     folder = Path(folder)
     if not folder.is_dir():
-        raise PackError(f"Das ist kein Ordner:\n{folder}")
+        raise PackError(t("importer.not_a_folder", path=folder))
 
     bekannt = set(known_ids) if known_ids is not None else None
     ergebnis = ImportResult(source=str(folder))
@@ -164,12 +167,14 @@ def scan_folder(folder: Path, known_ids: Optional[Iterable[int]] = None,
 
     for pfad in dateien:
         if pfad.suffix.lower() not in SUPPORTED_INPUT:
-            ergebnis.skipped.append(f"{pfad.name} (kein bekanntes Audioformat)")
+            ergebnis.skipped.append(
+                f"{pfad.name} {t('importer.unknown_audio_format')}")
             continue
 
         sound_id = sound_id_from_name(pfad.name)
         if sound_id is None:
-            ergebnis.skipped.append(f"{pfad.name} (keine Nummer im Namen)")
+            ergebnis.skipped.append(
+                f"{pfad.name} {t('importer.no_number_in_name')}")
             continue
 
         if bekannt is not None and sound_id not in bekannt:
@@ -206,49 +211,35 @@ def _kein_archiv(archive: Path, art: str) -> PackError:
 
     if art == "leer":
         return PackError(
-            "The file is empty.",
-            f"'{archive.name}' has 0 bytes. The download probably "
-            "failed or was interrupted. Please download the file again.")
+            t("importer.err_empty_title"),
+            t("importer.err_empty_hint", name=archive.name))
 
     if art == "zip":
         # is_zipfile() sieht am ENDE der Datei nach. Fehlt das Ende,
         # ist die Übertragung abgebrochen - der häufigste Fall.
         return PackError(
-            "The ZIP archive is incomplete.",
-            "The start of the file is a ZIP archive, but its directory "
-            "at the end is missing. That's exactly what an interrupted "
-            "transfer looks like.\n\n"
-            "Please download the file again and wait until the download "
-            "is really finished.\n\n"
-            f"File: {archive.name} ({groesse})")
+            t("importer.err_zip_incomplete_title"),
+            t("importer.err_zip_incomplete_hint", name=archive.name, size=groesse))
 
     if art in ("rar", "7z"):
-        name = _TYPNAME[art]
+        name = _typname(art)
         return PackError(
-            f"That's a {name} - the app can't handle those.",
-            "Please unpack it yourself and then choose either the "
-            "unpacked folder or repack the announcements as a ZIP. "
-            "The app understands ZIP and tar.gz.")
+            t("importer.err_unsupported_archive_title", type_name=name),
+            t("importer.err_unsupported_archive_hint"))
 
     if art in _TONDATEI:
         return PackError(
-            f"That's a single {_TYPNAME[art]}, not an archive.",
-            "A whole pack is expected here. Two paths lead to the goal: "
-            "put all announcements in a folder and choose 'Import "
-            "Folder' - or ZIP the folder first.")
+            t("importer.err_single_audio_title", type_name=_typname(art)),
+            t("importer.err_single_audio_hint"))
 
     if art == "pdf":
         return PackError(
-            "That's a PDF document, not a voice pack.",
-            "A ZIP or tar.gz archive with announcements named like "
-            "7.ogg or 12.wav is expected.")
+            t("importer.err_pdf_title"),
+            t("importer.err_pdf_hint"))
 
     return PackError(
-        "The file isn't an archive the app can read.",
-        f"'{archive.name}' starts like neither a ZIP nor a "
-        "tar.gz. It's also possible that a server error page was "
-        "downloaded instead of the archive - in that case, just "
-        "fetch it again.")
+        t("importer.err_unknown_archive_title"),
+        t("importer.err_unknown_archive_hint", name=archive.name))
 
 
 def extract_archive(archive: Path, target: Path,
@@ -307,9 +298,9 @@ def extract_archive(archive: Path, target: Path,
             if not behalten(name):
                 continue
             if len(verworfen) < MAX_MELDUNGEN:
-                verwerfen(name, "more than expected")
+                verwerfen(name, t("importer.reason_more_than_expected"))
             else:
-                verworfen.append((name, "more than expected"))
+                verworfen.append((name, t("importer.reason_more_than_expected")))
 
     def passt(entpackt: int, name: str) -> bool:
         """Darf dieser Eintrag noch mit?
@@ -321,10 +312,10 @@ def extract_archive(archive: Path, target: Path,
         """
         nonlocal gesamt
         if entpackt > MAX_EINTRAG_BYTES:
-            verwerfen(name, "too large")
+            verwerfen(name, t("importer.reason_too_large"))
             return False
         if gesamt + entpackt > MAX_GESAMT_BYTES:
-            verwerfen(name, "archive too large overall")
+            verwerfen(name, t("importer.reason_archive_too_large"))
             return False
         gesamt += entpackt
         return True
@@ -352,12 +343,9 @@ def extract_archive(archive: Path, target: Path,
                 # beschädigt - dabei fehlte nur das Kennwort.
                 if info.flag_bits & 0x1:
                     raise PackError(
-                        "The archive is password-protected.",
-                        "The app can't open password-protected archives. "
-                        "Please unpack it yourself and then choose the "
-                        "unpacked folder - or repack the announcements "
-                        "without a password.\n\n"
-                        f"Affected: {info.filename}")
+                        t("importer.err_password_protected_title"),
+                        t("importer.err_password_protected_hint",
+                          filename=info.filename))
                 # Die angekündigte Größe zuerst prüfen, damit gar
                 # nicht erst gelesen wird, was zu groß ist.
                 if not passt(info.file_size, info.filename):
@@ -376,7 +364,7 @@ def extract_archive(archive: Path, target: Path,
                     with zf.open(info) as strom:
                         roh = strom.read(MAX_EINTRAG_BYTES + 1)
                     if len(roh) > MAX_EINTRAG_BYTES:
-                        verwerfen(info.filename, "larger than announced")
+                        verwerfen(info.filename, t("importer.reason_larger_than_announced"))
                         gesamt -= info.file_size
                         continue
                 # zlib.error trifft den häufigsten Fall überhaupt:
@@ -386,13 +374,9 @@ def extract_archive(archive: Path, target: Path,
                 except (zipfile.BadZipFile, zlib.error, RuntimeError,
                         EOFError, OSError) as exc:
                     raise PackError(
-                        "The archive can't be read completely.",
-                        "The directory is there, but the data behind it "
-                        "isn't. That's what an incompletely downloaded "
-                        "or damaged archive looks like - please download "
-                        "it again.\n\n"
-                        f"Affected: {info.filename}\n"
-                        f"Technical reason: {exc}") from exc
+                        t("importer.err_incomplete_read_title"),
+                        t("importer.err_incomplete_read_hint",
+                          filename=info.filename, reason=exc)) from exc
                 try:
                     (target / name).write_bytes(roh)
                 except OSError as exc:
@@ -400,11 +384,9 @@ def extract_archive(archive: Path, target: Path,
                     # gesperrter Ordner. Vorher flog das roh bis in
                     # den Dialog.
                     raise PackError(
-                        "A file from the archive couldn't be saved.",
-                        f"Affected: {name}\n\nPossible reasons: the name "
-                        f"is too long, the disk is full, or the target "
-                        f"folder is locked.\n\nTechnical details: "
-                        f"{exc}") from exc
+                        t("importer.err_save_failed_title"),
+                        t("importer.err_save_failed_hint", name=name,
+                          reason=exc)) from exc
                 geschrieben.add(name)
                 anzahl += 1
     elif art not in ("gzip", "bzip2", "xz", "unbekannt"):
@@ -455,30 +437,22 @@ def extract_archive(archive: Path, target: Path,
                 # Download. Früher stand hier "erwartet wird ein
                 # tar.gz-Archiv" - genau das, was der Nutzer hatte.
                 raise PackError(
-                    "The archive is incomplete or damaged.",
-                    "The start of the file is a packed archive, but it "
-                    "can't be unpacked to the end. This is most often "
-                    "caused by an interrupted download - please download "
-                    "the file again.\n\n"
-                    f"Technical reason: {exc}") from exc
+                    t("importer.err_tar_incomplete_title"),
+                    t("importer.err_tar_incomplete_hint", reason=exc)) from exc
             raise _kein_archiv(archive, art) from exc
 
     if anzahl == 0:
-        hinweis = "Files like 7.ogg or 12.wav are expected."
+        hinweis = t("importer.hint_expected_files")
         if verworfen:
-            hinweis = (f"{len(verworfen)} entries were discarded. The first: "
-                       f"'{verworfen[0][0]}' ({verworfen[0][1]}). A voice "
-                       f"pack consists of short announcements a few "
-                       f"seconds long.")
-        raise PackError("The archive contained no usable audio files.",
-                        hinweis)
+            hinweis = t("importer.hint_discarded", count=len(verworfen),
+                        name=verworfen[0][0], reason=verworfen[0][1])
+        raise PackError(t("importer.err_no_audio_title"), hinweis)
 
     if log:
-        log(f"{anzahl} files unpacked from {archive.name}.")
+        log(t("importer.log_unpacked", count=anzahl, archive=archive.name))
         if verworfen:
-            log(f"Note: {len(verworfen)} entries were skipped "
-                f"({verworfen[0][1]}, first '{verworfen[0][0]}'). The pack "
-                f"is incomplete as a result.")
+            log(t("importer.log_skipped_note", count=len(verworfen),
+                  reason=verworfen[0][1], name=verworfen[0][0]))
     return target
 
 
@@ -511,26 +485,21 @@ def create_template_folder(previews: Dict[int, Path],
         else sorted(previews)
     if not ids:
         raise PackError(
-            "No original announcements are available.",
-            "First sign in under 'Start' - the app then fetches your "
-            "robot's original pack by itself.")
+            t("importer.err_no_originals_title"),
+            t("importer.err_no_originals_hint"))
 
     zeilen = [
-        "How to build your own voice pack",
+        t("importer.template_header"),
         "=" * 38,
         "",
-        "This folder has every announcement from your robot - already",
-        "correctly named. The number in the filename is the announcement number.",
+        t("importer.template_intro"),
         "",
-        "1. Listen to the file so you know what's said.",
-        "2. Save your own recording under EXACTLY THE SAME NAME.",
-        "   (mp3, wav, m4a, and flac work too - the app converts them.)",
-        "3. Whatever you don't replace, just leave alone: these announcements",
-        "   stay on the German original voice.",
-        "4. In the app, click 'Import Whole Folder' and choose this",
-        "   folder.",
+        t("importer.template_step1"),
+        t("importer.template_step2"),
+        t("importer.template_step3"),
+        t("importer.template_step4"),
         "",
-        "Keep the recordings short - the originals are two to six seconds.",
+        t("importer.template_keep_short"),
         "",
         "-" * 38,
         "",
@@ -545,14 +514,14 @@ def create_template_folder(previews: Dict[int, Path],
         kopiert += 1
 
         eintrag = catalog.get(sound_id)
-        beschreibung = eintrag.title if eintrag else "(unknown)"
+        beschreibung = eintrag.title if eintrag else t("importer.unknown_placeholder")
         zeilen.append(f"{sound_id}.ogg  =  {beschreibung}")
 
-    (target / "_Instructions.txt").write_text("\n".join(zeilen) + "\n",
-                                           encoding="utf-8")
+    (target / t("importer.instructions_filename")).write_text(
+        "\n".join(zeilen) + "\n", encoding="utf-8")
 
     if log:
-        log(f"{kopiert} original announcements copied to {target}.")
+        log(t("importer.log_copied", count=kopiert, target=target))
     return target
 
 

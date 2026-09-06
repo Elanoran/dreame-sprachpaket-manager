@@ -11,6 +11,7 @@ from tkinter import filedialog, messagebox, ttk
 from typing import Optional
 
 from .. import installer, library, official, packer, server
+from ..i18n import t
 from ..paths import build_dir
 from .state import (AppState, Task, error_text, run_async, spaeter,
                     to_main)
@@ -19,18 +20,7 @@ from .widgets import (Card, InfoBanner, LogView, ScrollablePage, StatusBadge,
                       labeled_value, show_error, show_info, show_warning)
 
 
-APP_HINWEIS = (
-    "Important regarding the Dreamehome app: your pack will NOT show up "
-    "there under 'Voice'. The app only lists languages from Dreame's own "
-    "catalog, and a self-assigned identifier isn't in it.\n\n"
-    "So if the app reports on opening that the robot and app have "
-    "different language settings, that's exactly the expected sign that "
-    "your pack is running.\n\n"
-    "Don't pick a language in the Dreamehome app now - that would make the "
-    "robot re-download the official pack and overwrite yours.\n\n"
-    "You can go back to the original voice any time via "
-    "'Restore Original Voice'."
-)
+APP_HINWEIS = t("tab_install.app_hinweis")
 
 
 def open_folder(path: Path) -> None:
@@ -65,15 +55,7 @@ class InstallTab(ttk.Frame):
 
         InfoBanner(
             outer, self.theme,
-            "How the install works: the app builds the pack, briefly starts "
-            "a small web server on this PC, and tells the robot via the "
-            "Dreame cloud to fetch it there. The robot checks the checksum "
-            "itself - if it doesn't match, it discards the pack and keeps "
-            "its current voice.\n"
-            "Your pack will NOT appear in the Dreamehome app under "
-            "'Voice' afterward - that only shows Dreame's own languages. "
-            "The 'Check Voice Pack on Robot' button tells you whether it's "
-            "running.",
+            t("tab_install.info_banner"),
         ).pack(fill="x", pady=(0, 14))
 
         top = ttk.Frame(outer, style="TFrame")
@@ -82,19 +64,19 @@ class InstallTab(ttk.Frame):
         top.columnconfigure(1, weight=2, uniform="cols")
 
         # ---- Zusammenfassung -------------------------------------------
-        summary = Card(top, self.theme, "Summary")
+        summary = Card(top, self.theme, t("tab_install.summary_title"))
         summary.grid(row=0, column=0, sticky="nsew", padx=(0, 7))
-        self.val_device = labeled_value(summary.content, self.theme, "Robot")
-        self.val_base = labeled_value(summary.content, self.theme, "Original Pack")
-        self.val_count = labeled_value(summary.content, self.theme, "Custom Announcements")
-        self.val_pack = labeled_value(summary.content, self.theme, "Built Pack")
-        self.val_md5 = labeled_value(summary.content, self.theme, "MD5 Checksum")
+        self.val_device = labeled_value(summary.content, self.theme, t("tab_install.summary_robot"))
+        self.val_base = labeled_value(summary.content, self.theme, t("tab_install.summary_original_pack"))
+        self.val_count = labeled_value(summary.content, self.theme, t("tab_install.summary_custom_announcements"))
+        self.val_pack = labeled_value(summary.content, self.theme, t("tab_install.summary_built_pack"))
+        self.val_md5 = labeled_value(summary.content, self.theme, t("tab_install.summary_md5"))
 
         self.prebuilt_row = ttk.Frame(summary.content, style="Card.TFrame")
         self.lbl_prebuilt = ttk.Label(self.prebuilt_row, text="", style="Warning.TLabel",
                                       wraplength=430, justify="left")
         self.lbl_prebuilt.pack(anchor="w")
-        ttk.Button(self.prebuilt_row, text="Build My Own Pack Instead",
+        ttk.Button(self.prebuilt_row, text=t("tab_install.build_own_pack_button"),
                    style="Small.TButton",
                    command=self._clear_prebuilt).pack(anchor="w", pady=(6, 0))
 
@@ -104,7 +86,7 @@ class InstallTab(ttk.Frame):
         # muss hier sehen und wählen können, welche installiert wird.
         self.pack_row = ttk.Frame(summary.content, style="Card.TFrame")
         self.pack_row.pack(fill="x", pady=(12, 0))
-        ttk.Label(self.pack_row, text="Saved Packs",
+        ttk.Label(self.pack_row, text=t("tab_install.saved_packs_label"),
                   style="Surface.TLabel").pack(anchor="w")
         self.var_saved = tk.StringVar()
         self.combo_saved = ttk.Combobox(self.pack_row, textvariable=self.var_saved,
@@ -117,12 +99,12 @@ class InstallTab(ttk.Frame):
         self._saved: list = []
 
         # ---- Einstellungen ---------------------------------------------
-        settings = Card(top, self.theme, "Settings")
+        settings = Card(top, self.theme, t("tab_install.settings_title"))
         settings.grid(row=0, column=1, sticky="nsew", padx=(7, 0))
         body = settings.content
         body.columnconfigure(1, weight=1)
 
-        ttk.Label(body, text="Identifier", style="Surface.TLabel").grid(
+        ttk.Label(body, text=t("tab_install.identifier_label"), style="Surface.TLabel").grid(
             row=0, column=0, sticky="w", pady=4, padx=(0, 8))
         # Fest, siehe installer.install_pack: Der Roboter legt je Kennung
         # einen Ordner an, den man über die Cloud nicht mehr löschen
@@ -131,7 +113,7 @@ class InstallTab(ttk.Frame):
                   style="Surface.TLabel").grid(
             row=0, column=1, sticky="w", pady=4)
 
-        ttk.Label(body, text="PC Address", style="Surface.TLabel").grid(
+        ttk.Label(body, text=t("tab_install.pc_address_label"), style="Surface.TLabel").grid(
             row=1, column=0, sticky="w", pady=4, padx=(0, 8))
         self.var_ip = tk.StringVar(value=self.state.config["host_ip"])
         self.combo_ip = ttk.Combobox(body, textvariable=self.var_ip, width=18,
@@ -147,45 +129,44 @@ class InstallTab(ttk.Frame):
         self.var_port = tk.StringVar(value=str(self.state.config["serve_port"] or ""))
         ttk.Entry(body, textvariable=self.var_port, width=10).grid(
             row=2, column=1, sticky="w", pady=4)
-        ttk.Label(body, text="empty = automatic", style="Muted.TLabel").grid(
+        ttk.Label(body, text=t("tab_install.port_empty_hint"), style="Muted.TLabel").grid(
             row=3, column=1, sticky="w")
 
-        ttk.Label(body, text="Custom URL", style="Surface.TLabel").grid(
+        ttk.Label(body, text=t("tab_install.custom_url_label"), style="Surface.TLabel").grid(
             row=4, column=0, sticky="w", pady=(10, 4), padx=(0, 8))
         self.var_url = tk.StringVar()
         ttk.Entry(body, textvariable=self.var_url).grid(
             row=4, column=1, sticky="ew", pady=(10, 4))
         ttk.Label(body,
-                  text=("only needed if the robot can't reach this PC "
-                        "(then upload the pack yourself)"),
+                  text=t("tab_install.custom_url_hint"),
                   style="Muted.TLabel", wraplength=230,
                   justify="left").grid(row=5, column=1, sticky="w")
 
         # ---- Aktionen ---------------------------------------------------
-        actions = Card(outer, self.theme, "Step 3: Transfer to the Robot")
+        actions = Card(outer, self.theme, t("tab_install.step3_title"))
         actions.pack(fill="x", pady=(14, 0))
 
         button_row = ttk.Frame(actions.content, style="Card.TFrame")
         button_row.pack(fill="x")
 
         self.btn_install = ttk.Button(
-            button_row, text="Install Voice Pack on Robot",
+            button_row, text=t("tab_install.install_button"),
             style="Big.TButton", command=self._on_install)
         self.btn_install.pack(side="left")
 
         self.btn_build_only = ttk.Button(
-            button_row, text="Build Only", command=self._on_build_only)
+            button_row, text=t("tab_install.build_only_button"), command=self._on_build_only)
         self.btn_build_only.pack(side="left", padx=(10, 0))
 
-        self.btn_cancel = ttk.Button(button_row, text="Cancel",
+        self.btn_cancel = ttk.Button(button_row, text=t("tab_install.cancel_button"),
                                      command=self._on_cancel, state="disabled")
         self.btn_cancel.pack(side="left", padx=(10, 0))
 
-        ttk.Button(button_row, text="Open Pack Folder", style="Small.TButton",
+        ttk.Button(button_row, text=t("tab_install.open_pack_folder_button"), style="Small.TButton",
                    command=lambda: open_folder(build_dir())).pack(side="right")
         # Bewusst "Gebautes Paket": unter 'Eigene Stimmen' gibt es einen Knopf zum Einlesen
         # von Aufnahmen, und "Fertiges Paket" hat für beides gepasst.
-        ttk.Button(button_row, text="Choose Ready-Made Pack ...",
+        ttk.Button(button_row, text=t("tab_install.choose_ready_pack_button"),
                    style="Small.TButton",
                    command=self._on_pick_pack).pack(side="right", padx=(0, 8))
 
@@ -195,10 +176,10 @@ class InstallTab(ttk.Frame):
 
         status_row = ttk.Frame(actions.content, style="Card.TFrame")
         status_row.pack(fill="x")
-        self.badge = StatusBadge(status_row, self.theme, "Ready")
+        self.badge = StatusBadge(status_row, self.theme, t("tab_install.status_ready"))
         self.badge.pack(side="left")
         self.btn_status = ttk.Button(
-            status_row, text="Check Voice Pack on Robot",
+            status_row, text=t("tab_install.check_status_button"),
             style="Small.TButton", command=self._on_query_status)
         self.btn_status.pack(side="right")
 
@@ -207,21 +188,19 @@ class InstallTab(ttk.Frame):
 
         # ---- Wiederherstellen -------------------------------------------
         self.karte_notausgang = restore = Card(
-            outer, self.theme, "Emergency Exit: Restore Original Voice",
-                       "Installs the official Dreame voice pack again - the "
-                       "robot loads it directly from the manufacturer, this "
-                       "PC isn't involved at all.")
+            outer, self.theme, t("tab_install.restore_card_title"),
+                       t("tab_install.restore_card_desc"))
         restore.pack(fill="x", pady=(14, 0))
 
         restore_row = ttk.Frame(restore.content, style="Card.TFrame")
         restore_row.pack(fill="x")
-        ttk.Label(restore_row, text="Language", style="Surface.TLabel").pack(
+        ttk.Label(restore_row, text=t("tab_install.language_label"), style="Surface.TLabel").pack(
             side="left", padx=(0, 10))
         self.var_restore = tk.StringVar()
         self.combo_restore = ttk.Combobox(restore_row, textvariable=self.var_restore,
                                           state="readonly", width=34, values=[])
         self.combo_restore.pack(side="left")
-        self.btn_restore = ttk.Button(restore_row, text="Restore Original Voice",
+        self.btn_restore = ttk.Button(restore_row, text=t("tab_install.restore_button"),
                                       command=self._on_restore)
         self.btn_restore.pack(side="left", padx=(12, 0))
 
@@ -241,8 +220,7 @@ class InstallTab(ttk.Frame):
         if not self._saved:
             self.var_saved.set("")
             self.lbl_saved.configure(
-                text=("No packs built yet. 'Custom Voices' creates a dialect "
-                      "pack, 'Individual Announcements' a custom one."))
+                text=t("tab_install.no_packs_built"))
             self.combo_saved.configure(state="disabled")
             return
 
@@ -254,8 +232,7 @@ class InstallTab(ttk.Frame):
                     self.var_saved.set(beschriftungen[i])
                     break
         self.lbl_saved.configure(
-            text=(f"{len(self._saved)} saved packs. Each voice lives in its "
-                  f"own file - a new version never overwrites an older one."))
+            text=t("tab_install.saved_packs_summary", count=len(self._saved)))
 
     def _on_pick_saved(self, _event=None) -> None:
         """Ein gespeichertes Paket zum Installieren auswählen."""
@@ -274,28 +251,28 @@ class InstallTab(ttk.Frame):
         self.state.prebuilt_name = info.dialect or info.path.name
         self.state.last_build = build
         self.refresh_summary()
-        self.log.append(f"Selected: {info.path.name}", "ok")
+        self.log.append(t("tab_install.log_selected", name=info.path.name), "ok")
         if info.voice:
-            self.log.append(f"Voice: {info.voice}", "muted")
+            self.log.append(t("tab_install.log_voice", voice=info.voice), "muted")
 
     def refresh_summary(self) -> None:
         self.refresh_saved_packs()
         device = self.state.device
         self.val_device.configure(
-            text=f"{device.name} ({device.model})" if device else "not selected")
+            text=f"{device.name} ({device.model})" if device else t("tab_install.device_not_selected"))
 
         if self.state.base_pack_info and self.state.has_base_pack:
             info = self.state.base_pack_info
             self.val_base.configure(
                 text=f"{info.label} - {info.size / (1024 * 1024):.1f} MB")
         else:
-            self.val_base.configure(text="not loaded yet")
+            self.val_base.configure(text=t("tab_install.base_pack_not_loaded"))
 
         assigned = len(self.state.assignments())
         missing = len(self.state.missing_assignments())
         text = str(assigned)
         if missing:
-            text += f"  ({missing} file(s) missing!)"
+            text += t("tab_install.missing_files_suffix", count=missing)
         self.val_count.configure(text=text)
 
         build = self.state.last_build
@@ -304,14 +281,12 @@ class InstallTab(ttk.Frame):
                 text=f"{build.path.name} - {build.size_mb:.1f} MB")
             self.val_md5.configure(text=build.md5)
         else:
-            self.val_pack.configure(text="not built yet")
+            self.val_pack.configure(text=t("tab_install.pack_not_built"))
             self.val_md5.configure(text="-")
 
         if self.state.prebuilt is not None:
             self.lbl_prebuilt.configure(
-                text=(f"The ready-made pack '{self.state.prebuilt_name}' is "
-                      f"queued for install. Your own assignments stay saved "
-                      f"but aren't being used right now."))
+                text=t("tab_install.prebuilt_queued", name=self.state.prebuilt_name))
             self.prebuilt_row.pack(fill="x", pady=(10, 0))
         else:
             self.prebuilt_row.pack_forget()
@@ -334,13 +309,13 @@ class InstallTab(ttk.Frame):
         die Antwort direkt vom Roboter.
         """
         if not self.state.connected:
-            show_warning(self, self.theme, "No Robot Selected",
-                         "Sign in under 'Connection' first.")
+            show_warning(self, self.theme, t("tab_install.query_status_no_robot_title"),
+                         t("tab_install.query_status_no_robot_message"))
             return
 
         cloud, device = self.state.cloud, self.state.device
         self.btn_status.configure(state="disabled")
-        self.badge.set("Asking the robot ...", "muted")
+        self.badge.set(t("tab_install.query_status_asking"), "muted")
 
         def work(_task):
             return (cloud.current_voice_pack(device),
@@ -348,40 +323,37 @@ class InstallTab(ttk.Frame):
 
         def ok(antwort) -> None:
             aktiv, zustand = antwort
-            self.log.append(f"Active voice pack per the robot: {aktiv or 'unknown'}",
+            self.log.append(t("tab_install.query_status_active_pack_log",
+                              value=aktiv or t("tab_install.query_status_unknown")),
                             "ok" if aktiv else "warn")
             if zustand:
-                self.log.append(f"State: {zustand}", "info")
+                self.log.append(t("tab_install.query_status_state_log", state=zustand), "info")
 
             offiziell = {p.id for p in self.state.official_packs}
             if not aktiv:
-                self.badge.set("No Response - Robot Asleep?", "warn")
+                self.badge.set(t("tab_install.query_status_no_response_badge"), "warn")
                 show_warning(
-                    self, self.theme, "No Response",
-                    "The robot didn't respond.",
-                    "Wake it in the Dreamehome app and try again.")
+                    self, self.theme, t("tab_install.query_status_no_response_title"),
+                    t("tab_install.query_status_no_response_message"),
+                    t("tab_install.query_status_no_response_hint"))
                 return
 
-            self.badge.set(f"Active: {aktiv}", "ok")
+            self.badge.set(t("tab_install.query_status_active_badge", value=aktiv), "ok")
             if str(aktiv).upper() in offiziell:
                 show_info(
-                    self, self.theme, "Official Pack Active",
-                    f"The robot is currently using '{aktiv}' - a pack from Dreame.",
-                    "Your custom pack isn't active as a result. This happens "
-                    "when a language was selected in the Dreamehome app: the "
-                    "robot then re-downloads it and overwrites the custom "
-                    "pack. Just install it again.")
+                    self, self.theme, t("tab_install.query_status_official_title"),
+                    t("tab_install.query_status_official_message", value=aktiv),
+                    t("tab_install.query_status_official_hint"))
             else:
                 show_info(
-                    self, self.theme, "Your Pack Is Active",
-                    f"The robot is currently using '{aktiv}' - that's your "
-                    f"own identifier, not a pack from Dreame.",
+                    self, self.theme, t("tab_install.query_status_own_title"),
+                    t("tab_install.query_status_own_message", value=aktiv),
                     APP_HINWEIS)
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            self.badge.set("Check Failed", "error")
-            show_error(self, self.theme, "Check Failed", message, hint)
+            self.badge.set(t("tab_install.query_status_failed_badge"), "error")
+            show_error(self, self.theme, t("tab_install.query_status_failed_title"), message, hint)
 
         run_async(self, work, on_success=ok, on_error=fail,
                   on_finally=lambda: self.btn_status.configure(state="normal"))
@@ -390,10 +362,10 @@ class InstallTab(ttk.Frame):
         """Ein bereits gebautes Sprachpaket von der Festplatte übernehmen."""
         chosen = filedialog.askopenfilename(
             parent=self,
-            title="Choose a Built Voice Pack (.tar.gz)",
+            title=t("tab_install.pick_pack_dialog_title"),
             initialdir=str(build_dir()),
-            filetypes=[("Built voice pack", "*.tar.gz *.tgz"),
-                       ("All files", "*.*")],
+            filetypes=[(t("tab_install.pick_pack_filetype_pack"), "*.tar.gz *.tgz"),
+                       (t("tab_install.pick_pack_filetype_all"), "*.*")],
         )
         if not chosen:
             return
@@ -402,17 +374,9 @@ class InstallTab(ttk.Frame):
         # 'Eigene Stimmen' - hier würden sie nur mit einer Formatmeldung scheitern.
         if Path(chosen).suffix.lower() == ".zip":
             show_warning(
-                self, self.theme, "That's Recordings, Not a Ready-Made Pack",
-                f"{Path(chosen).name} contains individual voice files. This "
-                f"expects an already-built pack - a .tar.gz file.",
-                "How to proceed: if these are the recordings from the "
-                "project page, they're already ready to go. Use the "
-                "'Ready-Made Voices' sidebar item instead - choose, "
-                "preview, install there.\n\n"
-                "If these are your own recordings, use 'Custom Voices' and "
-                "click 'Import Recordings ...' there. The app builds the "
-                "pack for your model from them; it then shows up here too. "
-                "You don't need to unpack anything.")
+                self, self.theme, t("tab_install.pick_pack_wrong_format_title"),
+                t("tab_install.pick_pack_wrong_format_message", name=Path(chosen).name),
+                t("tab_install.pick_pack_wrong_format_hint"))
             return
 
         try:
@@ -427,12 +391,12 @@ class InstallTab(ttk.Frame):
         self.refresh_summary()
 
         self.log.clear()
-        self.log.append(f"Loaded: {build.path.name}", "ok")
-        self.log.append(f"{len(build.replaced)} announcements, {build.size_mb:.1f} MB, "
-                        f"MD5 {build.md5}", "info")
+        self.log.append(t("tab_install.pick_pack_loaded_log", name=build.path.name), "ok")
+        self.log.append(t("tab_install.pick_pack_summary_log", count=len(build.replaced),
+                          size=build.size_mb, md5=build.md5), "info")
         for warning in build.warnings:
             self.log.append(warning, "warn")
-        self.badge.set("Pack Loaded - Ready to Install", "ok")
+        self.badge.set(t("tab_install.pick_pack_loaded_badge"), "ok")
 
     def _clear_prebuilt(self) -> None:
         self.state.prebuilt = None
@@ -477,23 +441,21 @@ class InstallTab(ttk.Frame):
     def _on_cancel(self) -> None:
         if self._task:
             self._task.cancel()
-            self.log.append("Cancellation requested ...", "warn")
+            self.log.append(t("tab_install.cancel_requested_log"), "warn")
 
     # ------------------------------------------------------------------
     def _preflight(self, need_device: bool = True) -> bool:
         if need_device and not self.state.connected:
             messagebox.showwarning(
-                "No Robot Selected",
-                "Sign in under 'Connection' and choose your robot.",
+                t("tab_install.preflight_no_robot_title"),
+                t("tab_install.preflight_no_robot_message"),
                 parent=self)
             return False
 
         if not self.state.has_base_pack:
             messagebox.showwarning(
-                "Original Pack Missing",
-                "First download your robot's official voice pack under "
-                "'Individual Announcements'. It's the foundation for your "
-                "own pack.",
+                t("tab_install.preflight_no_base_title"),
+                t("tab_install.preflight_no_base_message"),
                 parent=self)
             return False
 
@@ -503,23 +465,21 @@ class InstallTab(ttk.Frame):
 
         if not self.state.assignments():
             messagebox.showwarning(
-                "Nothing to Do",
-                "Not a single announcement has been replaced yet. Assign at "
-                "least one announcement an audio file under 'Individual "
-                "Announcements' - or get a ready-made pack under 'Custom "
-                "Voices'.",
+                t("tab_install.preflight_nothing_title"),
+                t("tab_install.preflight_nothing_message"),
                 parent=self)
             return False
 
         missing = self.state.missing_assignments()
         if missing:
-            preview = "\n".join(f"  Announcement {i}: {p}" for i, p in missing[:6])
-            more = f"\n  ... and {len(missing) - 6} more" if len(missing) > 6 else ""
+            preview = "\n".join(t("tab_install.preflight_missing_line", index=i, path=p)
+                                for i, p in missing[:6])
+            more = (t("tab_install.preflight_missing_more", count=len(missing) - 6)
+                    if len(missing) > 6 else "")
             if not messagebox.askyesno(
-                    "Files Missing",
-                    f"{len(missing)} assigned file(s) no longer exist:\n\n"
-                    f"{preview}{more}\n\nThese announcements will stay on the "
-                    f"original voice. Continue anyway?",
+                    t("tab_install.preflight_missing_title"),
+                    t("tab_install.preflight_missing_message",
+                      count=len(missing), preview=preview, more=more),
                     parent=self):
                 return False
         return True
@@ -527,10 +487,9 @@ class InstallTab(ttk.Frame):
     def _build_pack(self, task: Task):
         prebuilt = self.state.prebuilt
         if prebuilt is not None and prebuilt.path.is_file():
-            self._log(f"Using the prepared pack '{self.state.prebuilt_name}'.",
+            self._log(t("tab_install.build_pack_using_prepared_log", name=self.state.prebuilt_name),
                       "info")
-            self._log("It's already adapted to your model - nothing needs "
-                      "to be built again.", "info")
+            self._log(t("tab_install.build_pack_already_adapted_log"), "info")
             return prebuilt
 
         return packer.build_pack(
@@ -541,7 +500,7 @@ class InstallTab(ttk.Frame):
             mapping=self.state.voice_mapping(),
             log=lambda m: self._log(m),
             progress=lambda done, total: self._step(
-                "Building pack", 0.05 + 0.35 * (done / total if total else 0)),
+                t("tab_install.step_building_pack"), 0.05 + 0.35 * (done / total if total else 0)),
         )
 
     # ------------------------------------------------------------------
@@ -550,7 +509,7 @@ class InstallTab(ttk.Frame):
             return
 
         self.log.clear()
-        self.log.append("Building pack (without installing) ...", "step")
+        self.log.append(t("tab_install.build_only_log_start"), "step")
         self._busy(True)
         self.progress.configure(value=0)
 
@@ -561,11 +520,11 @@ class InstallTab(ttk.Frame):
             self.state.last_build = build
             self.refresh_summary()
             self.progress.configure(value=100)
-            self.badge.set("Pack Built", "ok")
+            self.badge.set(t("tab_install.build_only_badge_done"), "ok")
             self.log.append(build.summary(), "ok")
             for warning in build.warnings:
                 self.log.append(warning, "warn")
-            self.log.append(f"Saved to: {build.path}", "info")
+            self.log.append(t("tab_install.build_only_saved_log", path=build.path), "info")
 
         run_async(self, work, on_success=ok, on_error=self._on_error,
                   on_finally=lambda: self._busy(False))
@@ -579,8 +538,8 @@ class InstallTab(ttk.Frame):
         try:
             port = int(self.var_port.get().strip() or 0)
         except ValueError:
-            messagebox.showwarning("Invalid Port",
-                                   "The port must be a number (or left empty).",
+            messagebox.showwarning(t("tab_install.install_invalid_port_title"),
+                                   t("tab_install.install_invalid_port_message"),
                                    parent=self)
             return
 
@@ -594,7 +553,7 @@ class InstallTab(ttk.Frame):
         host_ip = self.var_ip.get().strip()
 
         self.log.clear()
-        self.log.append("Starting installation", "step")
+        self.log.append(t("tab_install.install_starting_log"), "step")
         self._busy(True)
         self.progress.configure(value=0)
 
@@ -606,7 +565,7 @@ class InstallTab(ttk.Frame):
                 self._log(warning_text, "warn")
 
             self._log("", "info")
-            self._log("Transferring to the robot", "step")
+            self._log(t("tab_install.install_transferring_log"), "step")
             return installer.install_pack(
                 cloud=cloud, device=device, build=build,
                 port=port, host_ip=host_ip, public_url=public_url,
@@ -621,9 +580,9 @@ class InstallTab(ttk.Frame):
                 # Belegt oder nur wahrscheinlich - der Unterschied gehört
                 # in die Plakette und ins Fenster, nicht nur ins Protokoll.
                 if outcome.bestaetigt:
-                    self.badge.set("Installed Successfully", "ok")
+                    self.badge.set(t("tab_install.install_success_badge"), "ok")
                 else:
-                    self.badge.set("Transferred, Not Confirmed", "warn")
+                    self.badge.set(t("tab_install.install_transferred_badge"), "warn")
                 self.log.append(outcome.message,
                                 "ok" if outcome.bestaetigt else "warn")
                 if outcome.hint:
@@ -631,9 +590,9 @@ class InstallTab(ttk.Frame):
                 self.log.append(APP_HINWEIS, "warn")
                 show_info(
                     self, self.theme,
-                    "Done" if outcome.bestaetigt else "Transferred",
-                    outcome.message + "\n\nTry it out: have the robot start "
-                    "a cleaning run - it should sound different now.",
+                    t("tab_install.install_done_title") if outcome.bestaetigt
+                    else t("tab_install.install_transferred_title"),
+                    outcome.message + "\n\n" + t("tab_install.install_try_it_out"),
                     (f"{outcome.hint}\n\n{APP_HINWEIS}" if outcome.hint
                      else APP_HINWEIS))
             else:
@@ -642,7 +601,7 @@ class InstallTab(ttk.Frame):
                 if outcome.hint:
                     self.log.append(outcome.hint, "warn")
                 messagebox.showwarning(
-                    "Not Completed",
+                    t("tab_install.install_not_completed_title"),
                     outcome.message + (f"\n\n{outcome.hint}" if outcome.hint else ""),
                     parent=self)
 
@@ -656,29 +615,28 @@ class InstallTab(ttk.Frame):
     # ------------------------------------------------------------------
     def _on_restore(self) -> None:
         if not self.state.connected:
-            messagebox.showwarning("No Robot Selected",
-                                   "Sign in under 'Connection' first.",
+            messagebox.showwarning(t("tab_install.restore_no_robot_title"),
+                                   t("tab_install.restore_no_robot_message"),
                                    parent=self)
             return
 
         pack = next((p for p in self.state.official_packs
                      if p.label == self.var_restore.get()), None)
         if pack is None:
-            messagebox.showwarning("No Language Chosen",
-                                   "Please choose the pack to restore.",
+            messagebox.showwarning(t("tab_install.restore_no_lang_title"),
+                                   t("tab_install.restore_no_lang_message"),
                                    parent=self)
             return
 
         if not messagebox.askyesno(
-                "Restore Original Voice",
-                f"The robot will load '{pack.label}' directly from Dreame, "
-                f"restoring the original voice.\n\nContinue?",
+                t("tab_install.restore_confirm_title"),
+                t("tab_install.restore_confirm_message", label=pack.label),
                 parent=self):
             return
 
         cloud, device = self.state.cloud, self.state.device
         self.log.clear()
-        self.log.append("Restoring original voice", "step")
+        self.log.append(t("tab_install.restore_log_start"), "step")
         self._busy(True, abbrechbar=False)
         self.progress.configure(value=0)
 
@@ -705,9 +663,9 @@ class InstallTab(ttk.Frame):
     # ------------------------------------------------------------------
     def _on_error(self, exc: Exception) -> None:
         message, hint = error_text(exc)
-        self.badge.set("Failed", "error")
+        self.badge.set(t("tab_install.error_failed_badge"), "error")
         self.log.append(message, "error")
         if hint:
             self.log.append(hint, "warn")
-        show_error(self, self.theme, "Error",
+        show_error(self, self.theme, t("tab_install.error_title"),
                        message + (f"\n\n{hint}" if hint else ""))
