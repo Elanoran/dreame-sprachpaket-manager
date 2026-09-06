@@ -37,6 +37,7 @@ DEFAULTS: Dict[str, Any] = {
     "serve_port": 0,             # 0 = freien Port automatisch wählen
     "host_ip": "",               # leer = automatisch ermitteln
     "dark_mode": False,
+    "ui_language": "en",         # en | de - the app's own display language
     # Sprachsynthese für Dialektpakete
     "tts_engine": "windows",     # windows | elevenlabs
     "tts_voice": "",             # Name der Windows-Stimme, leer = erste deutsche

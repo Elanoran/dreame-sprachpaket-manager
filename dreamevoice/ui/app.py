@@ -13,7 +13,7 @@ from tkinter import messagebox, ttk
 
 from .. import (APP_NAME, AUTOR, HAFTUNG, LIZENZ, PROJEKT_URL, SPENDEN_URL,
                 __version__, textfiles)
-from .. import aktualisierung, anleitungen
+from .. import aktualisierung, anleitungen, i18n
 from ..paths import data_dir, icon_file, log_file
 from .page_start import StartPage
 from .page_voice import VoicePage
@@ -40,6 +40,7 @@ class MainWindow(tk.Tk):
         super().__init__()
 
         self.state_obj = AppState()
+        i18n.set_language(self.state_obj.config["ui_language"])
         self._symbol_setzen()
         self.title(f"{APP_NAME}  {__version__}")
         self.minsize(*WINDOW_MIN)
@@ -222,6 +223,14 @@ class MainWindow(tk.Tk):
 
         right = ttk.Frame(header, style="TFrame")
         right.pack(side="right")
+        self.var_language = tk.StringVar(
+            value="Deutsch" if self.state_obj.config["ui_language"] == "de"
+            else "English")
+        language_box = ttk.Combobox(right, textvariable=self.var_language,
+                                    values=["English", "Deutsch"],
+                                    state="readonly", width=9)
+        language_box.pack(side="left", padx=(0, 12))
+        language_box.bind("<<ComboboxSelected>>", self._toggle_language)
         self.var_dark = tk.BooleanVar(value=bool(self.state_obj.config["dark_mode"]))
         ttk.Checkbutton(right, text="Dark mode", style="Bg.TCheckbutton",
                         variable=self.var_dark,
@@ -431,6 +440,17 @@ class MainWindow(tk.Tk):
             "unsaved input.",
             parent=self)
         self.state_obj.config["dark_mode"] = self.var_dark.get()
+        self.state_obj.save()
+
+    def _toggle_language(self, _event=None) -> None:
+        messagebox.showinfo(
+            "Switch language",
+            "The new language takes effect the next time the app starts.\n\n"
+            "Switching it live would rebuild every view and lose any "
+            "unsaved input.",
+            parent=self)
+        self.state_obj.config["ui_language"] = (
+            "de" if self.var_language.get() == "Deutsch" else "en")
         self.state_obj.save()
 
     # ------------------------------------------------------------------

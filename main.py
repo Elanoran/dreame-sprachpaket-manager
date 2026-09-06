@@ -50,26 +50,26 @@ def _fatal(title: str, message: str) -> None:
 
 def main() -> int:
     if sys.version_info < (3, 9):
-        _fatal("Python zu alt",
-               "Diese App braucht Python 3.9 oder neuer.\n"
-               f"Gefunden: {sys.version.split()[0]}")
+        _fatal("Python too old",
+               "This app needs Python 3.9 or newer.\n"
+               f"Found: {sys.version.split()[0]}")
         return 1
 
     try:
         import requests  # noqa: F401
     except ImportError:
-        _fatal("Baustein fehlt",
-               "Das Paket 'requests' ist nicht installiert.\n\n"
-               "Installiere es mit:\n\n    pip install -r requirements.txt")
+        _fatal("Missing package",
+               "The 'requests' package isn't installed.\n\n"
+               "Install it with:\n\n    pip install requests")
         return 1
 
     try:
         import tkinter  # noqa: F401
     except ImportError:
-        _fatal("Tkinter fehlt",
-               "Diese Python-Installation enthält kein Tkinter.\n\n"
-               "Unter Windows hilft eine Neuinstallation von python.org, "
-               "unter Linux das Paket 'python3-tk'.")
+        _fatal("Tkinter missing",
+               "This Python installation doesn't include Tkinter.\n\n"
+               "On Windows, reinstalling from python.org fixes this; "
+               "on Linux, install the 'python3-tk' package.")
         return 1
 
     _enable_dpi_awareness()
@@ -78,8 +78,8 @@ def main() -> int:
         from dreamevoice.ui.app import run
         run()
     except Exception:
-        _fatal("Unerwarteter Fehler",
-               "Die App musste beendet werden.\n\n" + traceback.format_exc())
+        _fatal("Unexpected error",
+               "The app had to close.\n\n" + traceback.format_exc())
         return 1
     return 0
 
