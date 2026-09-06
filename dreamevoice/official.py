@@ -151,22 +151,22 @@ class VoicePackInfo:
         "ungewöhnlich aus".
         """
         if not _KENNUNG_OK.match(str(self.id or "")):
-            return f"unzulässige Kennung {self.id!r}"
+            return f"invalid identifier {self.id!r}"
         teil = urlsplit(self.url or "")
         if teil.scheme.lower() != "https":
-            return f"Bezugsadresse ohne https ({teil.scheme or 'ohne Schema'})"
+            return f"source address without https ({teil.scheme or 'no scheme'})"
         if not adresse_erlaubt(self.url):
-            return f"unbekannter Server {teil.hostname or '?'}"
+            return f"unknown server {teil.hostname or '?'}"
         if len(self.md5) != 32 or any(z not in "0123456789abcdef"
                                       for z in self.md5):
             # Ohne brauchbare Prüfsumme kann weder die App noch der
             # Roboter feststellen, ob unterwegs etwas verändert wurde.
             # Geprueft wurde das früher erst NACH dem Download.
-            return f"unbrauchbare Prüfsumme {self.md5!r}"
+            return f"unusable checksum {self.md5!r}"
         if self.size <= 0:
-            return "keine Größenangabe"
+            return "no size given"
         if self.size > MAX_PAKET_BYTES:
-            return f"unplausible Größe {self.size} Bytes"
+            return f"implausible size {self.size} bytes"
         return ""
 
     @property
@@ -190,29 +190,29 @@ class VoicePackInfo:
 def fetch_catalog(model: str, timeout: int = 20) -> List[VoicePackInfo]:
     """Lädt die Sprachpaketliste für ein Modell (z. B. dreame.vacuum.r2532h)."""
     if not model:
-        raise PackError("Es ist kein Robotermodell bekannt.",
-                        "Melde dich zuerst unter 'Verbindung' an.")
+        raise PackError("No robot model is known.",
+                        "Sign in under 'Connection' first.")
     url = CATALOG_URL.format(model=model)
     try:
         resp = requests.get(url, timeout=timeout)
     except requests.exceptions.RequestException as exc:
-        raise NetworkError("Die Sprachpaketliste von Dreame ist nicht erreichbar.",
-                           f"Technische Details: {exc}") from exc
+        raise NetworkError("Dreame's voice pack list can't be reached.",
+                           f"Technical details: {exc}") from exc
 
     if resp.status_code == 404:
         raise PackError(
-            f"Für das Modell {model} bietet Dreame keine Sprachpaketliste an.",
-            "Das Modell ist entweder sehr neu oder wird über einen anderen "
-            "Kanal versorgt. Ohne Originalpaket kann kein sicheres eigenes "
-            "Paket gebaut werden.",
+            f"Dreame doesn't offer a voice pack list for the model {model}.",
+            "The model is either very new or is served through a "
+            "different channel. Without an original pack, no safe "
+            "custom pack can be built.",
         )
     if resp.status_code != 200:
-        raise NetworkError(f"Dreame antwortete mit HTTP {resp.status_code}.")
+        raise NetworkError(f"Dreame responded with HTTP {resp.status_code}.")
 
     try:
         data = resp.json()
     except ValueError as exc:
-        raise PackError("Die Sprachpaketliste war unlesbar.") from exc
+        raise PackError("The voice pack list was unreadable.") from exc
 
     # Der Umschlag selbst ist auch nur eine Behauptung: `data` als
     # Liste, `voices` als Wörterbuch, Einträge als Text - alles das
@@ -221,11 +221,11 @@ def fetch_catalog(model: str, timeout: int = 20) -> List[VoicePackInfo]:
     voices = inhalt.get("voices") if isinstance(inhalt, dict) else None
     if not isinstance(voices, list):
         raise PackError(
-            "Die Sprachpaketliste von Dreame hat eine unerwartete Form.",
-            "Erwartet wurde eine Liste von Sprachpaketen. Es wurde nichts "
-            "geladen und nichts an den Roboter geschickt. Bleibt es dabei, "
-            "hat Dreame das Format geändert - dann hilft nur eine neue "
-            "Fassung dieser App.")
+            "Dreame's voice pack list has an unexpected shape.",
+            "A list of voice packs was expected. Nothing was loaded and "
+            "nothing was sent to the robot. If this persists, Dreame has "
+            "changed the format - only a new version of this app can "
+            "help then.")
     alle = [VoicePackInfo(v) for v in voices
             if isinstance(v, dict) and _text(v.get("download"))]
     # Was die Schranken nicht erfüllt, wird gar nicht erst angeboten.
@@ -243,14 +243,14 @@ def fetch_catalog(model: str, timeout: int = 20) -> List[VoicePackInfo]:
             # Protokoll, und auch dort nur als Kennung ohne Ursache.
             gruende = sorted({grund for _, grund in verworfen})
             raise PackError(
-                "Der Sprachpaket-Katalog von Dreame sieht ungewöhnlich aus.",
-                f"Alle {len(alle)} Einträge wurden abgelehnt. Grund: "
+                "Dreame's voice pack catalog looks unusual.",
+                f"All {len(alle)} entries were rejected. Reason: "
                 + "; ".join(gruende[:3])
-                + ".\n\nEs wurde nichts geladen und nichts an den Roboter "
-                "geschickt. Nennt der Grund einen unbekannten Server, hat "
-                "Dreame die Auslieferung umgestellt - dann hilft nur eine "
-                "neue Fassung dieser App.")
-        raise PackError(f"Dreame listet für {model} keine Sprachpakete auf.")
+                + ".\n\nNothing was loaded and nothing was sent to the "
+                "robot. If the reason names an unknown server, Dreame "
+                "has changed how it delivers packs - only a new version "
+                "of this app can help then.")
+        raise PackError(f"Dreame lists no voice packs for {model}.")
     return packs
 
 
@@ -294,7 +294,7 @@ def download_pack(pack: VoicePackInfo, model: str,
         with requests.get(pack.url, stream=True, timeout=60) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"Das Originalpaket konnte nicht geladen werden "
+                    f"The original pack couldn't be loaded "
                     f"(HTTP {resp.status_code}).")
             total = int(resp.headers.get("Content-Length") or pack.size or 0)
             done = 0
@@ -306,16 +306,16 @@ def download_pack(pack: VoicePackInfo, model: str,
                     done += len(block)
                     if done > MAX_PAKET_BYTES:
                         raise NetworkError(
-                            "Das angebotene Originalpaket ist unerwartet "
-                            "groß.",
-                            "Der Download wurde abgebrochen. Ein "
-                            "Sprachpaket wiegt rund zehn Megabyte.")
+                            "The offered original pack is unexpectedly "
+                            "large.",
+                            "The download was aborted. A voice pack "
+                            "weighs about ten megabytes.")
                     if progress:
                         progress(done, total)
     except requests.exceptions.RequestException as exc:
         tmp.unlink(missing_ok=True)
-        raise NetworkError("Der Download des Originalpakets ist abgebrochen.",
-                           f"Technische Details: {exc}") from exc
+        raise NetworkError("The original pack download was interrupted.",
+                           f"Technical details: {exc}") from exc
     except BaseException:
         # Der Abbruch wegen Überlänge ist ein NetworkError und damit
         # KEINE RequestException - er lief früher an der Aufräumzeile
@@ -331,15 +331,15 @@ def download_pack(pack: VoicePackInfo, model: str,
         # im Katalog übersprang die Kontrolle also vollständig.
         tmp.unlink(missing_ok=True)
         raise PackError(
-            "Zu diesem Originalpaket nennt Dreame keine Prüfsumme.",
-            "Ohne sie lässt sich nicht feststellen, ob die Datei "
-            "unterwegs verändert wurde. Sie wurde verworfen.")
+            "Dreame doesn't give a checksum for this original pack.",
+            "Without it, there's no way to tell whether the file was "
+            "altered in transit. It was discarded.")
     if actual != pack.md5:
         tmp.unlink(missing_ok=True)
         raise PackError(
-            "Das heruntergeladene Originalpaket ist beschädigt.",
-            f"Erwartete Prüfsumme {pack.md5}, tatsächlich {actual}. "
-            "Bitte erneut versuchen.",
+            "The downloaded original pack is corrupted.",
+            f"Expected checksum {pack.md5}, got {actual}. "
+            "Please try again.",
         )
 
     tmp.replace(target)
@@ -455,9 +455,9 @@ def describe_pack(pack_path: Path) -> str:
     built = ""
     if "time.txt" in meta:
         built = meta["time.txt"].decode("utf-8", "replace").strip()
-    parts = [f"{len(ids)} Ansagen"]
+    parts = [f"{len(ids)} announcements"]
     if meta:
-        parts.append(f"{len(meta)} Steuerdateien")
+        parts.append(f"{len(meta)} control files")
     if built:
-        parts.append(f"Stand {built}")
+        parts.append(f"built {built}")
     return ", ".join(parts)

@@ -148,5 +148,5 @@ def exists(target: str) -> bool:
 
 def describe(target: str) -> str:
     """Wo der Eintrag in Windows zu finden ist."""
-    return (f"Systemsteuerung > Anmeldeinformationsverwaltung > "
-            f"Windows-Anmeldeinformationen > „{target}“")
+    return (f"Control Panel > Credential Manager > "
+            f"Windows Credentials > “{target}”")

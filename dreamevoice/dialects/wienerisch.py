@@ -29,10 +29,10 @@ from __future__ import annotations
 from . import muster
 
 KEY = "wienerisch"
-NAME = "Wienerisch"
+NAME = "Viennese"
 BESCHREIBUNG = (
-    "Wienerisch, wie es in der Stadt geredet wird: lautgetreu geschrieben "
-    "und leicht grantig. Kein Bairisch mit Wiener Anstrich."
+    "Viennese, as spoken in the city: written phonetically and "
+    "slightly grumpy. Not Bavarian with a Viennese coat of paint."
 )
 LANG_ID = "WIEN"
 

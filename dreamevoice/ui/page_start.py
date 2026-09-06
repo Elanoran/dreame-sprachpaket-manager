@@ -102,8 +102,8 @@ class StartPage(ttk.Frame):
     def _bau_anmelden(self) -> ttk.Frame:
         rahmen = ttk.Frame(self.outer, style="TFrame")
 
-        card = Card(rahmen, self.theme, "Beim Hersteller-Konto anmelden",
-                    "Dieselben Zugangsdaten wie in deiner Handy-App")
+        card = Card(rahmen, self.theme, "Sign In to Your Manufacturer Account",
+                    "The same credentials as in your phone app")
         card.pack(fill="x")
         inhalt = card.content
 
@@ -130,11 +130,11 @@ class StartPage(ttk.Frame):
         self.combo_marke.grid(row=0, column=1, sticky="w", pady=5)
         self.combo_marke.bind("<<ComboboxSelected>>", self._on_marke)
 
-        beschriftung(1, "E-Mail")
+        beschriftung(1, "Email")
         ttk.Entry(raster, textvariable=self.var_email).grid(
             row=1, column=1, sticky="ew", pady=5)
 
-        beschriftung(2, "Passwort")
+        beschriftung(2, "Password")
         ttk.Entry(raster, textvariable=self.var_password, show="•").grid(
             row=2, column=1, sticky="ew", pady=5)
 
@@ -145,27 +145,27 @@ class StartPage(ttk.Frame):
             region_zelle, textvariable=self.var_region, state="readonly",
             values=[REGION_LABELS[r] for r in REGIONS], width=26)
         self.combo_region.pack(side="left")
-        ttk.Checkbutton(region_zelle, text="selbst erkennen",
+        ttk.Checkbutton(region_zelle, text="detect automatically",
                         style="TCheckbutton",
                         variable=self.var_autoregion).pack(side="left", padx=(10, 0))
 
-        ttk.Checkbutton(raster, text="Zugangsdaten im Windows-Tresor merken",
+        ttk.Checkbutton(raster, text="Remember credentials in the Windows vault",
                         style="TCheckbutton", variable=self.var_remember
                         ).grid(row=4, column=1, sticky="w", pady=(8, 0))
 
         knoepfe = ttk.Frame(inhalt, style="Card.TFrame")
         knoepfe.pack(fill="x", pady=(14, 0))
-        self.btn_login = ttk.Button(knoepfe, text="Anmelden und Roboter suchen",
+        self.btn_login = ttk.Button(knoepfe, text="Sign In and Find Robot",
                                     style="Accent.TButton", command=self._on_login)
         self.btn_login.pack(side="left")
-        self.badge_login = StatusBadge(knoepfe, self.theme, "Noch nicht verbunden")
+        self.badge_login = StatusBadge(knoepfe, self.theme, "Not connected yet")
         self.badge_login.pack(side="left", padx=(12, 0))
 
         ttk.Label(
             inhalt,
-            text=("Die Daten gehen ausschließlich an Dreame und werden im "
-                  "Windows-Tresor abgelegt, nicht in einer Datei. Es gibt kein "
-                  "Konto bei diesem Programm und keine Weitergabe an Dritte."),
+            text=("The data goes exclusively to Dreame and is stored in the "
+                  "Windows vault, not in a file. This program has no account "
+                  "of its own and shares nothing with third parties."),
             style="Muted.TLabel", wraplength=700, justify="left"
         ).pack(anchor="w", pady=(14, 0))
 
@@ -174,8 +174,8 @@ class StartPage(ttk.Frame):
     # -- Zustand 2: Roboter wählen -------------------------------------
     def _bau_roboter(self) -> ttk.Frame:
         rahmen = ttk.Frame(self.outer, style="TFrame")
-        card = Card(rahmen, self.theme, "Welcher Roboter?",
-                    "In deinem Konto steht mehr als ein Gerät")
+        card = Card(rahmen, self.theme, "Which Robot?",
+                    "Your account has more than one device")
         card.pack(fill="x")
 
         self.combo_device = ttk.Combobox(card.content, textvariable=self.var_device,
@@ -192,15 +192,15 @@ class StartPage(ttk.Frame):
     # -- Zustand 3: Originalpaket --------------------------------------
     def _bau_original(self) -> ttk.Frame:
         rahmen = ttk.Frame(self.outer, style="TFrame")
-        card = Card(rahmen, self.theme, "Einen Moment",
-                    "Das offizielle Sprachpaket wird geholt")
+        card = Card(rahmen, self.theme, "One Moment",
+                    "Fetching the official voice pack")
         card.pack(fill="x")
 
         ttk.Label(
             card.content,
-            text=("Jedes eigene Paket entsteht als Kopie des offiziellen - nur so "
-                  "bleibt keine Ansage auf der Strecke. Deshalb wird es einmalig "
-                  "heruntergeladen und danach wiederverwendet."),
+            text=("Every custom pack starts as a copy of the official one - "
+                  "that's the only way no announcement gets left behind. "
+                  "It's downloaded once and then reused."),
             style="Surface.TLabel", wraplength=700, justify="left"
         ).pack(anchor="w")
 
@@ -210,7 +210,7 @@ class StartPage(ttk.Frame):
         self.badge_original = StatusBadge(card.content, self.theme, "")
         self.badge_original.pack(anchor="w")
 
-        self.btn_original = ttk.Button(card.content, text="Jetzt herunterladen",
+        self.btn_original = ttk.Button(card.content, text="Download Now",
                                        style="Accent.TButton",
                                        command=self._on_load_base)
         self.btn_original.pack(anchor="w", pady=(12, 0))
@@ -220,7 +220,7 @@ class StartPage(ttk.Frame):
     def _bau_bereit(self) -> ttk.Frame:
         rahmen = ttk.Frame(self.outer, style="TFrame")
 
-        card = Card(rahmen, self.theme, "Auf dem Roboter")
+        card = Card(rahmen, self.theme, "On the Robot")
         card.pack(fill="x")
 
         oben = ttk.Frame(card.content, style="Card.TFrame")
@@ -236,14 +236,14 @@ class StartPage(ttk.Frame):
 
         rechts = ttk.Frame(oben, style="Card.TFrame")
         rechts.pack(side="right")
-        self.btn_abfragen = ttk.Button(rechts, text="Am Roboter abfragen",
+        self.btn_abfragen = ttk.Button(rechts, text="Check on Robot",
                                        style="Small.TButton",
                                        command=self._on_query)
         self.btn_abfragen.pack(anchor="e")
 
         knoepfe = ttk.Frame(card.content, style="Card.TFrame")
         knoepfe.pack(fill="x", pady=(16, 0))
-        ttk.Button(knoepfe, text="Andere Stimme wählen", style="Accent.TButton",
+        ttk.Button(knoepfe, text="Choose Another Voice", style="Accent.TButton",
                    command=lambda: self.gehe_zu("stimme")).pack(side="left")
         # "original" war nie eine Seite - der Knopf tat schlicht nichts.
         # Ausgerechnet der, den jemand drückt, wenn ihm die neue Stimme
@@ -251,7 +251,7 @@ class StartPage(ttk.Frame):
         # Aufspielen" im Abschnitt "Notausgang", und genau dorthin rollt
         # _zum_notausgang die Seite - nicht an ihren Anfang, wo als
         # größter Knopf "Sprachpaket installieren" wartet.
-        ttk.Button(knoepfe, text="Originalstimme zurück",
+        ttk.Button(knoepfe, text="Restore Original Voice",
                    command=self._zum_notausgang
                    ).pack(side="left", padx=(8, 0))
 
@@ -334,19 +334,19 @@ class StartPage(ttk.Frame):
         self._zustand = zustand
 
         if zustand == ZUSTAND_ANMELDEN:
-            self.kopf.configure(text="Willkommen")
+            self.kopf.configure(text="Welcome")
             self.unterzeile.configure(
-                text=("Zuerst die Anmeldung - ohne sie weiß die App nicht, welches "
-                      "Modell dein Roboter ist, und kann ihm auch nichts schicken."))
+                text=("Sign in first - without it, the app doesn't know your "
+                      "robot's model and can't send it anything."))
         elif zustand == ZUSTAND_ROBOTER:
-            self.kopf.configure(text="Fast geschafft")
-            self.unterzeile.configure(text="Wähle den Roboter, der sprechen soll.")
+            self.kopf.configure(text="Almost There")
+            self.unterzeile.configure(text="Choose the robot that should speak.")
             self._fuelle_geraete()
         elif zustand == ZUSTAND_ORIGINAL:
-            self.kopf.configure(text="Einen Moment")
+            self.kopf.configure(text="One Moment")
             self.unterzeile.configure(
-                text=f"{self._geraetename()} gefunden. Es fehlt nur noch das "
-                     f"offizielle Sprachpaket - das kommt einmalig und bleibt dann da.")
+                text=f"{self._geraetename()} found. All that's missing now is "
+                     f"the official voice pack - it's fetched once and stays.")
             if gewechselt and not self._laedt_original:
                 spaeter(self, 400, self._on_load_base)
         else:
@@ -356,7 +356,7 @@ class StartPage(ttk.Frame):
 
     def _geraetename(self) -> str:
         d = self.state.device
-        return d.name if d and d.name else (d.model if d else "Dein Roboter")
+        return d.name if d and d.name else (d.model if d else "Your robot")
 
     # -- Roboterauswahl -------------------------------------------------
     def _fuelle_geraete(self) -> None:
@@ -364,9 +364,9 @@ class StartPage(ttk.Frame):
         if not geraete:
             self.combo_device.configure(values=[])
             self.lbl_kein_geraet.configure(
-                text=("In diesem Konto ist kein Saugroboter hinterlegt. Prüfe, ob "
-                      "du dieselbe E-Mail wie in der Dreamehome-App verwendest "
-                      "und ob der Roboter dort auftaucht."))
+                text=("No vacuum robot is registered in this account. Check "
+                      "that you're using the same email as in the Dreamehome "
+                      "app and that the robot shows up there."))
             return
         self.lbl_kein_geraet.configure(text="")
         beschriftungen = [f"{d.name or d.model}  ·  {d.model}" for d in geraete]
@@ -391,15 +391,15 @@ class StartPage(ttk.Frame):
         email = self.var_email.get().strip()
         passwort = self.var_password.get()
         if not email or not passwort:
-            show_warning(self, self.theme, "Angaben fehlen",
-                         "Bitte E-Mail und Passwort eintragen.")
+            show_warning(self, self.theme, "Missing Information",
+                         "Please enter email and password.")
             return
 
         region = self._region_code()
         auto = self.var_autoregion.get()
 
         self.btn_login.configure(state="disabled")
-        self.badge_login.set("Melde an ...", "muted")
+        self.badge_login.set("Signing in ...", "muted")
 
         marke = self._marke_code()
         self.state.config["account_type"] = marke
@@ -436,14 +436,14 @@ class StartPage(ttk.Frame):
                 cfg["device_model"] = treffer.model
             self.state.save()
 
-            self.badge_login.set(f"Angemeldet ({benutzt.upper()})", "ok")
+            self.badge_login.set(f"Signed in ({benutzt.upper()})", "ok")
             self.state.notify("device_changed")
             self.refresh()
 
         def fail(exc: Exception) -> None:
             nachricht, hinweis = error_text(exc)
-            self.badge_login.set("Anmeldung fehlgeschlagen", "error")
-            show_error(self, self.theme, "Anmeldung fehlgeschlagen",
+            self.badge_login.set("Sign-in Failed", "error")
+            show_error(self, self.theme, "Sign-in Failed",
                        nachricht, hinweis)
 
         run_async(self, work, on_success=ok, on_error=fail,
@@ -456,7 +456,7 @@ class StartPage(ttk.Frame):
         self._laedt_original = True
         self.btn_original.configure(state="disabled")
         self.progress_original.configure(value=0)
-        self.badge_original.set("Suche das passende Paket ...", "muted")
+        self.badge_original.set("Looking for the matching pack ...", "muted")
 
         modell = self.state.model
 
@@ -472,12 +472,11 @@ class StartPage(ttk.Frame):
                 or (pakete[0] if pakete else None)
             if paket is None:
                 raise RuntimeError(
-                    "Für dieses Modell ist kein offizielles Sprachpaket "
-                    "hinterlegt.")
+                    "No official voice pack is available for this model.")
             to_main(self, self.badge_original.set,
-                    f"Lade {paket.label} ...", "muted")
+                    f"Downloading {paket.label} ...", "muted")
             pfad = official.download_pack(paket, modell, progress=melde)
-            to_main(self, self.badge_original.set, "Entpacke Hörproben ...", "muted")
+            to_main(self, self.badge_original.set, "Extracting samples ...", "muted")
             proben = official.extract_previews(
                 pfad, preview_dir() / f"{modell}_{paket.id}")
             return pakete, paket, pfad, proben
@@ -490,17 +489,17 @@ class StartPage(ttk.Frame):
             self.state.previews = proben
             self.state.config["base_language"] = paket.id
             self.state.save()
-            self.badge_original.set("Fertig", "ok")
+            self.badge_original.set("Done", "ok")
             self.state.notify("base_pack_changed")
             self.state.notify("assignments_changed")
             self.refresh()
 
         def fail(exc: Exception) -> None:
             nachricht, hinweis = error_text(exc)
-            self.badge_original.set("Nicht geladen", "error")
+            self.badge_original.set("Not Loaded", "error")
             self.btn_original.configure(state="normal",
-                                        text="Erneut versuchen")
-            show_error(self, self.theme, "Originalpaket nicht geladen",
+                                        text="Try Again")
+            show_error(self, self.theme, "Original Pack Not Loaded",
                        nachricht, hinweis)
 
         def fertig() -> None:
@@ -518,18 +517,18 @@ class StartPage(ttk.Frame):
         # Roboter gar nicht führt.
         if name:
             self.lbl_stimme.configure(text=name)
-            self.lbl_stimme_detail.configure(text="zuletzt von hier aufgespielt")
+            self.lbl_stimme_detail.configure(text="last installed from here")
         else:
-            self.lbl_stimme.configure(text="Deutsch")
+            self.lbl_stimme.configure(text="German")
             self.lbl_stimme_detail.configure(
-                text="Noch nichts Eigenes aufgespielt - der Roboter spricht "
-                     "die mitgelieferte Stimme.")
+                text="Nothing custom installed yet - the robot is using the "
+                     "built-in voice.")
 
         paket = self.state.base_pack_info
         self.lbl_geraet.configure(
             text=f"{self._geraetename()} · {self.state.model} · "
-                 f"{len(self.state.previews)} Ansagen bekannt"
-                 + (f" · Grundlage {paket.label}" if paket else ""))
+                 f"{len(self.state.previews)} announcements known"
+                 + (f" · based on {paket.label}" if paket else ""))
 
         if frisch_abfragen:
             spaeter(self, 600, lambda: self._on_query(still=True))
@@ -548,31 +547,31 @@ class StartPage(ttk.Frame):
             if not aktiv:
                 if not still:
                     show_warning(
-                        self, self.theme, "Keine Antwort",
-                        "Der Roboter hat nicht geantwortet.",
-                        "Vermutlich schläft er. Wecke ihn in der "
-                        "Dreamehome-App und versuche es noch einmal.")
+                        self, self.theme, "No Response",
+                        "The robot didn't respond.",
+                        "It's probably asleep. Wake it in the Dreamehome "
+                        "app and try again.")
                 return
             offiziell = {p.id: p for p in self.state.official_packs}
             treffer = offiziell.get(aktiv)
             if treffer is not None:
                 self.lbl_stimme.configure(text=treffer.label)
                 self.lbl_stimme_detail.configure(
-                    text=f"offizielles Paket von Dreame · Kennung {aktiv}")
+                    text=f"official pack from Dreame · identifier {aktiv}")
             else:
                 name = self.state.prebuilt_name \
-                    or self.state.config["last_pack_name"] or "Eigenes Paket"
+                    or self.state.config["last_pack_name"] or "Custom pack"
                 self.lbl_stimme.configure(text=name)
                 self.lbl_stimme_detail.configure(
-                    text=f"eigenes Paket · Kennung {aktiv} · "
-                         f"in der Dreamehome-App nicht sichtbar, das ist normal")
+                    text=f"custom pack · identifier {aktiv} · "
+                         f"not visible in the Dreamehome app, that's normal")
 
         def fail(exc: Exception) -> None:
             if still:
                 _LOG.info("Abfrage im Hintergrund fehlgeschlagen: %s", exc)
                 return
             nachricht, hinweis = error_text(exc)
-            show_error(self, self.theme, "Abfrage fehlgeschlagen",
+            show_error(self, self.theme, "Check Failed",
                        nachricht, hinweis)
 
         run_async(self, work, on_success=ok, on_error=fail,

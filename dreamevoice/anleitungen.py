@@ -44,23 +44,23 @@ class Anleitung(NamedTuple):
 
 #: Reihenfolge wie in der README - vom Häufigsten zum Seltensten.
 ANLEITUNGEN = (
-    Anleitung("Problemloesung.md", "Wenn etwas nicht klappt",
-              "Der Roboter holt das Paket nicht ab, die Anmeldung "
-              "scheitert, die Stimme ist zu leise."),
-    Anleitung("Modelle.md", "Welche Roboter funktionieren",
-              "Geprüfte Modelle und woran man erkennt, ob der eigene "
-              "dazugehört."),
-    Anleitung("Sicherheit.md", "Warum das den Roboter nicht beschädigt",
-              "Was die App anfasst, was sie nicht anfasst und wie der "
-              "Rückweg aussieht."),
-    Anleitung("Eigene-Stimmen.md", "Eigene Stimmen und Dialekte",
-              "Eigene Texte, eigene Aufnahmen, Windows-Sprachausgabe "
-              "und ElevenLabs."),
-    Anleitung("Technik.md", "Technische Hintergründe",
-              "Paketformat, Cloud-Befehle und was beim Aufspielen "
-              "wirklich passiert."),
-    Anleitung("Entwicklung.md", "Entwicklung",
-              "Aus dem Quellcode starten, Selbsttest, EXE bauen."),
+    Anleitung("Problemloesung.md", "When Something Doesn't Work",
+              "The robot doesn't pick up the pack, sign-in fails, the "
+              "voice is too quiet."),
+    Anleitung("Modelle.md", "Which Robots Work",
+              "Verified models and how to tell whether yours is one of "
+              "them."),
+    Anleitung("Sicherheit.md", "Why This Doesn't Damage the Robot",
+              "What the app touches, what it doesn't, and what the way "
+              "back looks like."),
+    Anleitung("Eigene-Stimmen.md", "Custom Voices and Dialects",
+              "Your own text, your own recordings, Windows text-to-speech "
+              "and ElevenLabs."),
+    Anleitung("Technik.md", "Technical Background",
+              "Package format, cloud commands, and what really happens "
+              "during install."),
+    Anleitung("Entwicklung.md", "Development",
+              "Running from source, self-test, building the EXE."),
 )
 
 

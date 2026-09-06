@@ -216,14 +216,14 @@ class MainWindow(tk.Tk):
         left.pack(side="left")
         ttk.Label(left, text=APP_NAME, style="Title.TLabel").pack(anchor="w")
         ttk.Label(left,
-                  text=("Eigene Stimmen für Dreame-Saugroboter - entwickelt und "
-                        "geprüft am X50 Ultra Complete"),
+                  text=("Custom voices for Dreame vacuum robots - built and "
+                        "tested on the X50 Ultra Complete"),
                   style="MutedBg.TLabel").pack(anchor="w", pady=(2, 0))
 
         right = ttk.Frame(header, style="TFrame")
         right.pack(side="right")
         self.var_dark = tk.BooleanVar(value=bool(self.state_obj.config["dark_mode"]))
-        ttk.Checkbutton(right, text="Dunkles Design", style="Bg.TCheckbutton",
+        ttk.Checkbutton(right, text="Dark mode", style="Bg.TCheckbutton",
                         variable=self.var_dark,
                         command=self._toggle_theme).pack(side="left", padx=(0, 12))
         # Kein "Vollbild"-Knopf mehr: Er tat nichts anderes als das
@@ -235,11 +235,11 @@ class MainWindow(tk.Tk):
         # App selbst. Früher lag sie auf der Seite "Verbindung", unter
         # Konto und Roboterliste - dort sucht sie niemand, und der
         # Schalter "beim Start nachsehen" war damit ebenso versteckt.
-        ttk.Button(right, text="Aktualisierung", style="Small.TButton",
+        ttk.Button(right, text="Updates", style="Small.TButton",
                    command=self._show_update).pack(side="left", padx=(0, 8))
-        ttk.Button(right, text="Hilfe", style="Small.TButton",
+        ttk.Button(right, text="Help", style="Small.TButton",
                    command=self._show_help).pack(side="left")
-        ttk.Button(right, text="Über", style="Small.TButton",
+        ttk.Button(right, text="About", style="Small.TButton",
                    command=self._show_about).pack(side="left", padx=(8, 0))
 
         self.bind("<F11>", lambda _e: self._toggle_maximize())
@@ -262,25 +262,25 @@ class MainWindow(tk.Tk):
         # und Tab 3 (aufspielen) verteilt war - siehe page_voice.py.
         self.shell.add("start", "Start", "🏠", self.page_start,
                        beim_zeigen=self.page_start.refresh)
-        self.shell.add("stimme", "Fertige Stimmen", "🔊", self.page_voice,
+        self.shell.add("stimme", "Ready-Made Voices", "🔊", self.page_voice,
                        beim_zeigen=self.page_voice.refresh)
-        self.shell.add("eigene", "Eigene Stimmen", "🎙",
+        self.shell.add("eigene", "Custom Voices", "🎙",
                        bauen=lambda: StoreTab(buehne, self.theme,
                                               self.state_obj),
-                       section="Erweitert", beim_zeigen=self._beim_eigene)
-        self.shell.add("ansagen", "Einzelne Ansagen", "🧩",
+                       section="Advanced", beim_zeigen=self._beim_eigene)
+        self.shell.add("ansagen", "Individual Announcements", "🧩",
                        bauen=lambda: BuilderTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Erweitert", beim_zeigen=self._beim_ansagen)
-        self.shell.add("aufspielen", "Bauen und Aufspielen", "⬆",
+                       section="Advanced", beim_zeigen=self._beim_ansagen)
+        self.shell.add("aufspielen", "Build and Install", "⬆",
                        bauen=lambda: InstallTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Erweitert",
+                       section="Advanced",
                        beim_zeigen=lambda: self.tab_install.refresh_summary())
-        self.shell.add("verbindung", "Verbindung", "🔌",
+        self.shell.add("verbindung", "Connection", "🔌",
                        bauen=lambda: ConnectTab(buehne, self.theme,
                                                 self.state_obj),
-                       section="Erweitert",
+                       section="Advanced",
                        beim_zeigen=lambda: self.tab_connect.beim_zeigen())
 
         self.shell.show("start")
@@ -296,10 +296,10 @@ class MainWindow(tk.Tk):
         # wissen, WO die Dateien liegen, sondern hinkommen. Also ein
         # Knopf statt einer Zeile Text; den Pfad zeigt der Hinweis beim
         # Darüberfahren.
-        ttk.Button(status, text="Datenordner öffnen", style="Link.TButton",
+        ttk.Button(status, text="Open data folder", style="Link.TButton",
                    command=self._datenordner_oeffnen).pack(side="left")
         ttk.Label(status,
-                  text="hier liegen Einstellungen, Pakete und Aufnahmen",
+                  text="settings, packages, and recordings live here",
                   style="MutedBg.TLabel").pack(side="left", padx=(10, 0))
 
         # Die beiseitegelegte Vorgängerfassung kann erst jetzt weg -
@@ -379,11 +379,11 @@ class MainWindow(tk.Tk):
     def _update_melden(self, neuerung) -> None:
         """Fragt einmal nach - und merkt sich ein Nein."""
         antwort = messagebox.askyesnocancel(
-            f"Version {neuerung.version} ist da",
-            f"Du hast {__version__}, neu ist {neuerung.version}.\n\n"
-            f"Jetzt ansehen?\n\n"
-            f"'Nein' fragt beim nächsten Mal wieder, 'Abbrechen' "
-            f"überspringt diese Fassung.",
+            f"Version {neuerung.version} is available",
+            f"You have {__version__}, {neuerung.version} is new.\n\n"
+            f"Take a look now?\n\n"
+            f"'No' will ask again next time, 'Cancel' skips this "
+            f"version.",
             parent=self)
         if antwort is None:
             self.state_obj.config["update_uebersprungen"] = neuerung.version
@@ -414,10 +414,10 @@ class MainWindow(tk.Tk):
 
         self.shell.set_dot("verbindung", "ok" if verbunden else "warn")
 
-        ohne_anmeldung = ("Dafür muss die App erst wissen, welches Modell dein "
-                          "Roboter ist. Melde dich auf der Startseite an.")
-        ohne_basis = ("Dafür fehlt noch das offizielle Sprachpaket deines "
-                      "Roboters. Es wird auf der Startseite einmalig geholt.")
+        ohne_anmeldung = ("The app first needs to know your robot's model. "
+                          "Sign in on the Start page.")
+        ohne_basis = ("Your robot's official voice pack is still missing. "
+                      "It's fetched once, on the Start page.")
 
         for key in ("stimme", "eigene", "ansagen", "aufspielen"):
             self.shell.set_enabled(key, verbunden and basis,
@@ -425,10 +425,10 @@ class MainWindow(tk.Tk):
 
     def _toggle_theme(self) -> None:
         messagebox.showinfo(
-            "Design wechseln",
-            "Das dunkle Design wird beim nächsten Start der App verwendet.\n\n"
-            "Ein Wechsel im laufenden Betrieb würde alle Ansichten neu aufbauen "
-            "und dabei ungespeicherte Eingaben verlieren.",
+            "Switch theme",
+            "The dark theme takes effect the next time the app starts.\n\n"
+            "Switching it live would rebuild every view and lose any "
+            "unsaved input.",
             parent=self)
         self.state_obj.config["dark_mode"] = self.var_dark.get()
         self.state_obj.save()
@@ -437,13 +437,13 @@ class MainWindow(tk.Tk):
     def _show_about(self) -> None:
         """Lizenz, Haftungsausschluss und - falls hinterlegt - die Links."""
         window = tk.Toplevel(self)
-        window.title(f"Über {APP_NAME}")
+        window.title(f"About {APP_NAME}")
         window.configure(bg=self.theme.color("bg"))
         window.geometry("640x440")
         window.transient(self)
 
         card = Card(window, self.theme, f"{APP_NAME} {__version__}",
-                    f"von {AUTOR} · {LIZENZ}-Lizenz")
+                    f"by {AUTOR} · {LIZENZ} license")
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         # Text und Bildlaufleiste nebeneinander in einem eigenen Rahmen.
@@ -482,24 +482,24 @@ class MainWindow(tk.Tk):
         knoepfe.pack(fill="x")
 
         if PROJEKT_URL:
-            ttk.Button(knoepfe, text="Projektseite öffnen",
+            ttk.Button(knoepfe, text="Open project page",
                        command=lambda: webbrowser.open(PROJEKT_URL)
                        ).pack(side="left")
         if SPENDEN_URL:
             ttk.Button(
-                knoepfe, text="Trinkgeld dalassen (freiwillig)",
+                knoepfe, text="Leave a tip (optional)",
                 command=lambda: webbrowser.open(SPENDEN_URL)
             ).pack(side="left", padx=(8, 0))
 
-        ttk.Button(knoepfe, text="Schließen", style="Accent.TButton",
+        ttk.Button(knoepfe, text="Close", style="Accent.TButton",
                    command=window.destroy).pack(side="right")
 
         # Der Hinweis steht unter den Knöpfen, nicht daneben: dazwischen
         # gequetscht brach er mitten im Satz um.
         if SPENDEN_URL:
             ttk.Label(unten,
-                      text=("Freiwillig, ohne Gegenleistung - die App bleibt "
-                            "für alle gleich."),
+                      text=("Optional, no strings attached - the app stays "
+                            "the same for everyone."),
                       style="MutedBg.TLabel").pack(anchor="w", pady=(10, 0))
 
     # ------------------------------------------------------------------
@@ -519,9 +519,9 @@ class MainWindow(tk.Tk):
                 subprocess.Popen(["xdg-open", str(ordner)])
         except OSError as exc:
             _LOG.warning("Datenordner ließ sich nicht öffnen: %s", exc)
-            show_warning(self, self.theme, "Ordner nicht geöffnet",
-                         "Der Datenordner ließ sich nicht öffnen.",
-                         f"Du findest ihn hier:\n{ordner}")
+            show_warning(self, self.theme, "Folder not opened",
+                         "The data folder couldn't be opened.",
+                         f"You can find it here:\n{ordner}")
 
     # ------------------------------------------------------------------
     def _show_update(self, neuerung=None):
@@ -545,7 +545,7 @@ class MainWindow(tk.Tk):
     # ------------------------------------------------------------------
     def _show_help(self) -> None:
         window = tk.Toplevel(self)
-        window.title("Hilfe und Sicherheitshinweise")
+        window.title("Help and Safety Notes")
         window.configure(bg=self.theme.color("bg"))
         window.geometry("760x740")
         window.minsize(560, 420)
@@ -556,11 +556,11 @@ class MainWindow(tk.Tk):
         # den Rest. Andersherum schob er beide aus dem Fenster - auf
         # einem kleineren Bildschirm war das Fenster dann ohne
         # sichtbaren Ausgang.
-        ttk.Button(window, text="Schließen", style="Accent.TButton",
+        ttk.Button(window, text="Close", style="Accent.TButton",
                    command=window.destroy).pack(side="bottom", pady=(0, 16))
         self._bau_anleitungen(window)
 
-        card = Card(window, self.theme, "So funktioniert es")
+        card = Card(window, self.theme, "How It Works")
         card.pack(fill="both", expand=True, padx=16, pady=16)
 
         text = tk.Text(card.content, wrap="word", relief="flat", borderwidth=0,
@@ -584,7 +584,7 @@ class MainWindow(tk.Tk):
         mehrere Seiten gibt. Der Knopf sagt vorher, was er tut: Datei
         oder Browser, je nachdem, was wirklich da ist.
         """
-        karte = Card(fenster, self.theme, "Ausführlich nachlesen")
+        karte = Card(fenster, self.theme, "Read the Full Guides")
         karte.pack(side="bottom", fill="x", padx=16, pady=(0, 12))
         inhalt = karte.content
 
@@ -598,14 +598,14 @@ class MainWindow(tk.Tk):
             # ehrlicher Satz als sechs Knöpfe, die nichts tun.
             ttk.Label(inhalt, style="Muted.TLabel", justify="left",
                       wraplength=660,
-                      text=("Die ausführlichen Anleitungen liegen im Ordner "
-                            "'docs' beim Quellcode des Projekts.")).pack(anchor="w")
+                      text=("The full guides live in the 'docs' folder "
+                            "alongside the project's source code.")).pack(anchor="w")
             return
 
         ttk.Label(inhalt, style="Muted.TLabel", justify="left", wraplength=660,
-                  text=("Öffnet sich im Browser."
+                  text=("Opens in your browser."
                         if online and len(online) == len(art)
-                        else "Öffnet sich als Textdatei auf diesem PC.")
+                        else "Opens as a text file on this PC.")
                   ).pack(anchor="w", pady=(0, 8))
 
         # Raster statt nebeneinander gepackter Zeilen: Sonst beginnt
@@ -632,11 +632,11 @@ class MainWindow(tk.Tk):
         if anleitungen.oeffnen(datei) != "nein":
             return
         show_warning(
-            self, self.theme, "Anleitung nicht erreichbar",
-            f"'{datei}' ließ sich nicht öffnen.",
-            "Die Datei liegt im Ordner 'docs' beim Quellcode des "
-            "Projekts. Ist kein Programm für .md-Dateien eingerichtet, "
-            "öffnet sie jeder Texteditor.")
+            self, self.theme, "Guide Not Reachable",
+            f"'{datei}' couldn't be opened.",
+            "The file lives in the 'docs' folder alongside the project's "
+            "source code. If no program is set up for .md files, any "
+            "text editor will open it.")
 
     # ------------------------------------------------------------------
     def _on_unhandled(self, art, wert, spur) -> None:
@@ -652,11 +652,11 @@ class MainWindow(tk.Tk):
         _LOG.error("Unbehandelter Fehler in der Oberfläche:\n%s", text)
         try:
             show_error(
-                self, self.theme, "Unerwarteter Fehler",
+                self, self.theme, "Unexpected Error",
                 f"{art.__name__}: {wert}",
-                "Das hätte nicht passieren dürfen. Die App läuft weiter, der "
-                "Vorgang wurde aber abgebrochen.\n\n"
-                "Technische Einzelheiten (mit 'Text kopieren' weitergeben):\n\n"
+                "That shouldn't have happened. The app keeps running, but "
+                "the operation was cancelled.\n\n"
+                "Technical details (share these using 'Copy text'):\n\n"
                 + text)
         except Exception:      # pragma: no cover - Notnagel
             pass
@@ -671,151 +671,153 @@ class MainWindow(tk.Tk):
 
 
 HELP_TEXT = """\
-DER KURZE WEG
+THE SHORT PATH
 
-Wer einfach nur einen bayerisch sprechenden Roboter will, braucht genau
-zwei Seiten:
+If all you want is a robot that speaks Bavarian, you need exactly
+two pages:
 
 1. Start
-   Beim ersten Mal steht hier das Anmeldeformular - dieselben
-   Zugangsdaten wie in der Dreamehome-App. Danach holt die App einmalig
-   das offizielle Sprachpaket deines Roboters; das ist die Grundlage für
-   alles Weitere und bleibt gespeichert.
-   Ab dem zweiten Start zeigt die Seite nur noch, was der Roboter gerade
-   spricht.
+   The first time, this shows the sign-in form - the same credentials
+   as the Dreamehome app. The app then fetches your robot's official
+   voice pack once; that's the foundation for everything else and
+   stays saved.
+   From the second start on, this page just shows what the robot is
+   currently saying.
 
-2. Fertige Stimmen
-   Bayerisch, Hessisch, Wienerisch oder Berlinerisch aussuchen, mit
-   "Anhören" vier typische Ansagen probehören, dann "Aufspielen". Die
-   Dialektstimmen stecken in der Programmdatei - es wird nichts
-   heruntergeladen.
+2. Ready-Made Voices
+   Pick Bavarian, Hessian, Viennese, or Berlin dialect, preview four
+   typical announcements with "Listen", then "Install". The dialect
+   voices are built into the program file - nothing gets downloaded.
 
-Das war es. Alles andere steht unter "Erweitert" und wird nur gebraucht,
-wenn man mehr will:
+That's it. Everything else lives under "Advanced" and is only needed
+if you want more:
 
-- Eigene Stimmen: eigene Texte, andere Dialekte, Sprachsynthese über
-  Windows oder ElevenLabs
-- Einzelne Ansagen: Ansage für Ansage eine eigene Datei zuweisen
-- Bauen und Aufspielen: der ausführliche Weg mit allen Schaltern,
-  Netzwerkeinstellungen und dem Rückweg zur Originalstimme
-- Verbindung: Konto oder Region wechseln
+- Custom Voices: your own text, other dialects, speech synthesis via
+  Windows or ElevenLabs
+- Individual Announcements: assign your own file to each announcement
+  one by one
+- Build and Install: the detailed path with every switch, network
+  setting, and the way back to the original voice
+- Connection: switch account or region
 
-Graue Einträge in der Leiste sind nicht kaputt - sie brauchen nur erst
-die Anmeldung. Ein Klick darauf verrät, was fehlt.
-
-
-WARUM DAS DEN ROBOTER NICHT BESCHÄDIGT
-
-- Es wird keine Firmware angefasst. Sprachpakete zu wechseln ist eine
-  ganz normale, vom Hersteller vorgesehene Funktion - die Dreamehome-App
-  macht beim Sprachwechsel exakt dasselbe.
-
-- Dein Paket ist eine Kopie des offiziellen Pakets. Nur die Ansagen, die
-  du selbst zuweist, werden ersetzt. Alle Steuerdateien und alle übrigen
-  Ansagen bleiben unverändert - der Roboter wird also nirgends stumm.
-
-- Der Roboter prüft selbst. Zusammen mit der URL bekommt er Größe und
-  MD5-Prüfsumme. Passt etwas nicht, verwirft er das Paket und behält
-  seine bisherige Stimme.
-
-- Es gibt einen Rückweg. Der Knopf "Originalstimme wiederherstellen"
-  lässt den Roboter das offizielle Paket direkt bei Dreame laden.
-  Genauso funktioniert der Sprachwechsel in der Handy-App.
-
-- Kennung. Dein Paket landet immer unter CUSTOM und überschreibt damit
-  nicht die mitgelieferte deutsche Stimme. Das ist fest so: Der Roboter
-  legt je Kennung einen eigenen Ordner an, und löschen kann man die
-  über die Cloud nicht. Eine einzige Kennung überschreibt sich selbst.
+Greyed-out entries in the sidebar aren't broken - they just need you
+to sign in first. Clicking one tells you what's missing.
 
 
-DAS PAKET STEHT NICHT IN DER DREAMEHOME-APP
+WHY THIS DOESN'T DAMAGE YOUR ROBOT
 
-Das ist normal und kein Fehler. Die Dreamehome-App zeigt unter
-"Sprachton" nur Sprachen aus Dreames eigenem Katalog. Die Kennung
-CUSTOM steht dort nicht drin - also kann die App sie nicht anzeigen.
+- No firmware is touched. Switching voice packs is a perfectly normal,
+  manufacturer-provided function - the Dreamehome app does exactly the
+  same thing when you change the language.
 
-Meldet die App beim Öffnen, Roboter und App hätten verschiedene
-Spracheinstellungen, ist das genau das Zeichen dafür, dass dein Paket
-läuft: Der Roboter meldet eine Kennung, die die App nicht kennt.
+- Your pack is a copy of the official pack. Only the announcements you
+  assign yourself get replaced. Every control file and every other
+  announcement stays unchanged - the robot never goes silent anywhere.
 
-Zwei Dinge dazu:
+- The robot checks it itself. Along with the URL, it gets the size and
+  MD5 checksum. If anything doesn't match, it discards the pack and
+  keeps its current voice.
 
-- Wähle in der Dreamehome-App keine Sprache aus, solange dein Paket
-  laufen soll. Damit lädt der Roboter das offizielle Paket nach und
-  überschreibt deines.
-- In der Liste auftauchen kann es nicht. Die Kennung ist fest CUSTOM,
-  und Dreames Katalog kennt sie nicht. Das ist Absicht: Der Roboter
-  legt je Kennung einen eigenen Ordner an, und löschen kann man den
-  über die Cloud nicht.
-- Zurück zur Originalstimme geht es jederzeit über "Bauen und
-  Aufspielen" > "Originalstimme wiederherstellen".
+- There's a way back. The "Restore Original Voice" button has the
+  robot load the official pack straight from Dreame - exactly what
+  happens when you switch languages in the phone app.
 
-Ob dein Paket läuft, verrät der Knopf "Am Roboter abfragen" auf der
-Startseite - unter "Bauen und Aufspielen" heißt derselbe Knopf
-"Sprachpaket am Roboter abfragen". Die Antwort kommt direkt vom
-Gerät, nicht aus der App.
+- Identifier. Your pack always lands under CUSTOM, so it never
+  overwrites the built-in German voice. This is fixed on purpose: the
+  robot creates its own folder per identifier, and there's no way to
+  delete those via the cloud. A single identifier just overwrites
+  itself.
 
 
-WENN DER ROBOTER DAS PAKET NICHT ABHOLT
+THE PACK DOESN'T SHOW UP IN THE DREAMEHOME APP
 
-Das ist der häufigste Stolperstein. Der Roboter muss diesen PC im
-Netzwerk erreichen können:
+That's normal, not a bug. Under "Voice", the Dreamehome app only shows
+languages from Dreame's own catalog. The CUSTOM identifier isn't in
+it - so the app can't display it.
 
-- Die Windows-Firewall muss eingehende Verbindungen erlauben. Beim ersten
-  Start fragt Windows nach - dort "Privates Netzwerk" anhaken.
-- PC und Roboter müssen im selben Netz hängen. Ein getrenntes IoT- oder
-  Gast-WLAN verhindert die Verbindung.
-- Ein aktives VPN auf dem PC leitet die Antwort ins Leere. Kurz trennen.
-- Der Roboter darf nicht im Tiefschlaf sein - in der Dreamehome-App
-  aufwecken.
+If the app reports on opening that the robot and app have different
+language settings, that's exactly the sign your pack is running: the
+robot is reporting an identifier the app doesn't recognize.
 
-Alternativ lädst du das gebaute Paket auf einen eigenen Webspace und
-trägst dessen öffentliche Adresse im Feld "Eigene URL" ein.
+Two things to keep in mind:
 
+- Don't pick a language in the Dreamehome app while you want your pack
+  running. Doing so makes the robot re-download the official pack and
+  overwrite yours.
+- It can't appear in the list. The identifier is fixed as CUSTOM, and
+  Dreame's catalog doesn't know it. That's intentional: the robot
+  creates its own folder per identifier, and there's no way to delete
+  it via the cloud.
+- You can go back to the original voice any time via "Build and
+  Install" > "Restore Original Voice".
 
-EIGENE STIMMEN UND DIALEKTE
-
-Sieben Dialekte, jeder mit allen 593 sprachlichen Ansagen: Bayerisch,
-Hessisch, Schwäbisch, Sächsisch, Berlinerisch, Wienerisch und Kölsch.
-Im Original bleiben nur Klänge ohne Sprache - Startton, Piepser,
-Tierlaute. Fertig herunterladen kann man so etwas nirgends - es gibt
-für keinen Saugroboter Dialektpakete.
-
-Wer spricht, wählst du selbst:
-
-- Windows-Sprachausgabe: offline und kostenlos. Der Dialekt steckt aber
-  nur in den Worten, die Aussprache bleibt hochdeutsch. Männliche und
-  weibliche Stimmen stehen zur Auswahl.
-- ElevenLabs: echter Dialekt auch in der Aussprache, braucht ein eigenes
-  Konto. Ein vollständiges Dialektpaket kostet je nach Dialekt 22.700
-  bis 25.000 Zeichen - das Freikontingent von 10.000 im Monat reicht
-  dafür nicht, ein bezahlter Tarif schon. Einzelne Ansagen gehen auch
-  gratis: eine kostet im Mittel 40 Zeichen.
-
-Vor dem Erzeugen lohnt sich "Kostprobe anhören": drei Sätze mit der
-gerade gewählten Stimme, damit du weißt, worauf du dich einlässt.
-
-Läuft das ElevenLabs-Kontingent mitten in der Erzeugung leer, geht nichts
-verloren. Das Gesprochene bleibt gespeichert, das Paket wird mit dem
-fertigen Teil gebaut, und beim nächsten Versuch macht die App genau dort
-weiter.
+Whether your pack is running is revealed by the "Check on Robot"
+button on the Start page - under "Build and Install" the same button
+is called "Check Voice Pack on Robot". The answer comes straight from
+the device, not from the app.
 
 
-AUDIODATEIEN
+IF THE ROBOT DOESN'T PICK UP THE PACK
 
-Der Roboter versteht nur OGG Vorbis, mono, 16000 Hz. mp3- und wav-Dateien
-werden beim Bauen automatisch umgewandelt.
+This is the most common snag. The robot needs to be able to reach this
+PC on the network:
 
-Dafür wird ffmpeg gebraucht - und das steckt in der Programmdatei mit
-drin. Beim ersten Bedarf packt die App es einmalig in den Datenordner
-aus, danach ist es einfach da. Du musst dich darum nicht kümmern.
+- The Windows Firewall must allow incoming connections. Windows asks
+  the first time you run this - tick "Private network" there.
+- The PC and robot must be on the same network. A separate IoT or
+  guest Wi-Fi prevents the connection.
+- An active VPN on the PC routes the reply into a void. Disconnect it
+  briefly.
+- The robot mustn't be in deep sleep - wake it in the Dreamehome app.
 
-Nur wer die App aus dem Quellcode startet, hat es nicht automatisch
-dabei: Dann sucht sie eine ffmpeg.exe neben der App, im Datenordner oder
-im System-PATH und bietet sonst an, sie herunterzuladen.
+Alternatively, upload the built pack to your own web space and enter
+its public address in the "Custom URL" field.
 
-Halte die Ansagen kurz - die Originale sind meist zwei bis sechs Sekunden
-lang.
+
+CUSTOM VOICES AND DIALECTS
+
+Seven dialects, each with all 593 spoken announcements: Bavarian,
+Hessian, Swabian, Saxon, Berlin dialect, Viennese, and Cologne dialect.
+Only non-verbal sounds - the startup chime, beeps, animal noises -
+stay original. Nothing like this exists ready-made anywhere - no
+vacuum robot has dialect packs available.
+
+You choose who speaks:
+
+- Windows text-to-speech: offline and free. The dialect only lives in
+  the wording though - the pronunciation stays standard German. Male
+  and female voices are available.
+- ElevenLabs: genuine dialect in the pronunciation too, needs your own
+  account. A complete dialect pack costs 22,700 to 25,000 characters
+  depending on the dialect - the free monthly allowance of 10,000
+  isn't enough for that, a paid plan is. Individual announcements also
+  work for free: one costs 40 characters on average.
+
+Before generating, it's worth using "Listen to Sample": three
+sentences in the currently chosen voice, so you know what you're
+getting into.
+
+If the ElevenLabs quota runs out mid-generation, nothing is lost.
+What's already spoken stays saved, the pack gets built with the
+finished part, and the app picks up exactly where it left off next
+time.
+
+
+AUDIO FILES
+
+The robot only understands OGG Vorbis, mono, 16000 Hz. mp3 and wav
+files get converted automatically when building.
+
+ffmpeg is needed for that - and it's built into the program file. The
+app unpacks it into the data folder once, the first time it's needed;
+after that it's just there. You don't need to worry about it.
+
+Only if you run the app from source is it not included automatically:
+then it looks for an ffmpeg.exe next to the app, in the data folder,
+or on the system PATH, and otherwise offers to download it.
+
+Keep announcements short - the originals are mostly two to six seconds
+long.
 """
 
 

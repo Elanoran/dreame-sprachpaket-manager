@@ -5,10 +5,10 @@ from __future__ import annotations
 from . import muster
 
 KEY = "schwaebisch"
-NAME = "Schwäbisch"
+NAME = "Swabian"
 BESCHREIBUNG = (
-    "Stuggerter Schwäbisch. Fleissig, gründlich und mit dem nötigen "
-    "Respekt vor der Kehrwoche."
+    "Stuttgart-style Swabian. Diligent, thorough, and with due "
+    "respect for the cleaning rota."
 )
 LANG_ID = "SCHWABE"
 

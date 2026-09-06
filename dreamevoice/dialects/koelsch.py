@@ -7,8 +7,8 @@ from . import muster
 KEY = "koelsch"
 NAME = "Kölsch"
 BESCHREIBUNG = (
-    "Rheinisch-kölsch: gut gelaunt, nimmt nichts zu schwer. "
-    "Et hätt noch immer joot jejange."
+    "Cologne's Kölsch dialect: good-humored, doesn't take anything "
+    "too seriously. Et hätt noch immer joot jejange."
 )
 LANG_ID = "KOELN"
 

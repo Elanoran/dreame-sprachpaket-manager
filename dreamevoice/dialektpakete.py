@@ -61,10 +61,10 @@ class FertigerDialekt:
     ansagen: int
     stimme: str
     beschreibung: str
-    #: "männlich" oder "weiblich". Steht im angezeigten Namen, weil es
-    #: das erste ist, wonach man auswählt - vorher stand es klein
-    #: hinten in der Klammer und ging unter.
-    geschlecht: str = "männlich"
+    #: "male" or "female". Shown in the display name, because it's the
+    #: first thing you pick by - it used to sit small in a trailing
+    #: parenthesis and got overlooked.
+    geschlecht: str = "male"
 
     @property
     def url(self) -> str:
@@ -84,7 +84,7 @@ class FertigerDialekt:
 
     @property
     def label(self) -> str:
-        return f"{self.anzeigename}  ({self.ansagen} Ansagen, {self.stimme})"
+        return f"{self.anzeigename}  ({self.ansagen} announcements, {self.stimme})"
 
 
 # Die Stimmen, für die es fertige Aufnahmen gibt - vier Dialekte, davon
@@ -93,30 +93,30 @@ class FertigerDialekt:
 # "Eigene Stimmen" selbst erzeugt.
 KATALOG: List[FertigerDialekt] = [
     FertigerDialekt(
-        key="bayerisch", name="Bayerisch",
+        key="bayerisch", name="Bavarian",
         datei="Bayerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Oberbayerisch, wie man es um München herum spricht."),
+        beschreibung="Upper Bavarian, as spoken around Munich."),
     FertigerDialekt(
-        key="bayerisch-weiblich", name="Bayerisch",
+        key="bayerisch-weiblich", name="Bavarian",
         datei="Bayerisch-Weiblich-Aufnahmen.zip", ansagen=598,
-        stimme="ElevenLabs", geschlecht="weiblich",
-        beschreibung="Oberbayerisch, wie man es um München herum spricht."),
+        stimme="ElevenLabs", geschlecht="female",
+        beschreibung="Upper Bavarian, as spoken around Munich."),
     FertigerDialekt(
-        key="hessisch", name="Hessisch",
+        key="hessisch", name="Hessian",
         datei="Hessisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Frankfurterisch aus dem Rhein-Main-Gebiet."),
+        beschreibung="Frankfurt-style Hessian from the Rhine-Main area."),
     FertigerDialekt(
-        key="wienerisch", name="Wienerisch",
+        key="wienerisch", name="Viennese",
         datei="Wienerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Wiener Umgangssprache, kein Bühnendialekt."),
+        beschreibung="Viennese vernacular, not stage dialect."),
     FertigerDialekt(
-        key="berlinerisch", name="Berlinerisch",
+        key="berlinerisch", name="Berlin Dialect",
         datei="Berlinerisch-Aufnahmen.zip", ansagen=593,
         stimme="ElevenLabs",
-        beschreibung="Berliner Schnauze, mit dem harten j statt g."),
+        beschreibung="Berlin's Schnauze, with the hard j instead of g."),
 ]
 
 
@@ -197,7 +197,7 @@ def beschaffen(eintrag: FertigerDialekt,
     geladen = bereits_geladen(eintrag)
     if geladen is not None:
         if log:
-            log(f"{eintrag.name}: verwende die heruntergeladene Fassung.")
+            log(f"{eintrag.name}: using the downloaded version.")
         return geladen
 
     ausgepackt = embedded.extract_dialekt(eintrag.datei, log=log)
@@ -207,11 +207,11 @@ def beschaffen(eintrag: FertigerDialekt,
     aus_projekt = im_projektordner(eintrag)
     if aus_projekt is not None:
         if log:
-            log(f"{eintrag.name}: aus dem Projektordner.")
+            log(f"{eintrag.name}: from the project folder.")
         return aus_projekt
 
     if log:
-        log(f"{eintrag.name} ist weder mitgeliefert noch geladen.")
+        log(f"{eintrag.name} is neither bundled nor downloaded.")
     return None
 
 
@@ -232,8 +232,8 @@ def download(eintrag: FertigerDialekt,
 
     if not eintrag.url:
         raise PackError(
-            "Es ist keine Projektadresse hinterlegt.",
-            "Ohne sie weiß die App nicht, woher sie die Aufnahmen holen soll.")
+            "No project address is configured.",
+            "Without it, the app doesn't know where to get the recordings from.")
 
     ziel = eintrag.local_path
     tmp = ziel.with_suffix(ziel.suffix + ".part")
@@ -244,11 +244,11 @@ def download(eintrag: FertigerDialekt,
                           headers={"User-Agent": "DreameSprachpakete/1.0"}) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"{eintrag.name} konnte nicht geladen werden "
+                    f"{eintrag.name} couldn't be downloaded "
                     f"(HTTP {resp.status_code}).",
-                    f"Quelle: {eintrag.url}\n\nMöglicherweise gibt es noch kein "
-                    f"Release mit dieser Datei, oder die Internetverbindung "
-                    f"steht nicht.")
+                    f"Source: {eintrag.url}\n\nThere may not be a release "
+                    f"with this file yet, or the internet connection isn't "
+                    f"working.")
             gesamt = int(resp.headers.get("Content-Length") or 0)
             fertig = 0
             with tmp.open("wb") as fh:
@@ -267,8 +267,8 @@ def download(eintrag: FertigerDialekt,
     except requests.exceptions.RequestException as exc:
         tmp.unlink(missing_ok=True)
         raise NetworkError(
-            f"{eintrag.name} konnte nicht geladen werden.",
-            f"Technische Details: {exc}") from exc
+            f"{eintrag.name} couldn't be downloaded.",
+            f"Technical details: {exc}") from exc
 
     # Eine Fehlerseite statt eines Archivs fällt hier auf, bevor sie
     # als Sprachpaket missverstanden wird.
@@ -276,10 +276,10 @@ def download(eintrag: FertigerDialekt,
         groesse = tmp.stat().st_size
         tmp.unlink(missing_ok=True)
         raise PackError(
-            f"Die geladene Datei ist zu klein ({groesse} Bytes).",
-            "Erwartet werden mehrere Megabyte mit gesprochenen Ansagen. "
-            "Vermutlich hat der Server statt der Datei eine Fehlerseite "
-            "geschickt.")
+            f"The downloaded file is too small ({groesse} bytes).",
+            "Several megabytes of spoken announcements were expected. "
+            "The server probably sent an error page instead of the "
+            "file.")
 
     tmp.replace(ziel)
     _LOG.info("%s geladen (%d Bytes)", eintrag.datei, ziel.stat().st_size)

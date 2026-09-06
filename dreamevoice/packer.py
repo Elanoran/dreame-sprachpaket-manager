@@ -59,7 +59,7 @@ class BuildResult:
 
     def summary(self) -> str:
         return (f"{self.path.name} - {self.size_mb:.1f} MB, "
-                f"{len(self.replaced)} von {self.total_members} Ansagen ersetzt")
+                f"{len(self.replaced)} of {self.total_members} announcements replaced")
 
 
 def _noop_log(_: str) -> None:
@@ -141,14 +141,14 @@ def build_pack(base_pack: Path,
 
     if not base_pack.is_file():
         raise PackError(
-            "Das Originalpaket fehlt.",
-            "Lade unter 'Einzelne Ansagen' zuerst das offizielle Paket "
-            "deines Roboters herunter - es dient als sichere Grundlage.",
+            "The original pack is missing.",
+            "First download your robot's official pack under 'Individual "
+            "Announcements' - it serves as the safe foundation.",
         )
     if not assignments:
         raise PackError(
-            "Es ist noch keine einzige Ansage ausgetauscht.",
-            "Weise mindestens einer Ansage eine eigene Audiodatei zu.",
+            "Not a single announcement has been replaced yet.",
+            "Assign at least one announcement an audio file of your own.",
         )
 
     work_dir = work_dir or (build_dir() / "_arbeit")
@@ -156,7 +156,7 @@ def build_pack(base_pack: Path,
     out_path = build_dir() / out_name
 
     # ---- Schritt 1: Audiodateien vorbereiten ---------------------------
-    log("Bereite Audiodateien vor ...")
+    log("Preparing audio files ...")
     prepared: Dict[int, Path] = {}
     warnings: List[str] = []
 
@@ -172,17 +172,17 @@ def build_pack(base_pack: Path,
                                         target_lufs=target_for(pegel, sound_id))
         except Exception as exc:  # AudioError und alles Unerwartete
             raise PackError(
-                f"Ansage {sound_id}: {getattr(exc, 'message', str(exc))}",
+                f"Announcement {sound_id}: {getattr(exc, 'message', str(exc))}",
                 getattr(exc, "hint", ""),
             ) from exc
 
         prepared[sound_id] = usable
-        log(f"  {sound_id:>4}  {src.name}" + ("  (umgewandelt)" if converted else "  (übernommen)"))
+        log(f"  {sound_id:>4}  {src.name}" + ("  (converted)" if converted else "  (used as-is)"))
         if progress:
             progress(index, len(items))
 
     # ---- Schritt 2: Archiv neu schreiben --------------------------------
-    log("Baue Archiv auf Basis des Originalpakets ...")
+    log("Building the archive based on the original pack ...")
     replaced: List[int] = []
     total_members = 0
     tmp_path = out_path.with_suffix(".part")
@@ -226,22 +226,23 @@ def build_pack(base_pack: Path,
                 dst_tar.addfile(_tarinfo(f"{sound_id}.ogg", len(payload)), io.BytesIO(payload))
                 replaced.append(sound_id)
                 warnings.append(
-                    f"Ansage {sound_id} kommt im Originalpaket nicht vor und wurde "
-                    f"neu hinzugefügt. Ob der Roboter sie nutzt, ist offen."
+                    f"Announcement {sound_id} doesn't exist in the original "
+                    f"pack and was newly added. Whether the robot uses it "
+                    f"is open."
                 )
     except tarfile.TarError as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("Das Archiv konnte nicht geschrieben werden.",
-                        f"Technische Details: {exc}") from exc
+        raise PackError("The archive couldn't be written.",
+                        f"Technical details: {exc}") from exc
     except OSError as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("Das Paket konnte nicht gespeichert werden.",
-                        f"Technische Details: {exc}") from exc
+        raise PackError("The pack couldn't be saved.",
+                        f"Technical details: {exc}") from exc
 
     tmp_path.replace(out_path)
 
     md5, size = _md5_and_size(out_path)
-    log(f"Fertig: {size / (1024 * 1024):.1f} MB, MD5 {md5}")
+    log(f"Done: {size / (1024 * 1024):.1f} MB, MD5 {md5}")
 
     result = BuildResult(path=out_path, md5=md5, size=size,
                          replaced=sorted(replaced), warnings=warnings,
@@ -259,16 +260,16 @@ def _verify(result: BuildResult, base_pack: Path) -> None:
             base_names = {m.name for m in tf.getmembers() if m.isfile()}
     except tarfile.TarError as exc:
         raise PackError(
-            "Das gebaute Paket ließ sich nicht wieder öffnen.",
-            f"Es wird nicht installiert. Technische Details: {exc}",
+            "The built pack couldn't be reopened.",
+            f"It won't be installed. Technical details: {exc}",
         ) from exc
 
     missing = base_names - names
     if missing:
         raise PackError(
-            f"Im gebauten Paket fehlen {len(missing)} Dateien aus dem Original.",
-            "Das Paket wird sicherheitshalber nicht installiert. "
-            "Bitte baue es erneut.",
+            f"The built pack is missing {len(missing)} files from the original.",
+            "As a precaution, the pack won't be installed. "
+            "Please build it again.",
         )
 
 
@@ -281,31 +282,31 @@ def load_existing(path: Path) -> BuildResult:
     """
     path = Path(path)
     if not path.is_file():
-        raise PackError(f"Die Datei wurde nicht gefunden:\n{path}")
+        raise PackError(f"The file wasn't found:\n{path}")
 
     try:
         with tarfile.open(path, "r:*") as tf:
             names = [m.name.rsplit("/", 1)[-1] for m in tf.getmembers() if m.isfile()]
     except tarfile.TarError as exc:
         raise PackError(
-            "Das ist kein lesbares Sprachpaket.",
-            "Erwartet wird ein tar.gz-Archiv mit Ansagen als .ogg-Dateien. "
-            f"Technische Details: {exc}") from exc
+            "That's not a readable voice pack.",
+            "A tar.gz archive with announcements as .ogg files is expected. "
+            f"Technical details: {exc}") from exc
 
     sound_ids = sorted(int(n[:-4]) for n in names
                        if n.endswith(".ogg") and n[:-4].isdigit())
     if not sound_ids:
         raise PackError(
-            "In dieser Datei sind keine Ansagen enthalten.",
-            "Ein Sprachpaket besteht aus Dateien wie 7.ogg, 12.ogg und so weiter.")
+            "This file contains no announcements.",
+            "A voice pack consists of files like 7.ogg, 12.ogg, and so on.")
 
     md5, size = _md5_and_size(path)
     warnings: List[str] = []
     if not any(n in METADATA_HINT for n in names):
         warnings.append(
-            "Diesem Paket fehlen die Steuerdateien des Originals. Es stammt "
-            "vermutlich von einem anderen Modell. Sicherer ist es, das Paket "
-            "unter 'Eigene Stimmen' auf dein Modell anpassen zu lassen.")
+            "This pack is missing the original's control files. It "
+            "probably comes from a different model. It's safer to have "
+            "the pack adapted to your model under 'Custom Voices'.")
 
     return BuildResult(path=path, md5=md5, size=size, replaced=sound_ids,
                        warnings=warnings, total_members=len(sound_ids))
@@ -376,16 +377,16 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
     übernommen, alles andere kommt aus dem eigenen Originalpaket.
     """
     if not base_pack.is_file():
-        raise PackError("Das Originalpaket deines Modells fehlt.",
-                        "Lade es unter 'Einzelne Ansagen' herunter.")
+        raise PackError("Your model's original pack is missing.",
+                        "Download it under 'Individual Announcements'.")
 
-    log("Lese Fremdpaket ...")
+    log("Reading the third-party pack ...")
     overlay = _read_ogg_archive(Path(overlay_pack_path))
 
     if not overlay:
-        raise PackError("Das Fremdpaket enthält keine Ansagen (.ogg-Dateien).")
+        raise PackError("The third-party pack contains no announcements (.ogg files).")
 
-    log(f"Fremdpaket enthält {len(overlay)} Ansagen.")
+    log(f"The third-party pack contains {len(overlay)} announcements.")
 
     # Auch hier die Nummern-Umsetzung des Modells beachten.
     if mapping:
@@ -428,8 +429,8 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
                     progress(index, len(members))
     except (tarfile.TarError, OSError) as exc:
         tmp_path.unlink(missing_ok=True)
-        raise PackError("Das angepasste Paket konnte nicht gebaut werden.",
-                        f"Technische Details: {exc}") from exc
+        raise PackError("The adapted pack couldn't be built.",
+                        f"Technical details: {exc}") from exc
 
     tmp_path.replace(out_path)
     md5, size = _md5_and_size(out_path)
@@ -438,10 +439,10 @@ def overlay_pack(base_pack: Path, overlay_pack_path: Path,
     unused = len(overlay) - len(used)
     if unused:
         warnings.append(
-            f"{unused} Ansagen des Fremdpakets haben im Originalpaket deines "
-            f"Modells keine Entsprechung und wurden weggelassen."
+            f"{unused} announcements from the third-party pack have no "
+            f"match in your model's original pack and were left out."
         )
-    log(f"Fertig: {size / (1024 * 1024):.1f} MB, {len(replaced)} Ansagen übernommen")
+    log(f"Done: {size / (1024 * 1024):.1f} MB, {len(replaced)} announcements taken over")
 
     result = BuildResult(path=out_path, md5=md5, size=size, replaced=sorted(replaced),
                          warnings=warnings, total_members=total_members)

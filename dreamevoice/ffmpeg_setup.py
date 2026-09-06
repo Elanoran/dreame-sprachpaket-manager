@@ -64,15 +64,15 @@ def installed_path() -> Optional[Path]:
 def describe_source() -> str:
     """Text für den Bestätigungsdialog."""
     return (
-        f"ffmpeg wird von GitHub geladen:\n\n{DOWNLOAD_URL}\n\n"
-        f"Das ist das offizielle Windows-Build-Projekt, das auch ffmpeg.org "
-        f"verlinkt ({PROJECT_URL}).\n\n"
-        f"Größe: etwa {APPROX_SIZE_MB} MB. Aus dem Archiv werden nur "
-        f"ffmpeg.exe und ffprobe.exe entnommen und in den Datenordner der App "
-        f"gelegt. Am System wird nichts verändert, es wird nichts installiert "
-        f"und nichts in die Registry geschrieben.\n\n"
-        f"Alternative ohne Download: eine vorhandene ffmpeg.exe einfach in den "
-        f"Ordner dieser App kopieren."
+        f"ffmpeg will be downloaded from GitHub:\n\n{DOWNLOAD_URL}\n\n"
+        f"That's the official Windows build project, also linked by "
+        f"ffmpeg.org ({PROJECT_URL}).\n\n"
+        f"Size: about {APPROX_SIZE_MB} MB. Only ffmpeg.exe and ffprobe.exe "
+        f"are extracted from the archive and placed in the app's data "
+        f"folder. Nothing on the system is changed, nothing is installed, "
+        f"and nothing is written to the registry.\n\n"
+        f"Alternative without downloading: just copy an existing "
+        f"ffmpeg.exe into this app's folder."
     )
 
 
@@ -98,39 +98,39 @@ def download_and_install(progress: Optional[ProgressFn] = None,
                           headers={"User-Agent": "DreameSprachpakete/1.0"}) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"Der Download ist fehlgeschlagen (HTTP {resp.status_code}).",
-                    f"Quelle: {DOWNLOAD_URL}")
+                    f"The download failed (HTTP {resp.status_code}).",
+                    f"Source: {DOWNLOAD_URL}")
 
             total = int(resp.headers.get("Content-Length") or 0)
             if total and total > MAX_ARCHIVE_BYTES:
                 raise NetworkError(
-                    "Die angebotene Datei ist unerwartet groß.",
-                    f"{total // (1024 * 1024)} MB - der Download wurde abgebrochen.")
+                    "The offered file is unexpectedly large.",
+                    f"{total // (1024 * 1024)} MB - the download was aborted.")
 
             done = 0
             with archive.open("wb") as fh:
                 for block in resp.iter_content(chunk_size=1 << 18):
                     if cancelled():
-                        raise NetworkError("Vom Benutzer abgebrochen.")
+                        raise NetworkError("Cancelled by the user.")
                     if not block:
                         continue
                     fh.write(block)
                     done += len(block)
                     if done > MAX_ARCHIVE_BYTES:
-                        raise NetworkError("Der Download wurde unerwartet groß "
-                                           "und wurde abgebrochen.")
+                        raise NetworkError("The download became unexpectedly "
+                                           "large and was aborted.")
                     if progress:
                         progress(done, total)
     except requests.exceptions.RequestException as exc:
         archive.unlink(missing_ok=True)
-        raise NetworkError("ffmpeg konnte nicht geladen werden.",
-                           f"Technische Details: {exc}") from exc
+        raise NetworkError("ffmpeg couldn't be downloaded.",
+                           f"Technical details: {exc}") from exc
     except Exception:
         archive.unlink(missing_ok=True)
         raise
 
-    log(f"Heruntergeladen: {archive.stat().st_size // (1024 * 1024)} MB")
-    log("Entnehme ffmpeg.exe und ffprobe.exe ...")
+    log(f"Downloaded: {archive.stat().st_size // (1024 * 1024)} MB")
+    log("Extracting ffmpeg.exe and ffprobe.exe ...")
 
     extracted: list[str] = []
     try:
@@ -154,42 +154,42 @@ def download_and_install(progress: Optional[ProgressFn] = None,
                 extracted.append(name)
     except zipfile.BadZipFile as exc:
         archive.unlink(missing_ok=True)
-        raise AudioError("Die heruntergeladene Datei ist kein gültiges Archiv.",
-                         f"Technische Details: {exc}") from exc
+        raise AudioError("The downloaded file isn't a valid archive.",
+                         f"Technical details: {exc}") from exc
     finally:
         archive.unlink(missing_ok=True)
 
     exe = dest / "ffmpeg.exe"
     if not exe.is_file():
         raise AudioError(
-            "Im Archiv war keine ffmpeg.exe enthalten.",
-            f"Gefunden wurde: {', '.join(extracted) or 'nichts'}. "
-            f"Bitte ffmpeg von Hand besorgen und neben die App legen.")
+            "No ffmpeg.exe was in the archive.",
+            f"Found: {', '.join(extracted) or 'nothing'}. "
+            f"Please get ffmpeg manually and place it next to the app.")
 
-    log(f"Entpackt: {', '.join(extracted)}")
+    log(f"Extracted: {', '.join(extracted)}")
 
     # Funktionsprobe: läuft die Datei, und kann sie Vorbis kodieren?
     try:
         version = _run([str(exe), "-version"], timeout=30)
     except Exception as exc:
-        raise AudioError("Die entpackte ffmpeg.exe lässt sich nicht starten.",
-                         f"Technische Details: {exc}") from exc
+        raise AudioError("The extracted ffmpeg.exe won't start.",
+                         f"Technical details: {exc}") from exc
 
     if version.returncode != 0:
-        raise AudioError("Die entpackte ffmpeg.exe meldet einen Fehler.",
+        raise AudioError("The extracted ffmpeg.exe reports an error.",
                          (version.stderr or "")[:300])
 
     first_line = (version.stdout or "").splitlines()
-    log(first_line[0] if first_line else "ffmpeg gestartet")
+    log(first_line[0] if first_line else "ffmpeg started")
 
     encoders = _run([str(exe), "-hide_banner", "-encoders"], timeout=30)
     if "libvorbis" not in (encoders.stdout or ""):
         raise AudioError(
-            "Diesem ffmpeg fehlt der Vorbis-Kodierer (libvorbis).",
-            "Ohne ihn lassen sich keine Dreame-Sprachpakete erzeugen. "
-            "Bitte einen vollständigen ffmpeg-Build verwenden.")
+            "This ffmpeg is missing the Vorbis encoder (libvorbis).",
+            "Without it, no Dreame voice packs can be generated. "
+            "Please use a complete ffmpeg build.")
 
-    log("Vorbis-Kodierer vorhanden - ffmpeg ist einsatzbereit.")
+    log("Vorbis encoder present - ffmpeg is ready to use.")
     return exe
 
 

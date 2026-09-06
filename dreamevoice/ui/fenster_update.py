@@ -40,7 +40,7 @@ class UpdateFenster(tk.Toplevel):
         self.theme = theme
         self.state = state
 
-        self.title("Aktualisierung")
+        self.title("Updates")
         self.configure(bg=theme.color("bg"))
         self.geometry("660x520")
         self.minsize(520, 420)
@@ -48,34 +48,33 @@ class UpdateFenster(tk.Toplevel):
 
         # Knopf zum Schließen zuerst, damit ihn ein langer Text nicht
         # aus dem Fenster schiebt.
-        ttk.Button(self, text="Schließen", style="Accent.TButton",
+        ttk.Button(self, text="Close", style="Accent.TButton",
                    command=self.destroy).pack(side="bottom", pady=(0, 14))
 
-        karte = Card(self, theme, "Aktualisierung",
-                     "Nachsehen, ob es eine neuere Fassung gibt")
+        karte = Card(self, theme, "Updates",
+                     "Check whether a newer version is available")
         karte.pack(fill="both", expand=True, padx=16, pady=16)
         inhalt = karte.content
 
         ttk.Label(
             inhalt,
-            text=(f"Diese Fassung: {__version__}\n\n"
-                  "Die App fragt bei GitHub nach der neuesten Fassung. Dabei "
-                  "wird nichts über dich oder deinen Roboter übermittelt - "
-                  "aber wie bei jedem Seitenaufruf sieht die Gegenseite deine "
-                  "IP-Adresse. Deshalb ist die Abfrage ausgeschaltet, solange "
-                  "du sie nicht einschaltest."),
+            text=(f"This version: {__version__}\n\n"
+                  "The app asks GitHub for the latest version. This doesn't "
+                  "transmit anything about you or your robot - but as with "
+                  "any page request, the other side sees your IP address. "
+                  "That's why the check is off until you turn it on."),
             style="Surface.TLabel", wraplength=580, justify="left").pack(anchor="w")
 
         self.var_update = tk.BooleanVar(
             value=bool(state.config["update_pruefen"]))
         ttk.Checkbutton(inhalt, style="Haken.TCheckbutton",
-                        text="Beim Start nachsehen, ob es eine neuere Fassung gibt",
+                        text="Check for a newer version on startup",
                         variable=self.var_update,
                         command=self._on_schalter).pack(anchor="w", pady=(12, 0))
 
         reihe = ttk.Frame(inhalt, style="Card.TFrame")
         reihe.pack(fill="x", pady=(12, 0))
-        self.btn_update = ttk.Button(reihe, text="Jetzt nach Aktualisierung suchen",
+        self.btn_update = ttk.Button(reihe, text="Check for Updates Now",
                                      command=self._on_suchen)
         self.btn_update.pack(side="left")
         self.lbl_update = ttk.Label(reihe, text="", style="Muted.TLabel",
@@ -84,11 +83,11 @@ class UpdateFenster(tk.Toplevel):
 
         ttk.Label(
             inhalt,
-            text=("Gefunden wird nichts von selbst installiert. Die App zeigt, "
-                  "was neu ist, und fragt. Erst dann lädt sie die neue Datei, "
-                  "prüft ihre Prüfsumme und ersetzt sich selbst - ohne "
-                  "Installation, ohne Administratorrechte. Dein Datenordner "
-                  "bleibt unberührt."),
+            text=("Nothing found gets installed automatically. The app shows "
+                  "what's new and asks first. Only then does it download the "
+                  "new file, verify its checksum, and replace itself - no "
+                  "installer, no admin rights needed. Your data folder stays "
+                  "untouched."),
             style="Muted.TLabel", wraplength=580, justify="left"
         ).pack(anchor="w", pady=(14, 0))
 
@@ -100,7 +99,7 @@ class UpdateFenster(tk.Toplevel):
     def _on_suchen(self) -> None:
         """Von Hand nachsehen. Hier wird auch ein Fehler gezeigt."""
         self.btn_update.configure(state="disabled")
-        self.lbl_update.configure(text="Sehe nach ...")
+        self.lbl_update.configure(text="Checking ...")
 
         def work(_task):
             return aktualisierung.pruefen()
@@ -110,15 +109,15 @@ class UpdateFenster(tk.Toplevel):
             self.state.save()
             if neuerung is None:
                 self.lbl_update.configure(
-                    text=f"{__version__} ist die neueste Fassung.")
+                    text=f"{__version__} is the latest version.")
                 return
-            self.lbl_update.configure(text=f"Version {neuerung.version} ist da.")
+            self.lbl_update.configure(text=f"Version {neuerung.version} is available.")
             self.anbieten(neuerung)
 
         def fail(exc: Exception) -> None:
             nachricht, hinweis = error_text(exc)
             self.lbl_update.configure(text=nachricht)
-            show_error(self, self.theme, "Suche fehlgeschlagen", nachricht, hinweis)
+            show_error(self, self.theme, "Check Failed", nachricht, hinweis)
 
         run_async(self, work, on_success=ok, on_error=fail,
                   on_finally=lambda: self.btn_update.configure(state="normal"))
@@ -132,40 +131,39 @@ class UpdateFenster(tk.Toplevel):
             notizen = notizen[:900].rsplit("\n", 1)[0] + "\n..."
 
         if exe is None:
-            show_info(self, self.theme, f"Version {neuerung.version} ist da",
-                      "Diese App läuft aus dem Quellcode - ein Austausch der "
-                      "Programmdatei ergibt hier keinen Sinn.",
-                      f"Hol dir die neue Fassung über git.\n\n{notizen}")
+            show_info(self, self.theme, f"Version {neuerung.version} is available",
+                      "This app is running from source - replacing the "
+                      "program file doesn't make sense here.",
+                      f"Get the new version via git.\n\n{notizen}")
             return
 
         if not neuerung.pruefbar:
-            show_warning(self, self.theme, f"Version {neuerung.version} ist da",
-                         "Zu dieser Fassung liegt keine Prüfsumme vor.",
-                         "Ohne sie wird nichts ausgetauscht - eine "
-                         "Programmdatei ungeprüft über die eigene zu "
-                         "schreiben, wäre genau der Weg, den man einem "
-                         "Angreifer nicht offenlassen darf.\n\n"
-                         f"Lade sie von der Projektseite:\n{neuerung.seite}")
+            show_warning(self, self.theme, f"Version {neuerung.version} is available",
+                         "No checksum is available for this version.",
+                         "Without one, nothing gets replaced - writing over "
+                         "the program file unverified would be exactly the "
+                         "opening an attacker shouldn't be given.\n\n"
+                         f"Download it from the project page:\n{neuerung.seite}")
             return
 
         if not aktualisierung.ordner_beschreibbar(exe):
-            show_warning(self, self.theme, f"Version {neuerung.version} ist da",
-                         "In diesem Ordner darf die App nichts schreiben.",
-                         "Deshalb kann sie sich hier nicht selbst ersetzen. "
-                         "Verschiebe sie in einen eigenen Ordner - etwa auf "
-                         "den Schreibtisch - oder lade die neue Fassung von "
-                         f"der Projektseite:\n{neuerung.seite}")
+            show_warning(self, self.theme, f"Version {neuerung.version} is available",
+                         "The app isn't allowed to write in this folder.",
+                         "So it can't replace itself here. Move it to a "
+                         "folder of your own - the desktop, say - or "
+                         "download the new version from the project "
+                         f"page:\n{neuerung.seite}")
             return
 
         if not messagebox.askyesno(
-                f"Version {neuerung.version} ist da",
-                f"Du hast {__version__}, neu ist {neuerung.version} "
-                f"({neuerung.groesse_mb:.0f} MB).\n\n"
-                f"Die App lädt die neue Datei, prüft ihre Prüfsumme und legt "
-                f"sich selbst beiseite. Danach startet sie neu. Dein "
-                f"Datenordner und deine Pakete bleiben unberührt.\n\n"
-                + (f"Was neu ist:\n{notizen}\n\n" if notizen else "")
-                + "Jetzt aktualisieren?",
+                f"Version {neuerung.version} is available",
+                f"You have {__version__}, {neuerung.version} "
+                f"({neuerung.groesse_mb:.0f} MB) is new.\n\n"
+                f"The app downloads the new file, verifies its checksum, "
+                f"and sets itself aside. It then restarts. Your data "
+                f"folder and packages stay untouched.\n\n"
+                + (f"What's new:\n{notizen}\n\n" if notizen else "")
+                + "Update now?",
                 parent=self):
             return
 
@@ -173,12 +171,12 @@ class UpdateFenster(tk.Toplevel):
 
     def _holen(self, neuerung) -> None:
         self.btn_update.configure(state="disabled")
-        self.lbl_update.configure(text="Lade ...")
+        self.lbl_update.configure(text="Downloading ...")
 
         def melde(geladen: int, gesamt: int) -> None:
             if not gesamt:
                 return
-            text = f"Lade ... {geladen * 100 // gesamt} %"
+            text = f"Downloading ... {geladen * 100 // gesamt} %"
             to_main(self, lambda t=text: self.lbl_update.configure(text=t))
 
         def work(task):
@@ -192,20 +190,20 @@ class UpdateFenster(tk.Toplevel):
             return True
 
         def ok(_ergebnis) -> None:
-            self.lbl_update.configure(text=f"Version {neuerung.version} ist bereit.")
+            self.lbl_update.configure(text=f"Version {neuerung.version} is ready.")
             if messagebox.askyesno(
-                    "Fertig",
-                    f"Version {neuerung.version} ist eingespielt.\n\n"
-                    f"Jetzt neu starten? Die alte Fassung wird beim nächsten "
-                    f"Start weggeräumt.",
+                    "Done",
+                    f"Version {neuerung.version} has been installed.\n\n"
+                    f"Restart now? The old version will be cleaned up on "
+                    f"the next start.",
                     parent=self):
                 if aktualisierung.neu_starten():
                     haupt = self.master.winfo_toplevel()
                     spaeter(haupt, 200, haupt.destroy)
                 else:
-                    show_warning(self, self.theme, "Neustart",
-                                 "Die neue Fassung ließ sich nicht starten.",
-                                 "Schließe die App und starte sie von Hand.")
+                    show_warning(self, self.theme, "Restart",
+                                 "The new version couldn't be started.",
+                                 "Close the app and start it manually.")
 
         def fail(exc: Exception) -> None:
             nachricht, hinweis = error_text(exc)
@@ -215,13 +213,13 @@ class UpdateFenster(tk.Toplevel):
             # Gegenteil der Wahrheit - und zwar genau in dem Moment, in
             # dem der Benutzer wissen muss, was zu tun ist.
             if isinstance(exc, aktualisierung.TauschNotstand):
-                show_error(self, self.theme, "Bitte von Hand nachhelfen",
+                show_error(self, self.theme, "Manual Action Needed",
                            nachricht, hinweis)
                 return
-            show_error(self, self.theme, "Nicht aktualisiert", nachricht,
+            show_error(self, self.theme, "Not Updated", nachricht,
                        (hinweis + "\n\n" if hinweis else "")
-                       + f"Es wurde nichts ausgetauscht. Die Datei liegt "
-                         f"weiterhin auf der Projektseite bereit:\n"
+                       + f"Nothing was replaced. The file is still "
+                         f"waiting on the project page:\n"
                          f"{neuerung.seite}")
 
         run_async(self, work, on_success=ok, on_error=fail,

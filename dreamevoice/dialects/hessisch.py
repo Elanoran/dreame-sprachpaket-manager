@@ -31,10 +31,10 @@ from __future__ import annotations
 from . import muster
 
 KEY = "hessisch"
-NAME = "Hessisch"
+NAME = "Hessian"
 BESCHREIBUNG = (
-    "Frankfurterisch aus dem Rhein-Main-Gebiet: lautgetreu geschrieben, "
-    "gutgelaunt und geschwätzig. Ei gude, wie?"
+    "Frankfurt-style Hessian from the Rhine-Main area: written "
+    "phonetically, good-humored and chatty. Ei gude, wie?"
 )
 LANG_ID = "HESSEN"
 

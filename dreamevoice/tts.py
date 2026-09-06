@@ -51,7 +51,7 @@ class Voice:
 
     @property
     def label(self) -> str:
-        geschlecht = "männlich" if self.is_male else "weiblich"
+        geschlecht = "male" if self.is_male else "female"
         return f"{self.name} ({geschlecht})"
 
 
@@ -180,18 +180,18 @@ def synthesize(texts: Dict[int, str],
     """
     if not available():
         raise AudioError(
-            "Sprachsynthese ist nur unter Windows verfügbar.",
-            "Auf diesem System lässt sich kein Paket automatisch erzeugen. "
-            "Du kannst Ansagen aber selbst aufnehmen und zuweisen.")
+            "Speech synthesis is only available on Windows.",
+            "No pack can be generated automatically on this system. "
+            "You can, however, record and assign announcements yourself.")
     if not texts:
-        raise AudioError("Es wurden keine Texte übergeben.")
+        raise AudioError("No texts were provided.")
 
     chosen = pick_german_voice(voice)
     if chosen is None:
         raise AudioError(
-            "Es ist keine deutsche Sprachausgabe-Stimme installiert.",
-            "Windows-Einstellungen > Zeit und Sprache > Sprache > Deutsch > "
-            "Optionen > Sprachausgabe hinzufügen. Danach die App neu starten.")
+            "No German text-to-speech voice is installed.",
+            "Windows Settings > Time and Language > Language > German > "
+            "Options > Add speech. Then restart the app.")
 
     out_dir.mkdir(parents=True, exist_ok=True)
     if log:

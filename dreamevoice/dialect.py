@@ -50,9 +50,9 @@ ENGINE_WINDOWS = "windows"
 ENGINE_ELEVENLABS = "elevenlabs"
 
 NOTE_WINDOWS = (
-    "Mit der Windows-Stimme steckt der Dialekt nur in Wortwahl und "
-    "Schreibweise - die Aussprache bleibt hochdeutsch. Für echten Dialekt "
-    "unten auf ElevenLabs umschalten."
+    "With the Windows voice, the dialect only lives in the wording and "
+    "spelling - the pronunciation stays standard German. For genuine "
+    "dialect, switch to ElevenLabs below."
 )
 
 
@@ -320,14 +320,14 @@ def generate(dialect: DialectPack,
 
     if not base_pack or not Path(base_pack).is_file():
         raise PackError(
-            "Das Originalpaket deines Roboters fehlt.",
-            "Lade es unter 'Einzelne Ansagen' herunter - es ist die Grundlage jedes Pakets.")
+            "Your robot's original pack is missing.",
+            "Download it under 'Individual Announcements' - it's the foundation of every pack.")
 
     if ffmpeg is None:
         raise AudioError(
-            "Für die Umwandlung wird ffmpeg gebraucht.",
-            "Richte ffmpeg unter 'Einzelne Ansagen' ein - ohne den Vorbis-Kodierer lässt sich "
-            "aus der Sprachausgabe kein Sprachpaket bauen.")
+            "ffmpeg is needed for the conversion.",
+            "Set up ffmpeg under 'Individual Announcements' - without the Vorbis "
+            "encoder, no voice pack can be built from the speech output.")
 
     work_dir = Path(work_dir)
     wav_dir = work_dir / "gesprochen"
@@ -344,23 +344,23 @@ def generate(dialect: DialectPack,
     if ueberzaehlig:
         dialect = replace(dialect, texts={
             i: t for i, t in dialect.texts.items() if i in vorhandene_ids})
-        log(f"{len(ueberzaehlig)} Ansagen gibt es bei diesem Modell nicht "
-            f"und werden übersprungen.")
+        log(f"{len(ueberzaehlig)} announcements don't exist on this model "
+            f"and will be skipped.")
 
     # ---- 1. Sprechen -------------------------------------------------
     # Nur das sprechen, was fehlt oder nachweislich nicht mehr passt.
     passend, uebernommen, veraltet = classify_recordings(dialect, work_dir)
 
     if uebernommen:
-        log(f"{len(uebernommen)} vorhandene Aufnahmen ohne Herkunftsvermerk "
-            f"übernommen (z. B. aus einer Sicherung) - sie werden nicht neu "
-            f"gesprochen.")
+        log(f"{len(uebernommen)} existing recordings without a manifest "
+            f"entry taken over (e.g. from a backup) - they won't be "
+            f"re-spoken.")
         # Nachtragen, damit sie ab jetzt zugeordnet sind.
         write_manifest(work_dir, {i: dialect.texts[i] for i in uebernommen})
 
     if veraltet:
-        log(f"{len(veraltet)} Aufnahmen gehören zu einem inzwischen geänderten "
-            f"Text und werden neu gesprochen.")
+        log(f"{len(veraltet)} recordings belong to text that has since "
+            f"changed and will be re-spoken.")
         for sound_id in veraltet:
             for endung in (".wav", ".mp3"):
                 (wav_dir / f"{sound_id}{endung}").unlink(missing_ok=True)
@@ -368,19 +368,19 @@ def generate(dialect: DialectPack,
     brauchbar = {**passend, **uebernommen}
     offen = {i: t for i, t in dialect.texts.items() if i not in brauchbar}
     if brauchbar:
-        log(f"{len(brauchbar)} Ansagen liegen schon vor, "
-            f"{len(offen)} sind zu sprechen.")
+        log(f"{len(brauchbar)} announcements already exist, "
+            f"{len(offen)} need to be spoken.")
 
-    log(f"Spreche {len(offen)} von {dialect.count} Ansagen auf "
+    log(f"Speaking {len(offen)} of {dialect.count} announcements for "
         f"{dialect.name} ...")
 
     if not offen:
-        log("Alle Ansagen liegen bereits vor - es wird nichts neu gesprochen.")
+        log("All announcements already exist - nothing new will be spoken.")
         wavs = dict(brauchbar)
     elif engine == ENGINE_ELEVENLABS:
         from . import elevenlabs
-        log(f"Sprachdienst: ElevenLabs "
-            f"({elevenlabs.estimate_characters(offen)} Zeichen)")
+        log(f"Speech service: ElevenLabs "
+            f"({elevenlabs.estimate_characters(offen)} characters)")
         neu = elevenlabs.synthesize(
             offen, wav_dir, api_key=api_key, voice_id=voice_id,
             log=log,
@@ -406,10 +406,10 @@ def generate(dialect: DialectPack,
         wavs = {**brauchbar, **neu}
 
     if cancelled():
-        raise PackError("Vom Benutzer abgebrochen.")
+        raise PackError("Cancelled by the user.")
 
     # ---- 2. Umwandeln -------------------------------------------------
-    log("Wandle in das Format des Roboters um (OGG Vorbis, mono, 16 kHz) ...")
+    log("Converting to the robot's format (OGG Vorbis, mono, 16 kHz) ...")
     # Jede neue Ansage bekommt die Lautheit der deutschen Originalansage,
     # die sie ersetzt. Sonst klingt der Dialekt neben den verbliebenen
     # Originalen leiser.
@@ -418,7 +418,7 @@ def generate(dialect: DialectPack,
     total = len(wavs)
     for index, (sound_id, wav) in enumerate(sorted(wavs.items()), 1):
         if cancelled():
-            raise PackError("Vom Benutzer abgebrochen.")
+            raise PackError("Cancelled by the user.")
         target = ogg_dir / f"{sound_id}.ogg"
         convert_to_pack_format(wav, target, ffmpeg,
                                target_lufs=target_for(pegel, sound_id))
@@ -426,12 +426,12 @@ def generate(dialect: DialectPack,
         if progress:
             progress(total + index, total * 2)
 
-    log(f"{len(assignments)} Ansagen umgewandelt.")
+    log(f"{len(assignments)} announcements converted.")
 
     fehlend = dialect.count - len(assignments)
     if fehlend > 0:
-        log(f"Hinweis: {fehlend} Ansagen fehlen noch und bleiben auf der "
-            f"deutschen Originalstimme.")
+        log(f"Note: {fehlend} announcements are still missing and stay "
+            f"on the German original voice.")
 
     # ---- 3. Paket bauen ------------------------------------------------
     result = build_pack(
@@ -445,10 +445,10 @@ def generate(dialect: DialectPack,
     )
     if fehlend > 0:
         result.warnings.append(
-            f"{fehlend} von {dialect.count} Ansagen konnten nicht gesprochen "
-            f"werden und bleiben Hochdeutsch. Starte die Erzeugung später "
-            f"einfach erneut - die App macht dort weiter, wo sie aufgehört hat.")
-    log(f"Fertig: {result.summary()}")
+            f"{fehlend} of {dialect.count} announcements couldn't be "
+            f"spoken and stay in standard German. Just start generating "
+            f"again later - the app picks up where it left off.")
+    log(f"Done: {result.summary()}")
     return result
 
 
@@ -503,7 +503,7 @@ def speak_one(text: str,
     """
     text = (text or "").strip()
     if not text:
-        raise AudioError("Der Text ist leer.")
+        raise AudioError("The text is empty.")
 
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -531,7 +531,7 @@ def speak_one(text: str,
                                  voice=voice, rate=rate, pitch=pitch, log=log)
 
     if not dateien:
-        raise AudioError("Der Satz konnte nicht gesprochen werden.")
+        raise AudioError("The sentence couldn't be spoken.")
 
     quelle = next(iter(dateien.values()))
     fertig.write_bytes(quelle.read_bytes())
@@ -560,7 +560,7 @@ def preview(dialect: DialectPack,
     """
     texts = sample_texts(dialect, count)
     if not texts:
-        raise AudioError("Für diesen Dialekt gibt es keine Beispielsätze.")
+        raise AudioError("There are no sample sentences for this dialect.")
 
     work_dir = Path(work_dir)
     work_dir.mkdir(parents=True, exist_ok=True)
@@ -568,14 +568,14 @@ def preview(dialect: DialectPack,
     if engine == ENGINE_ELEVENLABS:
         from . import elevenlabs
         chars = sum(len(t) for t in texts.values())
-        log(f"Hörprobe über ElevenLabs ({chars} Zeichen)")
+        log(f"Sample via ElevenLabs ({chars} characters)")
         files = elevenlabs.synthesize(texts, work_dir, api_key=api_key,
                                       voice_id=voice_id, log=log,
                                       model=model,
                                       voice_settings=voice_settings,
                                       use_voice_settings=use_voice_settings)
     else:
-        log("Hörprobe über die Windows-Sprachausgabe")
+        log("Sample via the Windows text-to-speech voice")
         files = tts.synthesize(
             texts, work_dir, voice=voice,
             rate=dialect.rate if rate is None else rate,
@@ -589,8 +589,8 @@ def preview(dialect: DialectPack,
     # die erste Aufnahme ab.
     zusammen = concat_with_pauses(einzeln, work_dir / "kostprobe.wav", ffmpeg)
     if zusammen not in einzeln:
-        log(f"{len(einzeln)} Sätze zu einer Hörprobe zusammengefügt.")
+        log(f"{len(einzeln)} sentences combined into one sample.")
         return [zusammen]
 
-    log("Sätze konnten nicht zusammengefügt werden - es läuft nur der erste.")
+    log("Sentences couldn't be combined - only the first one will play.")
     return einzeln

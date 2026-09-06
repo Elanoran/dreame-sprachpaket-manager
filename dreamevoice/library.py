@@ -60,7 +60,7 @@ def suggest_name(dialect_name: str, engine: str, voice_label: str = "") -> str:
     stimme = (voice_label or "").strip()
     # Klammerzusätze wie "(de · selbst erzeugt)" machen den Namen unnötig lang.
     stimme = stimme.split("(")[0].strip()
-    teile = ["dialekt", dialect_name, dienst]
+    teile = ["dialect", dialect_name, dienst]
     if stimme:
         teile.append(stimme)
     return safe_name("_".join(teile))
@@ -125,7 +125,7 @@ class PackInfo:
         kopf = " · ".join(teile)
         anhang = []
         if self.replaced:
-            anhang.append(f"{self.replaced} Ansagen")
+            anhang.append(f"{self.replaced} announcements")
         anhang.append(f"{self.size_mb:.1f} MB")
         if self.created:
             anhang.append(self.created[:10])

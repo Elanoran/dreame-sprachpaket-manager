@@ -50,52 +50,51 @@ def file_for(key: str) -> Path:
 # --------------------------------------------------------------------------
 
 KOPF = """\
-# {name} - Sprachpaket für Dreame-, MOVA- und Trouver-Saugroboter
-# {anzahl} Ansagen.
+# {name} - voice pack for Dreame, MOVA, and Trouver vacuum robots
+# {anzahl} announcements.
 #
-# Die Nummern gelten für alle Modelle: Dreame nutzt eine gemeinsame
-# Nummerierung, nachgeprüft an acht fremden Modellen. Ansagen, die dein
-# Roboter nicht kennt, übergeht die App beim Bauen.
+# The numbers apply to all models: Dreame uses a shared numbering scheme,
+# verified against eight different models. Announcements your robot
+# doesn't recognize are skipped by the app when building.
 #
-# So arbeitest du damit:
-#   1. Diese Datei komplett kopieren und einer Sprach-KI geben. Ein
-#      Auftrag, der sich bewährt hat:
+# How to work with this:
+#   1. Copy this whole file and hand it to a language AI. A prompt that
+#      has worked well:
 #
-#        "Unten stehen die Ansagen eines Saugroboters auf {name}.
-#         Bitte überarbeite ausschließlich die dritte Spalte, damit sie
-#         natürlich und einheitlich klingt. Nummer und Bedeutung
-#         unverändert lassen, den Aufbau der Zeilen beibehalten und alle
-#         Zeilen zurückgeben. Die Sätze bleiben kurz und werden
-#         gesprochen, nicht gelesen."
+#        "Below are the announcements of a vacuum robot in {name}.
+#         Please rework only the third column so it sounds natural and
+#         consistent. Leave the number and meaning unchanged, keep the
+#         line structure, and return every line. Keep the sentences
+#         short - they're spoken, not read."
 #
-#   2. Die Antwort hier wieder einfügen und die Datei speichern.
-#   3. In der App auf "Texte aus Datei einlesen" klicken.
+#   2. Paste the reply back in here and save the file.
+#   3. Click "Import Texts from File" in the app.
 #
-# Aufbau je Zeile:   Nummer | Bedeutung auf Hochdeutsch | Dialekttext
+# Line format:   Number | Meaning in English | Dialect/custom text
 #
-# Beim Einlesen zählt die Nummer und alles hinter dem zweiten
-# senkrechten Strich. Zeilen mit # und Leerzeilen werden überlesen.
-# Zeilen, die du löschst, bleiben unverändert - du kannst also auch
-# nur einen Teil überarbeiten lassen.
+# On import, only the number and everything after the second pipe
+# character counts. Lines starting with # and blank lines are ignored.
+# Lines you delete stay unchanged - so you can also have just a part
+# reworked.
 #
-# Halte die Sätze kurz. Die Originalansagen sind zwei bis sechs
-# Sekunden lang; alles Längere wirkt am Roboter geschwätzig.
+# Keep the sentences short. The original announcements are two to six
+# seconds long; anything longer sounds chatty on the robot.
 """
 
 ABSCHNITT_ANSAGEN = """
 # ---------------------------------------------------------------------
-# Ansagen
+# Announcements
 # ---------------------------------------------------------------------
 """
 
 ABSCHNITT_SCHEMA = """
 # ---------------------------------------------------------------------
-# Schematische Ansagen
+# Schematic announcements
 #
-# Diese entstehen aus zwei Satzmustern (Akkustand in Prozent,
-# Bestätigung je Zimmer) und unterscheiden sich nur in einem Wort. Für
-# eine sprachliche Überarbeitung sind sie meist uninteressant - dann
-# diesen Abschnitt einfach stehen lassen oder löschen.
+# These are generated from two sentence templates (battery percentage,
+# per-room confirmation) and differ by only one word. They're usually
+# uninteresting for a wording rework - just leave this section as is or
+# delete it.
 # ---------------------------------------------------------------------
 """
 
@@ -138,7 +137,7 @@ def write_one(pack: DialectPack,
             eintrag = catalog.get(sound_id)
             bedeutung = ""
             if eintrag is not None:
-                bedeutung = eintrag.de or eintrag.en or ""
+                bedeutung = eintrag.en or eintrag.de or ""
             bedeutung = bedeutung.replace(TRENNER, "/").strip() or "-"
             text = aktuell.texts.get(sound_id, "")
             raus.append(f"{sound_id:>4} {TRENNER} {bedeutung} {TRENNER} {text}")
@@ -216,14 +215,14 @@ class ReadResult:
         return len(self.overrides)
 
     def summary(self) -> str:
-        teile = [f"{self.gelesen} Zeilen gelesen",
-                 f"{self.geaendert} Texte weichen vom mitgelieferten ab"]
+        teile = [f"{self.gelesen} lines read",
+                 f"{self.geaendert} texts differ from the built-in ones"]
         if self.unveraendert:
-            teile.append(f"{self.unveraendert} unverändert")
+            teile.append(f"{self.unveraendert} unchanged")
         if self.leer:
-            teile.append(f"{self.leer} ohne Text übersprungen")
+            teile.append(f"{self.leer} skipped without text")
         if self.unbekannt:
-            teile.append(f"{len(self.unbekannt)} unbekannte Nummern")
+            teile.append(f"{len(self.unbekannt)} unknown numbers")
         return ", ".join(teile) + "."
 
 

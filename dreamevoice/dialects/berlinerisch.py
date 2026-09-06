@@ -5,10 +5,10 @@ from __future__ import annotations
 from . import muster
 
 KEY = "berlinerisch"
-NAME = "Berlinerisch"
+NAME = "Berlin Dialect"
 BESCHREIBUNG = (
-    "Berliner Schnauze: direkt, trocken, mit Herz. Beschwert sich gern, "
-    "macht aber trotzdem sauber."
+    "Berlin's famous 'Schnauze': blunt, dry, with heart. Loves to "
+    "complain, but cleans anyway."
 )
 LANG_ID = "BERLIN"
 

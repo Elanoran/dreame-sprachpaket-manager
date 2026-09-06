@@ -95,12 +95,12 @@ def regionen_fuer(marke: str) -> list:
     """Die Regionen, die es bei dieser Marke gibt."""
     return REGIONS_JE_MARKE.get(marke, list(REGIONS))
 REGION_LABELS = {
-    "eu": "Europa (Deutschland, Österreich, Schweiz)",
-    "us": "Nord-/Südamerika",
-    "sg": "Asien-Pazifik",
-    "ru": "Russland",
+    "eu": "Europe (Germany, Austria, Switzerland)",
+    "us": "North/South America",
+    "sg": "Asia-Pacific",
+    "ru": "Russia",
     "kr": "Korea",
-    "cn": "China (Festland)",
+    "cn": "China (Mainland)",
 }
 
 # MIoT-Adressen des Sprachpaket-Dienstes (Service 7).
@@ -192,7 +192,7 @@ class DreameCloud:
         """Meldet an. Wirft LoginError/NetworkError mit Klartextmeldung."""
         email = (email or "").strip()
         if not email or not password:
-            raise LoginError("E-Mail und Passwort dürfen nicht leer sein.")
+            raise LoginError("Email and password must not be empty.")
         if region not in REGIONS:
             region = "eu"
 
@@ -215,19 +215,20 @@ class DreameCloud:
             )
         except requests.exceptions.SSLError as exc:
             raise NetworkError(
-                "Die gesicherte Verbindung zum Dreame-Server kam nicht zustande.",
-                "Prüfe, ob eine Firewall, ein VPN oder ein Virenscanner mit "
-                "HTTPS-Scan dazwischenfunkt.",
+                "The secure connection to the Dreame server didn't come "
+                "through.",
+                "Check whether a firewall, VPN, or antivirus with HTTPS "
+                "scanning is interfering.",
             ) from exc
         except requests.exceptions.Timeout as exc:
             raise NetworkError(
-                "Der Dreame-Server hat nicht rechtzeitig geantwortet.",
-                "Prüfe deine Internetverbindung und versuche es erneut.",
+                "The Dreame server didn't respond in time.",
+                "Check your internet connection and try again.",
             ) from exc
         except requests.exceptions.RequestException as exc:
             raise NetworkError(
-                "Der Dreame-Server ist nicht erreichbar.",
-                f"Technische Details: {exc}",
+                "The Dreame server can't be reached.",
+                f"Technical details: {exc}",
             ) from exc
 
         self._apply_login_response(resp)
@@ -247,26 +248,26 @@ class DreameCloud:
                                                    or "user" in low
                                                    or not detail):
                 raise LoginError(
-                    "E-Mail oder Passwort wurde nicht akzeptiert.",
-                    "Prüfe die Zugangsdaten in der Dreamehome-App. Achte auch "
-                    "auf die richtige Region: Konten aus Deutschland liegen "
-                    "fast immer auf 'Europa'.",
+                    "Email or password wasn't accepted.",
+                    "Check your credentials in the Dreamehome app. Also "
+                    "check the right region: accounts from Germany are "
+                    "almost always on 'Europe'.",
                 )
             raise LoginError(
-                f"Die Anmeldung wurde abgelehnt (HTTP {resp.status_code}).",
-                detail or "Keine nähere Begründung vom Server.",
+                f"The sign-in was rejected (HTTP {resp.status_code}).",
+                detail or "No further explanation from the server.",
             )
 
         try:
             data = resp.json()
         except ValueError as exc:
-            raise LoginError("Die Antwort des Servers war unlesbar.") from exc
+            raise LoginError("The server's response was unreadable.") from exc
 
         token = data.get("access_token")
         if not token:
             raise LoginError(
-                "Der Server hat kein Zugriffstoken geliefert.",
-                f"Antwort: {json.dumps(data)[:300]}",
+                "The server didn't provide an access token.",
+                f"Response: {json.dumps(data)[:300]}",
             )
 
         self.access_token = token
@@ -306,7 +307,7 @@ class DreameCloud:
                 last = exc
         if isinstance(last, Exception):
             raise last
-        raise LoginError("Anmeldung in keiner Region erfolgreich.")
+        raise LoginError("Sign-in did not succeed in any region.")
 
     def _ensure_token(self) -> None:
         if self.access_token and time.time() < self._expires_at:
@@ -314,7 +315,7 @@ class DreameCloud:
         if self._email and self._password:
             self.login(self._email, self._password, self.region)
         elif not self.access_token:
-            raise LoginError("Nicht angemeldet.")
+            raise LoginError("Not signed in.")
 
     @property
     def logged_in(self) -> bool:
@@ -343,7 +344,7 @@ class DreameCloud:
                 continue
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"Der Dreame-Server antwortete mit HTTP {resp.status_code}.",
+                    f"The Dreame server responded with HTTP {resp.status_code}.",
                     (resp.text or "")[:300],
                 )
             try:
@@ -352,8 +353,8 @@ class DreameCloud:
                 last_exc = exc
 
         raise NetworkError(
-            "Die Anfrage an den Dreame-Server ist fehlgeschlagen.",
-            f"Technische Details: {last_exc}",
+            "The request to the Dreame server failed.",
+            f"Technical details: {last_exc}",
         )
 
     # -- Geräte -----------------------------------------------------------
@@ -362,8 +363,8 @@ class DreameCloud:
         data = self._api(PATH_DEVICE_LIST)
         if data.get("code") != 0 or "data" not in data:
             raise NetworkError(
-                "Die Geräteliste konnte nicht geladen werden.",
-                f"Antwort des Servers: {json.dumps(data)[:300]}",
+                "The device list couldn't be loaded.",
+                f"Server response: {json.dumps(data)[:300]}",
             )
         records = (((data.get("data") or {}).get("page") or {}).get("records")) or []
         devices = [Device(r) for r in records]
@@ -372,7 +373,7 @@ class DreameCloud:
     def device_info(self, did: str) -> Dict[str, Any]:
         data = self._api(PATH_DEVICE_INFO, {"did": str(did)})
         if data.get("code") != 0:
-            raise NetworkError("Die Gerätedaten konnten nicht geladen werden.")
+            raise NetworkError("The device data couldn't be loaded.")
         return data.get("data") or {}
 
     # -- MIoT-Befehle ------------------------------------------------------
@@ -401,9 +402,9 @@ class DreameCloud:
         inner = data.get("data")
         if not inner or "result" not in inner:
             raise NetworkError(
-                "Der Roboter hat auf den Befehl nicht geantwortet.",
-                "Er ist vermutlich offline oder im Standby. Wecke ihn in der "
-                "Dreamehome-App auf und versuche es erneut.",
+                "The robot didn't respond to the command.",
+                "It's probably offline or in standby. Wake it in the "
+                "Dreamehome app and try again.",
             )
         return inner["result"]
 

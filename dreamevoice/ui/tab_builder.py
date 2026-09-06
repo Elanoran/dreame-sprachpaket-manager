@@ -33,11 +33,11 @@ def open_folder(path: Path) -> None:
         pass
 
 AUDIO_FILETYPES = [
-    ("Audiodateien", "*.ogg *.wav *.mp3 *.m4a *.flac *.aac *.opus *.wma"),
-    ("OGG Vorbis (bereits passend)", "*.ogg"),
+    ("Audio files", "*.ogg *.wav *.mp3 *.m4a *.flac *.aac *.opus *.wma"),
+    ("OGG Vorbis (already correct)", "*.ogg"),
     ("WAV", "*.wav"),
     ("MP3", "*.mp3"),
-    ("Alle Dateien", "*.*"),
+    ("All files", "*.*"),
 ]
 
 PAGE_SIZE = 100
@@ -91,7 +91,7 @@ class SoundRow(ttk.Frame):
         if sound.de and sound.en:
             sub_parts.append(f"Original (EN): {sound.en}")
         elif not sound.de and not sound.en:
-            sub_parts.append("keine Beschreibung bekannt - bitte anhören")
+            sub_parts.append("no description known - please listen")
         subtitle = ttk.Label(self, text="  ·  ".join(sub_parts), style="Muted.TLabel",
                              anchor="w", wraplength=ZEILENBREITE, justify="left")
         subtitle.grid(row=1, column=1, sticky="ew", pady=(1, 0))
@@ -100,7 +100,7 @@ class SoundRow(ttk.Frame):
         controls = ttk.Frame(self, style="Card.TFrame")
         controls.grid(row=0, column=2, rowspan=2, sticky="e", padx=(12, 0))
 
-        self.btn_preview = ttk.Button(controls, text="Original anhören",
+        self.btn_preview = ttk.Button(controls, text="Listen to Original",
                                       style="Small.TButton",
                                       command=self._play_original)
         self.btn_preview.pack(side="left", padx=(0, 6))
@@ -110,7 +110,7 @@ class SoundRow(ttk.Frame):
         self.entry.pack(side="left", padx=(0, 6))
         self.entry.bind("<FocusOut>", lambda _e: self._store())
 
-        ttk.Button(controls, text="Durchsuchen ...", style="Small.TButton",
+        ttk.Button(controls, text="Browse ...", style="Small.TButton",
                    command=self._browse).pack(side="left", padx=(0, 6))
         ttk.Button(controls, text="✕", style="Small.TButton", width=3,
                    command=self._clear).pack(side="left")
@@ -130,22 +130,22 @@ class SoundRow(ttk.Frame):
         available = self.sound.id in self.tab.state.previews
         self.btn_preview.configure(state="normal" if available else "disabled")
         if not available:
-            self.btn_preview.configure(text="Original anhören")
+            self.btn_preview.configure(text="Listen to Original")
 
     def _play_original(self) -> None:
         path = self.tab.state.previews.get(self.sound.id)
         if not path or not path.is_file():
             messagebox.showinfo(
-                "Keine Hörprobe",
-                "Lade zuerst oben das offizielle Sprachpaket deines Roboters "
-                "herunter - daraus stammen die Hörproben.",
+                "No Preview Available",
+                "First download your robot's official voice pack above - "
+                "the previews come from that.",
                 parent=self)
             return
         try:
             open_with_default_player(path)
         except OSError as exc:
-            show_error(self, self.theme, "Wiedergabe nicht möglich",
-                       f"Die Datei konnte nicht abgespielt werden.\n\n{path}\n\n{exc}")
+            show_error(self, self.theme, "Playback Not Possible",
+                       f"The file couldn't be played back.\n\n{path}\n\n{exc}")
 
     def _browse(self) -> None:
         initial = (self.tab.state.config["last_audio_dir"]
@@ -154,8 +154,8 @@ class SoundRow(ttk.Frame):
         # später erwartet - so passt beides zusammen.
         chosen = filedialog.askopenfilename(
             parent=self,
-            title=(f"Audiodatei für Ansage {self.sound.id} - {self.sound.title}"
-                   f"   (erwarteter Name: {importer.suggested_filename(self.sound.id)})"),
+            title=(f"Audio File for Announcement {self.sound.id} - {self.sound.title}"
+                   f"   (expected name: {importer.suggested_filename(self.sound.id)})"),
             initialdir=initial if Path(initial).is_dir() else str(Path.home()),
             initialfile=importer.suggested_filename(self.sound.id),
             filetypes=AUDIO_FILETYPES,
@@ -189,7 +189,7 @@ class SoundRow(ttk.Frame):
 
         path = Path(value)
         if not path.is_file():
-            self.hint.configure(text="Diese Datei existiert nicht (mehr).",
+            self.hint.configure(text="This file no longer exists.",
                                 style="Danger.TLabel")
             return
 
@@ -198,7 +198,7 @@ class SoundRow(ttk.Frame):
             self.hint.configure(text=warning, style="Warning.TLabel")
         else:
             size_kb = path.stat().st_size // 1024
-            self.hint.configure(text=f"Bereit: {path.name} ({size_kb} KB)",
+            self.hint.configure(text=f"Ready: {path.name} ({size_kb} KB)",
                                 style="Success.TLabel")
 
     def refresh(self) -> None:
@@ -227,33 +227,33 @@ class BuilderTab(ttk.Frame):
 
         InfoBanner(
             outer, self.theme,
-            "Dein Paket entsteht als Kopie des offiziellen Sprachpakets deines "
-            "Roboters - ausgetauscht wird nur, was du selbst zuweist. Alles andere "
-            "bleibt auf der originalen deutschen Stimme. Deshalb ist der erste "
-            "Schritt immer das Laden des Originalpakets.",
+            "Your pack is built as a copy of your robot's official voice "
+            "pack - only what you assign yourself gets replaced. Everything "
+            "else stays on the original German voice. That's why the first "
+            "step is always loading the original pack.",
         ).pack(fill="x", pady=(0, 14))
 
         # ---- Basis -----------------------------------------------------
-        base = Card(outer, self.theme, "Schritt 1: Originalpaket laden",
-                    "Grundlage und zugleich Sicherheitsnetz - daraus kommen auch "
-                    "die Hörproben.")
+        base = Card(outer, self.theme, "Step 1: Load Original Pack",
+                    "The foundation and safety net at the same time - the "
+                    "previews come from here too.")
         base.pack(fill="x")
 
         row = ttk.Frame(base.content, style="Card.TFrame")
         row.pack(fill="x")
-        ttk.Label(row, text="Sprache", style="Surface.TLabel").pack(side="left",
+        ttk.Label(row, text="Language", style="Surface.TLabel").pack(side="left",
                                                                     padx=(0, 10))
-        self.var_language = tk.StringVar(value="Deutsch (DE)")
+        self.var_language = tk.StringVar(value="German (DE)")
         self.combo_language = ttk.Combobox(row, textvariable=self.var_language,
                                            state="readonly", width=34, values=[])
         self.combo_language.pack(side="left")
 
-        self.btn_load_base = ttk.Button(row, text="Originalpaket herunterladen",
+        self.btn_load_base = ttk.Button(row, text="Download Original Pack",
                                         style="Accent.TButton",
                                         command=self._on_load_base)
         self.btn_load_base.pack(side="left", padx=(12, 0))
 
-        self.base_badge = StatusBadge(row, self.theme, "Noch nicht geladen")
+        self.base_badge = StatusBadge(row, self.theme, "Not loaded yet")
         self.base_badge.pack(side="left", padx=(14, 0))
 
         self.base_progress = ttk.Progressbar(base.content, mode="determinate",
@@ -268,32 +268,32 @@ class BuilderTab(ttk.Frame):
 
         ffmpeg_actions = ttk.Frame(self.ffmpeg_banner, style="Card.TFrame")
         ffmpeg_actions.pack(anchor="w", pady=(6, 0))
-        self.btn_ffmpeg = ttk.Button(ffmpeg_actions, text="ffmpeg automatisch einrichten",
+        self.btn_ffmpeg = ttk.Button(ffmpeg_actions, text="Set Up ffmpeg Automatically",
                                      style="Small.TButton", command=self._on_setup_ffmpeg)
         self.ffmpeg_progress = ttk.Progressbar(ffmpeg_actions, mode="determinate",
                                                maximum=100, length=200)
         self._check_ffmpeg()
 
         # ---- Zuweisungen ------------------------------------------------
-        assign = Card(outer, self.theme, "Schritt 2: Ansagen austauschen",
-                      "Wähle je Ansage eine eigene Audiodatei. Formate wie mp3 "
-                      "oder wav werden beim Bauen automatisch umgewandelt.")
+        assign = Card(outer, self.theme, "Step 2: Replace Announcements",
+                      "Choose a custom audio file per announcement. Formats "
+                      "like mp3 or wav are converted automatically when building.")
         assign.pack(fill="both", expand=True, pady=(14, 0))
 
         filters = ttk.Frame(assign.content, style="Card.TFrame")
         filters.pack(fill="x", pady=(0, 10))
 
-        ttk.Label(filters, text="Suche", style="Surface.TLabel").pack(side="left")
+        ttk.Label(filters, text="Search", style="Surface.TLabel").pack(side="left")
         self.var_search = tk.StringVar()
         search_entry = ttk.Entry(filters, textvariable=self.var_search, width=26)
         search_entry.pack(side="left", padx=(8, 16))
         search_entry.bind("<KeyRelease>", lambda _e: self._debounced_rebuild())
 
-        ttk.Label(filters, text="Bereich", style="Surface.TLabel").pack(side="left")
-        self.var_group = tk.StringVar(value="Alle Bereiche")
+        ttk.Label(filters, text="Category", style="Surface.TLabel").pack(side="left")
+        self.var_group = tk.StringVar(value="All Categories")
         self.combo_group = ttk.Combobox(filters, textvariable=self.var_group,
                                         state="readonly", width=20,
-                                        values=["Alle Bereiche"])
+                                        values=["All Categories"])
         self.combo_group.pack(side="left", padx=(8, 16))
         self.combo_group.bind("<<ComboboxSelected>>", lambda _e: self.rebuild_list())
 
@@ -305,16 +305,16 @@ class BuilderTab(ttk.Frame):
         filter2.pack(fill="x", pady=(8, 0))
 
         self.var_common = tk.BooleanVar(value=True)
-        ttk.Checkbutton(filter2, text="nur die wichtigsten",
+        ttk.Checkbutton(filter2, text="only the most important",
                         variable=self.var_common,
                         command=self.rebuild_list).pack(side="left", padx=(0, 16))
 
         self.var_assigned = tk.BooleanVar(value=False)
-        ttk.Checkbutton(filter2, text="nur bereits zugewiesene",
+        ttk.Checkbutton(filter2, text="only already assigned",
                         variable=self.var_assigned,
                         command=self.rebuild_list).pack(side="left")
 
-        ttk.Button(filter2, text="Alle Zuweisungen löschen",
+        ttk.Button(filter2, text="Clear All Assignments",
                    style="Small.TButton",
                    command=self._clear_all).pack(side="right")
 
@@ -322,20 +322,21 @@ class BuilderTab(ttk.Frame):
         bulk = ttk.Frame(assign.content, style="Card.TFrame")
         bulk.pack(fill="x", pady=(0, 10))
 
-        ttk.Button(bulk, text="Ganzen Ordner importieren ...",
+        ttk.Button(bulk, text="Import Whole Folder ...",
                    style="Accent.TButton",
                    command=self._on_import_folder).pack(side="left")
-        ttk.Button(bulk, text="Aus Archiv importieren ...",
+        ttk.Button(bulk, text="Import from Archive ...",
                    style="Small.TButton",
                    command=self._on_import_archive).pack(side="left", padx=(8, 0))
-        ttk.Button(bulk, text="Vorlagenordner anlegen ...",
+        ttk.Button(bulk, text="Create Template Folder ...",
                    style="Small.TButton",
                    command=self._on_create_template).pack(side="left", padx=(8, 0))
 
         self.lbl_bulk = ttk.Label(
             bulk,
-            text=("Die Zahl im Dateinamen ist die Ansage-Nummer: 7.ogg, 007.wav "
-                  "oder '7 - Reinigung.mp3' landen alle bei Ansage 7."),
+            text=("The number in the filename is the announcement number: "
+                  "7.ogg, 007.wav, or '7 - Cleaning.mp3' all land on "
+                  "announcement 7."),
             style="Muted.TLabel", wraplength=285, justify="left")
         self.lbl_bulk.pack(side="left", padx=(14, 0))
 
@@ -349,7 +350,7 @@ class BuilderTab(ttk.Frame):
         footer.pack(fill="x", pady=(10, 0))
         self.lbl_counter = ttk.Label(footer, text="", style="Muted.TLabel")
         self.lbl_counter.pack(side="left")
-        self.btn_more = ttk.Button(footer, text="Weitere anzeigen",
+        self.btn_more = ttk.Button(footer, text="Show More",
                                    style="Small.TButton", command=self._show_more)
 
         self._search_job: Optional[str] = None
@@ -363,7 +364,7 @@ class BuilderTab(ttk.Frame):
         if found:
             version = audio.ffmpeg_version(found)
             self.lbl_ffmpeg.configure(
-                text=f"Audio-Umwandlung bereit ({version or found.name}).",
+                text=f"Audio conversion ready ({version or found.name}).",
                 style="Success.TLabel")
             self.btn_ffmpeg.pack_forget()
             return
@@ -374,18 +375,17 @@ class BuilderTab(ttk.Frame):
             self.btn_ffmpeg.pack_forget()
             if auto_extract and not self._ffmpeg_busy:
                 self.lbl_ffmpeg.configure(
-                    text="ffmpeg ist in der App enthalten und wird einmalig "
-                         "ausgepackt ...",
+                    text="ffmpeg is built into the app and is being "
+                         "unpacked once ...",
                     style="Muted.TLabel")
                 self._extract_embedded_ffmpeg()
             return
 
         self.lbl_ffmpeg.configure(
-            text=("ffmpeg wurde nicht gefunden. Ohne ffmpeg lassen sich nur "
-                  "fertige .ogg-Dateien (Vorbis, mono, 16000 Hz) verwenden - "
-                  "mp3 und wav können dann nicht umgewandelt werden. "
-                  "Abhilfe: entweder ffmpeg.exe in denselben Ordner wie diese "
-                  "App legen, oder die Schaltfläche unten benutzen."),
+            text=("ffmpeg wasn't found. Without ffmpeg, only ready-made "
+                  ".ogg files (Vorbis, mono, 16000 Hz) can be used - mp3 "
+                  "and wav can't be converted. Fix: either place ffmpeg.exe "
+                  "in the same folder as this app, or use the button below."),
             style="Warning.TLabel")
         self.btn_ffmpeg.pack(side="left")
 
@@ -407,8 +407,8 @@ class BuilderTab(ttk.Frame):
                 self._check_ffmpeg(auto_extract=False)
             else:
                 self.lbl_ffmpeg.configure(
-                    text=("Das mitgelieferte ffmpeg ließ sich nicht auspacken. "
-                          "Lege ersatzweise eine ffmpeg.exe neben die App."),
+                    text=("The bundled ffmpeg couldn't be unpacked. Place "
+                          "an ffmpeg.exe next to the app instead."),
                     style="Warning.TLabel")
                 self.btn_ffmpeg.pack(side="left")
 
@@ -420,24 +420,24 @@ class BuilderTab(ttk.Frame):
                   on_finally=lambda: self.ffmpeg_progress.pack_forget())
 
     def _on_setup_ffmpeg(self) -> None:
-        if not messagebox.askyesno("ffmpeg einrichten",
+        if not messagebox.askyesno("Set Up ffmpeg",
                                    ffmpeg_setup.describe_source()
-                                   + "\n\nJetzt herunterladen?",
+                                   + "\n\nDownload now?",
                                    parent=self):
             return
 
         self.btn_ffmpeg.configure(state="disabled")
         self.ffmpeg_progress.pack(side="left", padx=(10, 0))
         self.ffmpeg_progress.configure(value=0)
-        self.lbl_ffmpeg.configure(text="Lade ffmpeg herunter (etwa 170 MB) ...",
+        self.lbl_ffmpeg.configure(text="Downloading ffmpeg (about 170 MB) ...",
                                   style="Muted.TLabel")
 
         def report(done: int, total: int) -> None:
             percent = (done / total * 100) if total else 0
             to_main(self, self.ffmpeg_progress.configure, {"value": percent})
             to_main(self, self.lbl_ffmpeg.configure,
-                    {"text": f"Lade ffmpeg herunter ... "
-                             f"{done // (1024 * 1024)} von "
+                    {"text": f"Downloading ffmpeg ... "
+                             f"{done // (1024 * 1024)} of "
                              f"{(total or 1) // (1024 * 1024)} MB"})
 
         def work(task):
@@ -449,15 +449,15 @@ class BuilderTab(ttk.Frame):
 
         def ok(_path):
             self._check_ffmpeg()
-            messagebox.showinfo("ffmpeg eingerichtet",
-                                "ffmpeg ist jetzt einsatzbereit. mp3-, wav- und "
-                                "m4a-Dateien werden ab sofort automatisch "
-                                "umgewandelt.", parent=self)
+            messagebox.showinfo("ffmpeg Set Up",
+                                "ffmpeg is now ready to use. mp3, wav, and "
+                                "m4a files will be converted automatically "
+                                "from now on.", parent=self)
 
         def fail(exc):
             message, hint = error_text(exc)
             self._check_ffmpeg()
-            show_error(self, self.theme, "ffmpeg-Einrichtung fehlgeschlagen",
+            show_error(self, self.theme, "ffmpeg Setup Failed",
                        message + (f"\n\n{hint}" if hint else ""))
 
         def done():
@@ -470,7 +470,7 @@ class BuilderTab(ttk.Frame):
     def _on_device_changed(self) -> None:
         # Das Verwerfen des alten Gerätestands passiert in AppState.notify -
         # unabhängig davon, ob diese Seite überhaupt schon gebaut wurde.
-        self.base_badge.set("Noch nicht geladen", "muted")
+        self.base_badge.set("Not loaded yet", "muted")
         self.combo_language.configure(values=[])
         self._load_catalog_async()
 
@@ -492,11 +492,11 @@ class BuilderTab(ttk.Frame):
                 self.var_language.set(match.label)
             elif labels:
                 self.var_language.set(labels[0])
-            self.base_badge.set(f"{len(packs)} offizielle Sprachen verfügbar", "muted")
+            self.base_badge.set(f"{len(packs)} official languages available", "muted")
 
         def fail(exc):
             message, hint = error_text(exc)
-            self.base_badge.set("Sprachliste nicht abrufbar", "error")
+            self.base_badge.set("Language List Not Available", "error")
             self.lbl_ffmpeg.configure(text=f"{message} {hint}".strip(),
                                       style="Warning.TLabel")
 
@@ -512,24 +512,24 @@ class BuilderTab(ttk.Frame):
     def _on_load_base(self) -> None:
         if not self.state.model:
             messagebox.showwarning(
-                "Kein Roboter ausgewählt",
-                "Melde dich zuerst unter 'Verbindung' an und wähle deinen Roboter.",
+                "No Robot Selected",
+                "Sign in under 'Connection' first and choose your robot.",
                 parent=self)
             return
 
         if not self.state.official_packs:
             self._load_catalog_async()
             messagebox.showinfo(
-                "Sprachliste wird geladen",
-                "Die Liste der offiziellen Sprachpakete wird gerade abgerufen. "
-                "Bitte gleich noch einmal klicken.",
+                "Loading Language List",
+                "The list of official voice packs is being fetched. "
+                "Please click again in a moment.",
                 parent=self)
             return
 
         pack = self._selected_pack()
         if pack is None:
-            messagebox.showwarning("Keine Sprache gewählt",
-                                   "Bitte wähle ein offizielles Sprachpaket aus.",
+            messagebox.showwarning("No Language Chosen",
+                                   "Please choose an official voice pack.",
                                    parent=self)
             return
 
@@ -537,7 +537,7 @@ class BuilderTab(ttk.Frame):
         self.btn_load_base.configure(state="disabled")
         self.base_progress.pack(fill="x", pady=(10, 0))
         self.base_progress.configure(value=0)
-        self.base_badge.set("Lade Originalpaket ...", "muted")
+        self.base_badge.set("Loading original pack ...", "muted")
 
         def report(done: int, total: int) -> None:
             percent = (done / total * 100) if total else 0
@@ -545,7 +545,7 @@ class BuilderTab(ttk.Frame):
 
         def work(_task):
             path = official.download_pack(pack, model, progress=report)
-            to_main(self, self.base_badge.set, "Entpacke Hörproben ...", "muted")
+            to_main(self, self.base_badge.set, "Extracting samples ...", "muted")
             previews = official.extract_previews(
                 path, preview_dir() / f"{model}_{pack.id}")
             return pack, path, previews
@@ -559,7 +559,7 @@ class BuilderTab(ttk.Frame):
             self.state.save()
 
             summary = official.describe_pack(path)
-            self.base_badge.set(f"Bereit - {summary}", "ok")
+            self.base_badge.set(f"Ready - {summary}", "ok")
 
             # Katalog auf die IDs beschränken, die dieses Modell wirklich kennt.
             ids = sorted(previews.keys())
@@ -570,8 +570,8 @@ class BuilderTab(ttk.Frame):
 
         def fail(exc):
             message, hint = error_text(exc)
-            self.base_badge.set("Download fehlgeschlagen", "error")
-            show_error(self, self.theme, "Originalpaket nicht geladen",
+            self.base_badge.set("Download Failed", "error")
+            show_error(self, self.theme, "Original Pack Not Loaded",
                        message + (f"\n\n{hint}" if hint else ""))
 
         def done():
@@ -588,7 +588,7 @@ class BuilderTab(ttk.Frame):
 
     def _visible_sounds(self) -> List[Sound]:
         group = self.var_group.get()
-        group = "" if group == "Alle Bereiche" else group
+        group = "" if group == "All Categories" else group
         sounds = self.state.catalog.filtered(
             group=group,
             search=self.var_search.get(),
@@ -602,11 +602,11 @@ class BuilderTab(ttk.Frame):
     def rebuild_list(self) -> None:
         self._search_job = None
 
-        groups = ["Alle Bereiche"] + self.state.catalog.groups()
+        groups = ["All Categories"] + self.state.catalog.groups()
         if list(self.combo_group.cget("values")) != groups:
             self.combo_group.configure(values=groups)
             if self.var_group.get() not in groups:
-                self.var_group.set("Alle Bereiche")
+                self.var_group.set("All Categories")
 
         sounds = self._visible_sounds()
         self._shown = min(max(self._shown, PAGE_SIZE), max(len(sounds), PAGE_SIZE))
@@ -617,7 +617,7 @@ class BuilderTab(ttk.Frame):
 
         if not sounds:
             ttk.Label(self.rows_frame,
-                      text="Zu diesen Filtern gibt es keine Ansagen.",
+                      text="No announcements match these filters.",
                       style="Muted.TLabel").pack(anchor="w", pady=20, padx=4)
         else:
             for sound in sounds[:self._shown]:
@@ -632,7 +632,7 @@ class BuilderTab(ttk.Frame):
     def _update_footer(self, total: int) -> None:
         if total > self._shown:
             self.btn_more.configure(
-                text=f"Weitere {min(PAGE_SIZE, total - self._shown)} anzeigen")
+                text=f"Show {min(PAGE_SIZE, total - self._shown)} More")
             self.btn_more.pack(side="right")
         else:
             self.btn_more.pack_forget()
@@ -646,12 +646,12 @@ class BuilderTab(ttk.Frame):
         total = len(self.state.catalog)
         missing = len(self.state.missing_assignments())
 
-        text = f"{assigned} von {total} Ansagen ausgetauscht"
+        text = f"{assigned} of {total} announcements replaced"
         shown = len(self._rows)
         if shown:
-            text += f"  ·  {shown} angezeigt"
+            text += f"  ·  {shown} shown"
         if missing:
-            text += f"  ·  {missing} Zuweisung(en) zeigen auf fehlende Dateien"
+            text += f"  ·  {missing} assignment(s) point to missing files"
 
         self.lbl_counter.configure(
             text=text, style="Warning.TLabel" if missing else "Muted.TLabel")
@@ -660,7 +660,7 @@ class BuilderTab(ttk.Frame):
     # ------------------------------------------------------------------
     def _on_import_folder(self) -> None:
         ordner = filedialog.askdirectory(
-            parent=self, title="Ordner mit deinen Audiodateien wählen",
+            parent=self, title="Choose the Folder with Your Audio Files",
             initialdir=self.state.config["last_audio_dir"] or str(Path.home()))
         if ordner:
             self._import_from(lambda: importer.scan_folder(
@@ -668,13 +668,13 @@ class BuilderTab(ttk.Frame):
 
     def _on_import_archive(self) -> None:
         datei = filedialog.askopenfilename(
-            parent=self, title="Sprachpaket oder Archiv wählen",
+            parent=self, title="Choose a Voice Pack or Archive",
             initialdir=self.state.config["last_audio_dir"] or str(Path.home()),
-            filetypes=[("Archive", "*.tar.gz *.tgz *.zip"),
-                       ("Alle Dateien", "*.*")])
+            filetypes=[("Archives", "*.tar.gz *.tgz *.zip"),
+                       ("All files", "*.*")])
         if datei:
             self._import_from(lambda: importer.import_archive(
-                Path(datei), data_dir() / "Importiert",
+                Path(datei), data_dir() / "Imported",
                 self.state.catalog.ids()))
 
     def _import_from(self, arbeit) -> None:
@@ -685,10 +685,10 @@ class BuilderTab(ttk.Frame):
         def ok(ergebnis: importer.ImportResult) -> None:
             if not ergebnis.assigned:
                 show_warning(
-                    self, self.theme, "Nichts gefunden",
-                    "In der Auswahl war keine verwertbare Audiodatei.",
-                    "Die Dateien müssen die Ansage-Nummer im Namen tragen, "
-                    "zum Beispiel 7.ogg oder 12.wav.\n\n"
+                    self, self.theme, "Nothing Found",
+                    "No usable audio file was in the selection.",
+                    "Files need the announcement number in their name, "
+                    "e.g. 7.ogg or 12.wav.\n\n"
                     + self._skipped_text(ergebnis))
                 return
 
@@ -696,17 +696,17 @@ class BuilderTab(ttk.Frame):
             neu = [i for i in ergebnis.assigned if i not in vorher]
             ersetzt = [i for i in ergebnis.assigned if i in vorher]
 
-            frage = (f"{len(ergebnis.assigned)} Ansagen gefunden:\n\n"
-                     f"· {len(neu)} neu zugewiesen\n"
-                     f"· {len(ersetzt)} bereits zugewiesene werden überschrieben\n")
+            frage = (f"{len(ergebnis.assigned)} announcements found:\n\n"
+                     f"· {len(neu)} newly assigned\n"
+                     f"· {len(ersetzt)} already-assigned ones will be overwritten\n")
             if ergebnis.unknown_ids:
-                frage += (f"· {len(ergebnis.unknown_ids)} Nummern kennt dein "
-                          f"Modell nicht und werden ausgelassen\n")
+                frage += (f"· {len(ergebnis.unknown_ids)} numbers your model "
+                          f"doesn't recognize will be skipped\n")
             if ergebnis.skipped:
-                frage += f"· {len(ergebnis.skipped)} Dateien übersprungen\n"
-            frage += "\nÜbernehmen?"
+                frage += f"· {len(ergebnis.skipped)} files skipped\n"
+            frage += "\nApply?"
 
-            if not messagebox.askyesno("Import prüfen", frage, parent=self):
+            if not messagebox.askyesno("Review Import", frage, parent=self):
                 return
 
             for sound_id, pfad in ergebnis.assigned.items():
@@ -718,13 +718,13 @@ class BuilderTab(ttk.Frame):
             self.state.save()
 
             self.rebuild_list()
-            show_info(self, self.theme, "Import fertig",
+            show_info(self, self.theme, "Import Complete",
                       ergebnis.summary(),
                       self._skipped_text(ergebnis))
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            show_error(self, self.theme, "Import fehlgeschlagen", message, hint)
+            show_error(self, self.theme, "Import Failed", message, hint)
 
         run_async(self, work, on_success=ok, on_error=fail)
 
@@ -733,14 +733,14 @@ class BuilderTab(ttk.Frame):
         zeilen = []
         if ergebnis.unknown_ids:
             nummern = sorted(set(ergebnis.unknown_ids))
-            zeilen.append("Unbekannte Ansage-Nummern: "
+            zeilen.append("Unknown announcement numbers: "
                           + ", ".join(str(n) for n in nummern[:20])
                           + (" ..." if len(nummern) > 20 else ""))
         if ergebnis.skipped:
-            zeilen.append("Übersprungen:")
+            zeilen.append("Skipped:")
             zeilen += [f"   · {n}" for n in ergebnis.skipped[:15]]
             if len(ergebnis.skipped) > 15:
-                zeilen.append(f"   ... und {len(ergebnis.skipped) - 15} weitere")
+                zeilen.append(f"   ... and {len(ergebnis.skipped) - 15} more")
         return "\n".join(zeilen)
 
     # ------------------------------------------------------------------
@@ -748,27 +748,28 @@ class BuilderTab(ttk.Frame):
         """Legt einen Ordner mit allen Originalansagen zum Nachsprechen an."""
         if not self.state.previews:
             show_warning(
-                self, self.theme, "Originalpaket fehlt",
-                "Für den Vorlagenordner werden die Originalansagen gebraucht.",
-                "Lade oben in Schritt 1 zuerst das offizielle Sprachpaket "
-                "deines Roboters herunter.")
+                self, self.theme, "Original Pack Missing",
+                "The template folder needs the original announcements.",
+                "First download your robot's official voice pack above, in "
+                "step 1.")
             return
 
         nur_wichtige = messagebox.askyesno(
-            "Umfang wählen",
-            f"Sollen nur die wichtigsten Ansagen in den Vorlagenordner?\n\n"
-            f"Ja  = {len(self.state.catalog.filtered(only_common=True))} "
-            f"Ansagen (empfohlen für den Anfang)\n"
-            f"Nein = alle {len(self.state.previews)} Ansagen",
+            "Choose Scope",
+            f"Should only the most important announcements go into the "
+            f"template folder?\n\n"
+            f"Yes = {len(self.state.catalog.filtered(only_common=True))} "
+            f"announcements (recommended to start with)\n"
+            f"No = all {len(self.state.previews)} announcements",
             parent=self)
 
         ziel = filedialog.askdirectory(
-            parent=self, title="Wo soll der Vorlagenordner entstehen?",
+            parent=self, title="Where Should the Template Folder Go?",
             initialdir=self.state.config["last_audio_dir"] or str(Path.home()))
         if not ziel:
             return
 
-        ordner = Path(ziel) / "Meine Ansagen"
+        ordner = Path(ziel) / "My Announcements"
         ids = ([s.id for s in self.state.catalog.filtered(only_common=True)]
                if nur_wichtige else None)
 
@@ -781,19 +782,19 @@ class BuilderTab(ttk.Frame):
             self.state.config["last_audio_dir"] = str(pfad)
             self.state.save()
             show_info(
-                self, self.theme, "Vorlagenordner angelegt",
-                f"{anzahl} Originalansagen liegen jetzt in:\n{pfad}",
-                "So geht es weiter:\n"
-                "1. Datei anhören, damit du weißt, was gesagt wird.\n"
-                "2. Eigene Aufnahme unter genau demselben Namen speichern.\n"
-                "3. Hier auf 'Ganzen Ordner importieren' klicken.\n\n"
-                "Eine Anleitung liegt als _Anleitung.txt im Ordner. "
-                "Der Ordner wird jetzt geöffnet.")
+                self, self.theme, "Template Folder Created",
+                f"{anzahl} original announcements are now in:\n{pfad}",
+                "How to proceed:\n"
+                "1. Listen to a file so you know what's said.\n"
+                "2. Save your own recording under exactly the same name.\n"
+                "3. Click 'Import Whole Folder' here.\n\n"
+                "Instructions are in _Instructions.txt in the folder. "
+                "The folder is now opening.")
             open_folder(pfad)
 
         def fail(exc: Exception) -> None:
             message, hint = error_text(exc)
-            show_error(self, self.theme, "Vorlagenordner fehlgeschlagen",
+            show_error(self, self.theme, "Template Folder Failed",
                        message, hint)
 
         run_async(self, work, on_success=ok, on_error=fail)
@@ -802,9 +803,9 @@ class BuilderTab(ttk.Frame):
         if not self.state.config["assignments"]:
             return
         if not messagebox.askyesno(
-                "Wirklich löschen?",
-                "Alle Zuweisungen werden entfernt. Deine Audiodateien selbst "
-                "bleiben natürlich erhalten.",
+                "Really Delete?",
+                "All assignments will be removed. Your audio files "
+                "themselves are of course kept.",
                 parent=self):
             return
         self.state.config.clear_assignments()

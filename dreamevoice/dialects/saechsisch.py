@@ -5,10 +5,10 @@ from __future__ import annotations
 from . import muster
 
 KEY = "saechsisch"
-NAME = "Sächsisch"
+NAME = "Saxon"
 BESCHREIBUNG = (
-    "Sächsisch mit weichen Konsonanten und einem herzlichen 'Nu'. "
-    "Klingt immer ein bisschen freundlicher, als es gemeint ist."
+    "Saxon dialect with soft consonants and a hearty 'Nu'. Always "
+    "sounds a bit friendlier than it's meant."
 )
 LANG_ID = "SACHSE"
 

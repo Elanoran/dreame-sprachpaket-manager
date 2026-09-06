@@ -37,3 +37,10 @@ ffprobe.exe
 # Hoervergleich-Archiv: 4,7 MB Audio, gehoert in ein Release oder
 # gar nicht ins Projekt.
 Hoertest-*.zip
+
+# --------------------------------------------------------------------------
+# Local additions (not part of upstream) - personal voice-cloning workflow
+# assets and generated output. Never belongs in this fork.
+# --------------------------------------------------------------------------
+JarvisAudio/
+*.mp3

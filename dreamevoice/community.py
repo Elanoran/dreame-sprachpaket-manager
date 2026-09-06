@@ -95,7 +95,7 @@ class CommunityPack:
 
     def local_path(self) -> Path:
         suffix = ".zip" if self.archive_kind == "zip" else ".tar.gz"
-        folder = data_dir() / "Community-Pakete"
+        folder = data_dir() / "Community Packs"
         folder.mkdir(parents=True, exist_ok=True)
         return folder / f"{self.key}{suffix}"
 
@@ -109,99 +109,99 @@ PACKS: List[CommunityPack] = [
         key="glados_zigerschlitz",
         name="GLaDOS",
         description=(
-            "Die sarkastische KI aus dem Spiel Portal. Der am besten gepflegte "
-            "GLaDOS-Satz, als fertiges Archiv mit veröffentlichter Prüfsumme."
+            "The sarcastic AI from the game Portal. The best-maintained "
+            "GLaDOS set, as a ready-made archive with a published checksum."
         ),
-        language="Englisch",
+        language="English",
         url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
              "releases/download/0.1/glados.tar.gz"),
         project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
         author="Makers Im Zigerschlitz",
-        license="keine Lizenz angegeben",
+        license="no license given",
         approx_sounds=155,
         expected_size=4322744,
         expected_md5="d79114b8b0b41e132dd0214f4922836c",
-        tags=["lustig", "KI", "Spiel"],
+        tags=["funny", "AI", "game"],
     ),
     CommunityPack(
         key="r2d2_zigerschlitz",
         name="R2-D2",
         description=(
-            "Statt Sätzen nur Piepen und Zwitschern des Star-Wars-Droiden. "
-            "Sehr unterhaltsam, aber man erfährt nicht mehr, was der Roboter "
-            "eigentlich meldet."
+            "Just beeps and chirps from the Star Wars droid instead of "
+            "sentences. Very entertaining, but you no longer know what the "
+            "robot is actually reporting."
         ),
-        language="ohne Sprache",
+        language="no speech",
         url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
              "releases/download/0.1/r2d2.tar.gz"),
         project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
         author="Makers Im Zigerschlitz",
-        license="keine Lizenz angegeben",
+        license="no license given",
         approx_sounds=155,
         expected_size=18808415,
         expected_md5="bdd0b85996748e20037b20bbede258aa",
-        notes="Achtung: Fehlermeldungen sind danach nicht mehr verständlich.",
-        tags=["lustig", "Film", "ohne Sprache"],
+        notes="Note: error messages are no longer intelligible after this.",
+        tags=["funny", "movie", "no speech"],
     ),
     CommunityPack(
         key="memes_zigerschlitz",
         name="Memes",
-        description="Internet-Meme-Sounds statt der üblichen Ansagen.",
-        language="Englisch / ohne Sprache",
+        description="Internet meme sounds instead of the usual announcements.",
+        language="English / no speech",
         url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
              "releases/download/0.1/memes.tar.gz"),
         project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
         author="Makers Im Zigerschlitz",
-        license="keine Lizenz angegeben",
+        license="no license given",
         approx_sounds=155,
         expected_size=4398965,
         expected_md5="ba83696fe8e954983a9960a14825b6c5",
-        tags=["lustig"],
+        tags=["funny"],
     ),
     CommunityPack(
         key="glados_findus23",
-        name="GLaDOS (Variante 15.ai)",
+        name="GLaDOS (15.ai variant)",
         description=(
-            "Ältere GLaDOS-Fassung, mit der Sprachsynthese 15.ai erzeugt. "
-            "Andere Betonung als die Variante oben."
+            "Older GLaDOS version, generated with the 15.ai speech "
+            "synthesizer. Different intonation than the variant above."
         ),
-        language="Englisch",
+        language="English",
         url="https://github.com/Findus23/voice_pack_dreame/raw/main/voice_pack.tar.gz",
         project_url="https://github.com/Findus23/voice_pack_dreame",
         author="Findus23",
-        license="keine Lizenz angegeben",
+        license="no license given",
         approx_sounds=155,
         expected_size=4325024,
         expected_md5="8ebfabb9e23e169a5c9b867266f9d1ef",
-        tags=["lustig", "KI", "Spiel"],
+        tags=["funny", "AI", "game"],
     ),
     CommunityPack(
         key="glados_x40_kokoro",
-        name="GLaDOS für X40 (514 Ansagen)",
+        name="GLaDOS for X40 (514 announcements)",
         description=(
-            "Mit Abstand der umfangreichste Satz: alle 514 Ansagen des X40 "
-            "Ultra neu getextet und mit Kokoro-TTS gesprochen. Da X40 und X50 "
-            "sich 513 Nummern teilen, deckt dieses Paket fast den kompletten "
-            "X50 ab."
+            "By far the most extensive set: all 514 announcements of the "
+            "X40 Ultra rewritten and spoken with Kokoro TTS. Since the X40 "
+            "and X50 share 513 numbers, this pack covers almost the "
+            "entire X50."
         ),
-        language="Englisch",
+        language="English",
         url="https://github.com/sproft/dreame-x40-glados-voice-pack/archive/refs/heads/main.zip",
         project_url="https://github.com/sproft/dreame-x40-glados-voice-pack",
         author="sproft",
-        license="siehe LICENSE im Projekt",
+        license="see LICENSE in the project",
         approx_sounds=514,
         archive_kind="zip",
-        notes=("Wird als Projektarchiv geladen; die App holt sich die "
-               "Ogg-Dateien daraus. Größe und Prüfsumme ändern sich mit "
-               "jeder Aktualisierung des Projekts und werden daher nicht "
-               "fest geprüft."),
-        tags=["lustig", "KI", "Spiel", "umfangreich"],
+        notes=("Downloaded as a project archive; the app extracts the "
+               "Ogg files from it. Size and checksum change with every "
+               "update to the project, so they aren't checked against a "
+               "fixed value."),
+        tags=["funny", "AI", "game", "extensive"],
     ),
     CommunityPack(
         key="uk_female_pensive",
-        name="Ukrainisch (weiblich, ruhig)",
-        description="Ukrainische Ansagen, ruhig und sachlich gesprochen.",
-        language="Ukrainisch",
+        name="Ukrainian (female, calm)",
+        description="Ukrainian announcements, spoken calmly and matter-of-factly.",
+        language="Ukrainian",
         url=("https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs/"
              "raw/main/voice_packs/uk_female_pensive"),
         project_url="https://github.com/oleksandr-belei/dreame-vacuum-uk-voice-packs",
@@ -213,25 +213,25 @@ PACKS: List[CommunityPack] = [
         # ohne Steuerdateien. Ohne diese Angabe galt eine einmal
         # geladene Datei für immer als gültig.
         expected_md5="55bfe4272ce1e77d9bbafebf9ec99330",
-        tags=["Sprache"],
+        tags=["language"],
     ),
     CommunityPack(
         key="original_en_zigerschlitz",
-        name="Original Englisch (Sicherung)",
+        name="Original English (backup)",
         description=(
-            "Die englischen Originalansagen eines älteren Modells. Vor allem "
-            "als Vergleichsmaterial nützlich."
+            "The original English announcements of an older model. Mainly "
+            "useful as reference material."
         ),
-        language="Englisch",
+        language="English",
         url=("https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame/"
              "releases/download/0.1/original-en.tar.gz"),
         project_url="https://github.com/Makers-Im-Zigerschlitz/voicepacks_dreame",
         author="Makers Im Zigerschlitz",
-        license="keine Lizenz angegeben",
+        license="no license given",
         approx_sounds=155,
         expected_size=3102855,
         expected_md5="2a467cdb59f0ecff54ccb6931c81c0b3",
-        tags=["Sprache", "Referenz"],
+        tags=["language", "reference"],
     ),
 ]
 
@@ -257,9 +257,9 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
 
     if not adresse_erlaubt(pack.url):
         raise NetworkError(
-            f"Die Bezugsadresse von '{pack.name}' ist nicht zulässig.",
-            f"Fremdpakete werden nur von GitHub geladen.\n\nAdresse: "
-            f"{pack.url}")
+            f"'{pack.name}''s source address isn't allowed.",
+            f"Third-party packs are only downloaded from GitHub.\n\n"
+            f"Address: {pack.url}")
 
     tmp = target.with_suffix(target.suffix + ".part")
     try:
@@ -267,8 +267,8 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
                           headers={"User-Agent": "DreameSprachpakete/1.0"}) as resp:
             if resp.status_code != 200:
                 raise NetworkError(
-                    f"Download fehlgeschlagen (HTTP {resp.status_code}).",
-                    f"Quelle: {pack.url}",
+                    f"Download failed (HTTP {resp.status_code}).",
+                    f"Source: {pack.url}",
                 )
             total = int(resp.headers.get("Content-Length") or pack.expected_size or 0)
             done = 0
@@ -280,15 +280,15 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
                     done += len(block)
                     if done > MAX_PAKET_BYTES:
                         raise NetworkError(
-                            f"'{pack.name}' ist unerwartet groß.",
-                            "Der Download wurde abgebrochen. Ein "
-                            "Sprachpaket wiegt rund zehn Megabyte.")
+                            f"'{pack.name}' is unexpectedly large.",
+                            "The download was aborted. A voice pack "
+                            "weighs about ten megabytes.")
                     if progress:
                         progress(done, total)
     except requests.exceptions.RequestException as exc:
         tmp.unlink(missing_ok=True)
-        raise NetworkError(f"Das Paket '{pack.name}' konnte nicht geladen werden.",
-                           f"Technische Details: {exc}") from exc
+        raise NetworkError(f"The pack '{pack.name}' couldn't be downloaded.",
+                           f"Technical details: {exc}") from exc
     except BaseException:
         # Der Abbruch wegen Überlänge ist ein NetworkError und damit
         # keine RequestException - er liefe sonst an dieser Zeile vorbei
@@ -302,9 +302,9 @@ def download(pack: CommunityPack, progress: Optional[ProgressFn] = None,
         if actual != pack.expected_md5:
             tmp.unlink(missing_ok=True)
             raise PackError(
-                f"Die Prüfsumme von '{pack.name}' stimmt nicht.",
-                f"Erwartet {pack.expected_md5}, erhalten {actual}. Der Download "
-                f"wurde verworfen - die Datei wird nicht verwendet.",
+                f"'{pack.name}''s checksum doesn't match.",
+                f"Expected {pack.expected_md5}, got {actual}. The download "
+                f"was discarded - the file won't be used.",
             )
 
     tmp.replace(target)

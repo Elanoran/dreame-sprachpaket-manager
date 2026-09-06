@@ -24,14 +24,15 @@ from .paths import resource_dir
 _LOG = logging.getLogger(__name__)
 
 GROUP_ORDER = [
-    "Reinigung",
-    "Fehler & Wartung",
-    "Akku & Laden",
-    "Basisstation",
-    "Netzwerk",
-    "Sprachassistent",
-    "Akkustand",
-    "Sonstiges",
+    "Cleaning",
+    "Errors & Maintenance",
+    "Battery & Charging",
+    "Base Station",
+    "Network",
+    "Voice Assistant",
+    "Battery Level",
+    "Controls",
+    "Other",
 ]
 
 
@@ -42,17 +43,17 @@ class Sound:
     id: int
     de: str = ""
     en: str = ""
-    group: str = "Sonstiges"
+    group: str = "Other"
     common: bool = False
 
     @property
     def title(self) -> str:
         """Beste verfügbare Beschreibung."""
-        if self.de:
-            return self.de
         if self.en:
             return self.en
-        return "(unbekannte Ansage - bitte Hörprobe nutzen)"
+        if self.de:
+            return self.de
+        return "(unknown announcement - please listen)"
 
     @property
     def has_german_label(self) -> bool:
@@ -142,7 +143,7 @@ class SoundCatalog:
 
         sounds = [
             Sound(id=int(entry["id"]), de=entry.get("de", ""), en=entry.get("en", ""),
-                  group=entry.get("group", "Sonstiges"), common=bool(entry.get("common")))
+                  group=entry.get("group", "Other"), common=bool(entry.get("common")))
             for entry in data.get("sounds", [])
         ]
         return cls(sounds, data.get("source_model", ""))

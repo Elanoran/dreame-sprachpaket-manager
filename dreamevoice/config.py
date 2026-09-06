@@ -219,10 +219,10 @@ class Config:
     def elevenlabs_key_location(self) -> str:
         """Wo der Schlüssel liegt - für die Anzeige."""
         if credentials.exists(credentials.TARGET_ELEVENLABS):
-            return "Windows-Anmeldeinformationsspeicher"
+            return "Windows Credential Manager"
         if self._values.get("elevenlabs_key_enc"):
-            return "config.json (verschlüsselt mit deinem Windows-Konto)"
-        return "nicht gespeichert"
+            return "config.json (encrypted with your Windows account)"
+        return "not saved"
 
     def forget_elevenlabs_key(self) -> None:
         credentials.delete(credentials.TARGET_ELEVENLABS)
@@ -257,9 +257,9 @@ class Config:
 
         if auch_zugangsdaten:
             if credentials.exists(credentials.TARGET_DREAME):
-                geleert.append("Dreamehome-Passwort")
+                geleert.append("Dreamehome password")
             if credentials.exists(credentials.TARGET_ELEVENLABS):
-                geleert.append("ElevenLabs-Schlüssel")
+                geleert.append("ElevenLabs key")
             credentials.delete(credentials.TARGET_DREAME)
             credentials.delete(credentials.TARGET_ELEVENLABS)
             self._values["password_enc"] = ""
@@ -272,7 +272,7 @@ class Config:
             pfad = log_file()
             if pfad.is_file() and pfad.stat().st_size:
                 pfad.write_text("", encoding="utf-8")
-                geleert.append("Protokoll")
+                geleert.append("Log")
         except OSError as exc:
             _LOG.warning("Protokoll nicht geleert: %s", exc)
 

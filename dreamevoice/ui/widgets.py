@@ -466,10 +466,10 @@ class MessageDialog(tk.Toplevel):
 
         knoepfe = ttk.Frame(rahmen, style="Card.TFrame")
         knoepfe.pack(fill="x", padx=16, pady=16)
-        self.btn_copy = ttk.Button(knoepfe, text="Text kopieren",
+        self.btn_copy = ttk.Button(knoepfe, text="Copy text",
                                    command=self._kopieren)
         self.btn_copy.pack(side="left")
-        ttk.Button(knoepfe, text="Schließen", style="Accent.TButton",
+        ttk.Button(knoepfe, text="Close", style="Accent.TButton",
                    command=self.destroy).pack(side="right")
 
         self.bind("<Escape>", lambda _e: self.destroy())
@@ -495,9 +495,9 @@ class MessageDialog(tk.Toplevel):
 
     def _kopieren(self) -> None:
         copy_to_clipboard(self, self._volltext)
-        self.btn_copy.configure(text="Kopiert")
+        self.btn_copy.configure(text="Copied")
         spaeter(self, 1500,
-                lambda: self.btn_copy.configure(text="Text kopieren"))
+                lambda: self.btn_copy.configure(text="Copy text"))
 
     def _zentrieren(self) -> None:
         self.update_idletasks()

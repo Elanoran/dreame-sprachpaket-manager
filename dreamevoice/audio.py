@@ -75,7 +75,7 @@ class OggInfo:
                 and self.rate == TARGET_RATE)
 
     def describe(self) -> str:
-        return f"{self.codec}, {self.channels} Kanal/Kanäle, {self.rate} Hz"
+        return f"{self.codec}, {self.channels} channel(s), {self.rate} Hz"
 
 
 # --------------------------------------------------------------------------
@@ -326,15 +326,15 @@ def convert_to_pack_format(src: Path, dst: Path,
     ffmpeg = ffmpeg or find_ffmpeg()
     if not ffmpeg:
         raise AudioError(
-            "ffmpeg wurde nicht gefunden.",
-            "ffmpeg wird gebraucht, um deine Audiodatei in das Format zu "
-            "bringen, das der Roboter versteht (OGG Vorbis, mono, 16 kHz). "
-            "Lege ffmpeg.exe einfach neben die App - oder wähle bereits "
-            "passend vorbereitete .ogg-Dateien aus.",
+            "ffmpeg wasn't found.",
+            "ffmpeg is needed to bring your audio file into the format "
+            "the robot understands (OGG Vorbis, mono, 16 kHz). Just place "
+            "ffmpeg.exe next to the app - or choose .ogg files that are "
+            "already in the right format.",
         )
 
     if not src.is_file():
-        raise AudioError(f"Die Datei wurde nicht gefunden:\n{src}")
+        raise AudioError(f"The file wasn't found:\n{src}")
 
     dst.parent.mkdir(parents=True, exist_ok=True)
 
@@ -379,16 +379,16 @@ def convert_to_pack_format(src: Path, dst: Path,
             proc = _run(cmd)
         except subprocess.TimeoutExpired as exc:
             raise AudioError(
-                f"Die Umwandlung von {src.name} hat zu lange gedauert.") from exc
+                f"Converting {src.name} took too long.") from exc
         except OSError as exc:
-            raise AudioError(f"ffmpeg konnte nicht gestartet werden: {exc}") from exc
+            raise AudioError(f"ffmpeg couldn't be started: {exc}") from exc
 
         if proc.returncode != 0 or not dst.exists() or dst.stat().st_size == 0:
             detail = (proc.stderr or "").strip()[:400]
             raise AudioError(
-                f"Die Datei {src.name} konnte nicht umgewandelt werden.",
-                detail or "ffmpeg hat keine Begründung geliefert. Ist die Datei "
-                          "vielleicht beschädigt oder gar keine Audiodatei?",
+                f"The file {src.name} couldn't be converted.",
+                detail or "ffmpeg gave no explanation. Is the file perhaps "
+                          "damaged, or not an audio file at all?",
             )
 
     durchgang(gain_db)
@@ -412,9 +412,9 @@ def convert_to_pack_format(src: Path, dst: Path,
     info = probe_ogg(dst)
     if not info or info.codec != TARGET_CODEC:
         raise AudioError(
-            f"Das Ergebnis für {src.name} ist kein OGG Vorbis.",
-            "Vermutlich fehlt deinem ffmpeg der Vorbis-Encoder (libvorbis). "
-            "Nutze einen vollständigen ffmpeg-Build.",
+            f"The result for {src.name} isn't OGG Vorbis.",
+            "Your ffmpeg is probably missing the Vorbis encoder "
+            "(libvorbis). Use a complete ffmpeg build.",
         )
     return dst
 
@@ -431,13 +431,13 @@ def prepare(src: Path, dst: Path, ffmpeg: Optional[Path] = None,
     Rückgabe: (verwendbare Datei, ob umgewandelt wurde).
     """
     if not src.is_file():
-        raise AudioError(f"Die Datei wurde nicht gefunden:\n{src}")
+        raise AudioError(f"The file wasn't found:\n{src}")
 
     if src.stat().st_size > MAX_FILE_BYTES:
         raise AudioError(
-            f"{src.name} ist mit {src.stat().st_size // 1024} KB sehr groß.",
-            "Ansagen des Roboters sind nur wenige Sekunden lang. Bitte kürze "
-            "die Datei, bevor du sie verwendest.",
+            f"{src.name} is very large at {src.stat().st_size // 1024} KB.",
+            "The robot's announcements are only a few seconds long. "
+            "Please trim the file before using it.",
         )
 
     if not needs_conversion(src):
@@ -468,7 +468,7 @@ def concat_with_pauses(files: List[Path], out: Path,
     """
     files = [Path(f) for f in files if Path(f).is_file()]
     if not files:
-        raise AudioError("Es gibt nichts zusammenzufügen.")
+        raise AudioError("There's nothing to combine.")
     if len(files) == 1:
         return files[0]
 
@@ -513,16 +513,16 @@ def concat_with_pauses(files: List[Path], out: Path,
 def check_input_file(path: Path) -> str:
     """Gibt eine Warnung zurück, wenn etwas auffällig ist (sonst "")."""
     if path.suffix.lower() not in SUPPORTED_INPUT:
-        return (f"Das Format {path.suffix or '(ohne Endung)'} ist nicht "
-                f"vorgesehen. Erwartet werden z. B. "
+        return (f"The format {path.suffix or '(no extension)'} isn't "
+                f"supported. Expected are e.g. "
                 f"{', '.join(SUPPORTED_INPUT[:4])}.")
     if path.stat().st_size > MAX_FILE_BYTES:
-        return "Die Datei ist sehr groß - Ansagen sollten nur Sekunden dauern."
+        return "The file is very large - announcements should only be seconds long."
     if path.suffix.lower() == ".ogg":
         info = probe_ogg(path)
         if info and not info.is_target_format:
-            return (f"Die Datei ist {info.describe()}. Sie wird beim Bauen "
-                    f"automatisch nach mono/16000 Hz umgewandelt.")
+            return (f"The file is {info.describe()}. It will be converted "
+                    f"to mono/16000 Hz automatically when building.")
         if info is None:
-            return "Die Datei sieht nicht wie eine gültige Ogg-Datei aus."
+            return "The file doesn't look like a valid Ogg file."
     return ""
