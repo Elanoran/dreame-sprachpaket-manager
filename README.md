@@ -11,15 +11,18 @@ No rooting, no installation, a single file.
     "Na denn los. Ick fang an zu saugen."                Berlin dialect
 ```
 
-> **This is an English-translated fork.** The original German project is
-> by Maximilian Mangold: [Anon365-Project/dreame-sprachpaket-manager]
+> **This is a bilingual fork.** The original German project is by
+> Maximilian Mangold: [Anon365-Project/dreame-sprachpaket-manager]
 > (https://github.com/Anon365-Project/dreame-sprachpaket-manager). This
-> fork translates everything you see and interact with in the app -
-> buttons, labels, error messages, the dialect pack names - to English.
-> That covers roughly 99% of the app; the supporting guides linked below
-> (under `docs/`) are still in German for now. The functionality, the
-> dialect voice packs themselves (their actual spoken content stays in
-> dialect, on purpose), and the license are unchanged from upstream.
+> fork adds a language switch - **English or Deutsch**, picked from a
+> dropdown next to *Dark mode* and applied on the next launch - covering
+> everything you see and interact with in the app: buttons, labels,
+> error messages, the dialect pack names. That covers roughly 99% of the
+> app; the supporting guides linked below (under `docs/`) are still
+> German-only text for now, regardless of which language the app itself
+> is set to. The functionality, the dialect voice packs themselves
+> (their actual spoken content stays in dialect, on purpose), and the
+> license are unchanged from upstream.
 
 **This fork doesn't currently ship a prebuilt EXE** - only the
 translated source. Run it directly:
