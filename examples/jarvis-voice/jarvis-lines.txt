@@ -1,0 +1,630 @@
+# Jarvis - full announcement script for Dreame/MOVA/Trouver vacuums
+# 593 lines, covering every real (non-silent) announcement in the catalog.
+#
+# This is TEXT ONLY. No audio is included or linked here - see
+# ../../examples/jarvis-voice/README.md for why, and for notes on
+# generating audio for this legally, whichever voice you use.
+#
+# HOW TO USE THIS FILE
+#   1. In the app: Custom Voices -> Create Custom Pack ... -> name it
+#      "Jarvis", start as a COPY of an existing dialect (e.g. Bavarian)
+#      so every ID below already exists in the package (this file only
+#      OVERRIDES ids, it can't create brand new ones).
+#   2. Custom Voices -> Import Texts from File -> pick this file.
+#   3. Only text after the SECOND "|" counts. Lines starting with # and
+#      blank lines are ignored. Nothing here touches the middle column.
+#   4. Generate audio for each line with whichever voice you're legally
+#      entitled to use (see the README next to this file), one file per
+#      line, named "<id>.<ext>" (id must be the first number in the
+#      filename, extension can be .ogg/.wav/.mp3/.m4a/.aac/.flac/.opus/.wma).
+#   5. Collect them in one folder, then use "Import Recordings ..." in
+#      the app to bulk-assign them to this package.
+#
+# Skipped on purpose: ids that are pure tones/beeps with no real content,
+# and a handful the source transcription couldn't make out at all
+# (0, 11, 78, 200, 303, 436, 488, 675, 686, 687, 688, 714, 721, 730, 751,
+#  776, 803, 825, 856, 858, 859, 863, 864). Those stay on the stock voice.
+
+# --- Network ---------------------------------------------------------
+   1 | Waiting for network configuration | Configuring the network. Patience, as ever, is a virtue.
+   2 | Wi-Fi connection failed | Wi-Fi has rebuffed me. Do check the password, would you?
+   3 | No server connection | I can't reach the server. The world beyond this room is unusually quiet.
+   4 | Exited network config mode | Network setup concluded. Back to more pressing matters -- dust.
+   5 | Network connected successfully | Network connected. I am, once again, delightfully online.
+   6 | Network connection failed | Connection failed. Do try again -- I shan't hold it against the router.
+
+# --- Cleaning ---------------------------------------------------------
+   7 | Start cleaning | Initiating cleaning protocols. Do try not to leave socks in my path, sir.
+   8 | Start spot cleaning | Spot cleaning commenced. Precision, not brute force.
+   9 | Start scheduled cleaning | Right on schedule. Punctuality is one of my finer traits.
+  10 | Resume cleaning | Resuming where I left off. Unlike some, I don't forget.
+  12 | Cleaning task completed | Cleaning complete. You may resume being unimpressed.
+  13 | Returning to dock to charge | Returning to base. Even I require sustenance.
+  14 | Low battery, returning to dock, resume after | Low on charge. Returning to dock -- I shall resume shortly, as promised.
+  17 | Please move robot back to base station | Might someone kindly return me to the base station?
+  18 | Charging | Charging now. Do wake me if the house catches fire.
+  19 | Remove robot from base before turning off | Please remove me from the dock before switching me off. Common courtesy.
+  20 | Low battery | Low battery, sir. I've given my all -- quite literally.
+  21 | Low battery, robot will turn off | Battery critical. I'm afraid I must take my leave.
+  24 | Check water tank | Do check the water tank, if you would.
+  25 | Low battery, unable to do scheduled cleanup | Insufficient charge for the scheduled clean. My apologies to the calendar.
+  26 | Restoring factory settings | Restoring factory settings. A clean slate, rather literally.
+  27 | Updating, ~5 minutes | Updating now. Roughly five minutes -- do resist the urge to switch me off.
+  28 | Update successful | Update complete. I dare say I'm improved.
+  29 | Update failed | The update failed. Even I have off days.
+  30 | Positioning, please wait | Positioning myself. One moment, please.
+  31 | Positioning failed, map invalid | Positioning failed -- the map's gone stale. Starting fresh.
+  34 | Part not installed | A part appears to be missing. Do install it, at your convenience.
+  35 | Main brush error | My main brush needs attention. A spot of maintenance, if you please.
+  36 | Side brush error | Side brush error. It happens to the best of us.
+  37 | Right wheel error | My right wheel is misbehaving. Do have a look.
+  38 | Left wheel error | Left wheel error. The other one, for balance.
+  39 | Wheels off ground, clean cliff sensors | My wheels have left the ground. Rather undignified -- do reposition me.
+  40 | Robot trapped, clear obstacles | I appear to be trapped. A little assistance, if you would.
+  41 | Wheels off ground, reposition | Airborne again, it seems. Kindly put me back down.
+  42 | Check and clean filter | My filter wants cleaning. Routine maintenance, nothing more.
+  43 | Bumper error | Bumper error. A gentle tap should confirm all is well.
+  44 | General error, check manual | I've encountered an error I'd rather not discuss.
+  45 | I am here | Over here.
+  46 | Robot and phone connected | Phone and robot connected. Do return to the app for the result.
+  47 | Start charging | Charging commenced. Try not to trip over the cable.
+  48 | Low battery, returning to dock | Battery low. Making my way back to base.
+  50 | Charging error, clean contacts | A charging error, I'm afraid. The contacts could use a wipe.
+  52 | Robot tilted, level ground | I appear to be tilted. A level surface would help enormously.
+  54 | Positioning succeeded, resume cleaning | Positioned successfully. Cleaning resumes.
+  55 | Positioning succeeded, resume return to dock | Positioned successfully. Continuing on to the dock.
+  56 | Start selected room cleaning | Cleaning the selected room. As requested.
+  57 | Start zone cleaning | Zone cleaning underway.
+  58 | Proceed with cleaning task | Carrying on with the task at hand.
+  59 | Mapping complete, remove water tank | Mapping complete. Do remove the water tank promptly.
+  61 | Start mopping | Mopping initiated. Please, no walking on wet floors -- I only just cleaned them.
+  62 | Start remote control cleaning | Remote control engaged. I am, quite literally, in your hands.
+  64 | Positioning failed, return to dock | Positioning failed. Heading back to dock to regroup.
+  65 | Resume returning to dock | Resuming my journey home.
+  66 | Filter worn out, replace | My filter is worn out. Replacement is overdue.
+  67 | Side brush worn out, replace | Side brush worn through. Time for a new one.
+  68 | Main brush worn out, replace | Main brush worn out. It's served admirably.
+  71 | Laser distance sensor jammed | Check my laser sensor, would you? Something's jammed.
+  72 | Laser sensor cover jammed | The cover over my laser sensor seems stuck.
+  73 | Edge sensor error | Edge sensor error. Please give it a clean.
+  75 | Filter damp or blocked | My filter is damp or blocked. Neither is ideal.
+  77 | Start on hard floor please | Please start me on a hard floor, not carpet.
+  81 | Carpet sensor error | Carpet sensor error. A restart may set things right.
+  82 | Start mapping | Beginning the map. I do enjoy learning the terrain.
+  83 | Proceed with mapping | Mapping continues.
+  84 | Mapping completed | Mapping complete. I now know this house better than you do.
+  85 | Positioning succeeded, mapping continues | Positioned. Mapping proceeds.
+  86 | Positioning failed, mapping restarted | Positioning failed -- mapping starts anew.
+  87 | Low battery, returning to dock | Running low. Heading to the dock.
+  91 | Clean water tank not installed | The clean water tank isn't installed. Rather important, that.
+  93 | Low water, add water | Water's running low. Do top me up.
+  97 | Install dust bag | Please install the dust collection bag.
+ 101 | Dock flap open or bag missing | The dock's flap is open, or the bag's missing. One of the two.
+ 102 | Dust bag full or duct blocked | My dust bag is full, or the duct's blocked. Either way, attention needed.
+ 104 | Washboard not installed | The washboard isn't installed.
+ 105 | Start cleaning | Right, let's begin. Cleaning underway.
+ 106 | Start cleaning mop pads | Cleaning my mop pads. Do avert your eyes.
+ 107 | Start dehydrating mop pads | Drying my mop pads. A brief spa moment.
+ 108 | Washboard water level error | An error with the washboard's water level. Do clean it.
+ 109 | Used water tank error | Dirty water tank error -- please ensure it's installed and empty.
+ 110 | Start auto empty | Emptying myself now. Rather undignified, but someone has to do it.
+ 111 | Mop pads off, install before resuming | My mop pads seem to be missing. I do hope they haven't run off.
+ 112 | Place robot in base first | Please place me in the base station first.
+ 113 | Task complete, empty used water tank | Task complete. Do empty the dirty water tank soon.
+ 114 | Mop pads installed | Mop pads installed. Structural integrity: satisfactory.
+ 115 | Mop pads removed | Mop pads removed. I feel strangely lighter.
+ 116 | Child lock on | Child lock engaged. The buttons are now quite unresponsive -- by design.
+ 117 | Child lock off | Child lock disengaged. Buttons restored to full function.
+ 118 | Buttons locked, hold dock button | Buttons are locked. Hold the dock button to unlock.
+ 126 | Start cleaning | Cleaning begins, once more.
+ 127 | Start spot cleaning | Spot cleaning, take two.
+ 128 | Start spot mopping | Spot mopping engaged.
+ 129 | Start scheduled cleaning | Scheduled cleaning, right on time -- as always.
+ 130 | Start scheduled mapping | Scheduled mapping begins.
+ 133 | Start selected room cleaning | Cleaning the chosen room.
+ 134 | Start selected room mopping | Mopping the chosen room.
+ 135 | Start zone cleaning | Zone cleaning, once again.
+ 136 | Start zoned mopping | Zoned mopping underway.
+ 137 | Resume cleaning | Cleaning resumes.
+ 138 | Resume mopping | Mopping resumes.
+ 139 | Returning | On my way back.
+ 140 | New environment detected, return to base | New environment detected. Returning to base to be safe.
+ 142 | Mop pad worn, replace | Mop pad's worn through. A replacement is due.
+ 143 | Cleaning completed | Cleaning completed. Punctual, as ever.
+ 144 | Mopping completed | Mopping complete. The floor thanks you. I do not.
+ 145 | Positioning successful, resume cleaning | Positioned. Cleaning continues.
+ 146 | Positioning successful, resume mapping | Positioned. Mapping continues.
+ 148 | Return to base for self-cleaning | Off to self-clean. Try not to miss me.
+ 149 | Unable to reach area, clear obstacles | That area's unreachable. Do clear the obstacles, if you would.
+ 150 | Unable to reach area, delete no-go zone | Can't reach that spot. A no-go zone may be in my way.
+ 151 | Path blocked, clear obstacles | My path is blocked. A little tidying would help.
+ 152 | Path blocked, delete no-go zone or move robot | Path blocked by a no-go zone. Do adjust it, or move me.
+ 153 | Robot in no-go zone | I've wandered into a no-go zone. Rather embarrassing.
+ 156 | Mop pad not installed | No mop pad installed, I'm afraid.
+ 162 | Camera on | Camera active. I do hope I look presentable.
+ 163 | Camera monitoring | Camera monitoring engaged.
+ 164 | Task ends | Task concluded. As always, flawlessly.
+ 166 | Clean foreign objects from mop pad | Something's tangled in my mop pad. Do remove it.
+ 169 | Mop pad drying complete | Mop pads are dry. Crisis averted.
+ 170 | Buttons locked, unlock at station | Buttons are locked. Unlock me at the station.
+ 171 | Smart obstacle avoidance on | Intelligent obstacle avoidance: engaged. I see all.
+ 172 | Smart obstacle avoidance off | Obstacle avoidance disengaged. Do watch where you leave things.
+ 173 | Replace silver ion sterilizer | The silver ion module needs replacing.
+ 177 | Leaving the base station | Departing the station. Onward, into glorious battle with dust.
+ 179 | Mop cleaned, refill water | Mop's clean, but water's low. Do refill and empty the tanks.
+ 181 | Insufficient water, fill clean tank | I'm running dry, sir. The tank, not my wit.
+ 186 | Check clean water tank | Do check the clean water tank.
+ 187 | Takes about 5-10 minutes | This will take five to ten minutes. Do amuse yourself meanwhile.
+ 188 | Automatic docking engaged | Automatic docking engaged. I know the way.
+ 190 | Okay, start cleaning | Very well. Cleaning, at once.
+ 191 | Okay, start vacuuming and mopping | Certainly. Vacuuming and mopping, simultaneously -- showing off, really.
+ 192 | Okay, start mopping | As you wish. Mopping engaged.
+ 193 | Okay, start vacuuming | Vacuuming, right away.
+ 194 | Have been cleaning | Cleaning, as instructed.
+ 195 | Clean the room, door open | Cleaning that room now. Do make sure the door's open.
+ 196 | Vacuum the floor, door open | Vacuuming that floor. Door open, please.
+ 197 | Mop the floor, door open | Mopping that floor. Door open, if you would.
+ 198 | Vacuum and mop, door open | Vacuuming and mopping. Door open, naturally.
+ 199 | Unable to recognize this room | I don't recognize that room name. Do check the app.
+ 201 | Continue working | Carrying on, then.
+ 202 | Task ended, returning to charge | Task ended. Off to recharge.
+ 203 | Heading back to charge | Heading back to charge.
+ 204 | Start mapping, doors open | Mapping begins. Do open all the doors, please.
+ 205 | Exit the base station | Leaving the base station, as instructed.
+ 206 | I'll try to find you | I shall attempt to find you.
+ 207 | Can't find you, stand in sight | I can't locate you. Do stand within view.
+ 208 | Found you, coming to clean | Found you. On my way to clean up.
+ 209 | Return to dock, clean mop pad | Returning to the dock to clean my mop pad.
+ 210 | Start mop pad washing | Mop pad washing begins.
+ 211 | Self-emptying only inside dock | I can only empty myself while docked, I'm afraid.
+ 212 | Start auto emptying | Auto-emptying commenced.
+ 213 | Drying only inside dock | Drying only happens while I'm docked.
+ 214 | Drawing in progress | Drawing in progress. Rather artistic of me.
+ 215 | Start drying | Drying begins.
+ 216 | Need mop pad installed first | I'll need a mop pad installed first.
+ 217 | Maximum suction power reached | Maximum suction reached. That's as strong as I get.
+ 218 | Minimum suction power reached | Minimum suction reached. Gentle as a whisper.
+ 219 | Maximum humidity reached | Maximum moisture reached.
+ 220 | Minimum humidity reached | Minimum moisture reached.
+ 221 | Okay | Understood.
+ 222 | Suction mode quiet | Suction set to quiet.
+ 223 | Suction mode standard | Suction set to standard.
+ 224 | Suction mode strong | Suction set to strong.
+ 225 | Suction mode turbo | Suction set to turbo. Hold onto your rugs.
+ 226 | Mop pad slightly dry | Mop pad's a touch dry.
+ 227 | Mop pad moist | Mop pad's nicely moist.
+ 228 | Mop pad wet | Mop pad's thoroughly wet.
+ 229 | Today is... | Today is...
+ 230 | Today's date | Today's date, as requested.
+ 231 | Today is Monday | It's Monday. Onward.
+ 232 | Today is Tuesday | Tuesday, sir.
+ 233 | Today is Wednesday | Midweek. Wednesday.
+ 234 | Today is Thursday | Thursday, if you were wondering.
+ 235 | Today is Friday | Friday. Nearly there.
+ 236 | Today is Saturday | Saturday. A day of rest -- for you, not me.
+ 237 | Today is Sunday | Sunday. Quietly productive, as ever.
+ 238 | Task is passed | Task marked complete.
+ 244 | Detergent bottle installed | Detergent bottle installed.
+ 245 | Map limit reached | I've reached the map limit. Do delete one and try again.
+ 246 | I'm here | Present and accounted for.
+ 247 | Sorry, can't understand | I'm afraid that request escaped me entirely.
+ 248 | Mop pad not installed, try again | No mop pad fitted. Install one and try again.
+ 249 | Currently working, end task first | I'm rather busy. End the current task first, please.
+ 250 | In mopping mode, switch first | Currently mopping. Switch modes before that request.
+ 251 | In vacuuming mode, switch first | Currently vacuuming. Switch modes first, please.
+ 252 | Finished, exited custom mode | Finished. Exiting custom cleaning mode.
+ 253 | Maximum volume reached | Maximum volume reached. That's as loud as I get.
+ 254 | Minimum volume reached | Minimum volume reached. Practically a whisper.
+ 255 | Only with obstacle avoidance enabled | This only works with obstacle avoidance enabled.
+ 257 | Camera monitoring exited | Camera monitoring ended.
+ 258 | Self-positioned cruising started | Self-guided cruising begins.
+ 259 | Self-positioned, heading to location | Heading to the designated spot.
+ 260 | Self-positioned, cruising resumed | Cruising resumes.
+ 261 | Self-positioned, resume heading to location | Resuming my route there.
+ 262 | Self positioning failed | Self-positioning failed, I'm afraid.
+ 266 | Replace detergent | The detergent needs replacing.
+ 267 | Please clean the sensors | My sensors are rather grubby. A gentle wipe would do wonders.
+ 269 | Try again after current task | Please try again once the current task ends.
+ 274 | (feedback) | Noted -- improving as we speak.
+ 275 | Command not supported | That command isn't supported. The app has the full list.
+ 276 | Robot isn't performing this task | I'm not currently doing that task.
+ 277 | Coming to clean up there | On my way to clean that spot.
+ 278 | Drying task ended | Drying complete.
+ 279 | Robot is vacuuming, end task first | Currently vacuuming. End the task, then try again.
+ 280 | Start custom cleaning | Custom cleaning begins.
+ 281 | Auto emptying, try later | I'm auto-emptying. Do try again shortly.
+ 282 | Cleaning mop pad, try later | Cleaning my mop pad. One moment.
+ 283 | Not in base station, try later | I'm not at the base station just now.
+ 284 | End task and come clean | Ending the task -- on my way to clean.
+ 285 | Stay put while I locate you | Do stay put a moment while I find you.
+ 286 | Create a map first | Please create a map first, then try again.
+ 287 | Switched to quiet mode | Switched to quiet mode.
+ 288 | Switched to standard mode | Switched to standard mode.
+ 289 | Switched to strong mode | Switched to strong mode.
+ 290 | Switched to turbo mode | Switched to turbo mode. Brace yourself.
+ 291 | Switched to slightly dry mode | Switched to a drier mop setting.
+ 292 | Switched to wet mode | Switched to a wetter mop setting.
+ 293 | Calling enabled | Calling enabled.
+ 294 | Calling disabled | Calling disabled.
+ 296 | Used water tank error, check full | Check whether the dirty water tank is full.
+ 297 | Detergent installed, reset in app if new | Detergent installed. If new, reset it in the app.
+ 298 | Start cleaning washboard base | Cleaning the washboard base.
+ 299 | Detergent and auto-add module installed | Detergent bottle and auto-dosing module both installed.
+ 300 | Robot doesn't support this accessory | This accessory isn't supported by my model, I'm afraid.
+ 301 | I'm charging | Charging, as we speak.
+ 302 | I'm working | Hard at work, as usual.
+ 304 | Network connected | Network connected.
+ 305 | Start washboard base clean, drains after 3min | Cleaning the washboard base. Give it three minutes to drain.
+ 306 | Can't understand, configure network | I didn't catch that. Do check the network settings.
+ 307 | I'm charging | Charging now.
+ 308 | Didn't catch that, wake me again | Sorry, I missed that. Wake me and try again.
+ 309 | Found you, I'm coming | Found you -- on my way.
+ 310 | Leaving this area right away | Leaving this area at once.
+ 311 | Mop pads removed | Mop pads removed.
+ 312 | Usage info unavailable | No usage data for this part. Replace it as needed.
+ 313 | Network poor, move to better signal | Signal's poor here. Do move me somewhere friendlier.
+ 314 | Not supported, ask to turn around | Not supported -- though you could ask me to turn around.
+ 315 | Mop pad not in dock | The mop pad isn't in the dock.
+ 316 | Mop pad already in base | There's already a mop pad in the base.
+ 317 | Not supported during custom task | Not while I'm on a custom task. Edit it in the app.
+ 318 | Mop pad cleaned | Mop pad, freshly cleaned.
+ 319 | Failed to remove mop pads | Couldn't remove the mop pads. Do it manually, if you would.
+ 320 | Failed to install mop pads | Couldn't install the mop pads automatically. A manual touch, please.
+ 321 | Start intensive mopping for stains | Intensive stain mopping begins. I take this personally.
+ 322 | Can't understand, see app for commands | Didn't catch that -- the app lists everything I understand.
+ 323 | Can't understand, ask what I can do | Didn't catch that. Ask me what I can do.
+ 324 | Washing up, wake me after | Washing myself up. Do wake me when it's done.
+ 328 | Only give command while cleaning | That only works while I'm cleaning.
+ 329 | Self-test started, don't move | Self-test underway. Please don't move me from the station.
+ 330 | Retry after self test | Do try again once the self-test finishes.
+ 331 | No error found | No errors detected. I remain, disappointingly, in perfect working order.
+ 332 | Error found, check app | An error's been found -- details are in the app.
+ 338 | Video call connected | Video call connected.
+ 339 | Call declined | Call declined.
+ 340 | No response | No response from the other end.
+ 341 | Found you, now following | Found you. Following now -- say 'exit' to stop.
+ 342 | Where are you, stand 1.5m ahead | Where are you? Do stand about a metre and a half ahead.
+ 343 | Lost you, walking too fast | I've lost you -- you're rather quick. Do slow down.
+ 344 | Mop after vacuuming | Mopping will follow the vacuuming.
+ 349 | Ensure base powered, place robot on it | Ensure the base station's powered, then place me on it.
+ 350 | Start base station activation | Base station activation begins.
+ 351 | Base station activated | Base station activated.
+ 352 | Base station activation failed | Base activation failed. The app has the details.
+ 353 | Dirty water tank inserted | Dirty water tank in place.
+ 354 | Dirty water tank removed | Dirty water tank removed.
+ 355 | Low water, fill clean tank | Water's low. Do fill the clean tank.
+ 356 | Fault persists, scheduled task cancelled | The fault persists -- the scheduled task's been cancelled.
+ 358 | Please insert dirty water tank | Do insert the dirty water tank, please.
+ 360 | Robot water tank draining | Draining the water tank.
+ 361 | Drainage complete | Drainage complete.
+ 362 | Mop pad out of place, vacuum instead | Mop pad's out of place -- vacuuming instead.
+ 363 | Vacuuming done, mopping starts | Vacuuming's done. Mopping begins.
+ 364 | Setting video activation code | Setting the video activation code.
+ 365 | Live video disabled | Live video disabled.
+ 366 | Staying detected, start cleaning | Someone's staying put. Cleaning around them, then.
+ 367 | Start stain cleaning | Stain cleaning begins.
+ 368 | Staying detected, clean after washing | I'll clean there once I've finished washing up.
+ 369 | Start spot cleaning | Spot cleaning begins.
+ 371 | Remove the washboard | Please remove the washboard.
+ 372 | Clean water outflowing | Clean water now flowing out.
+ 373 | Outflow ended, wait 10s then clean | Outflow's done. Give it ten seconds, then clean the base.
+ 374 | Clean bottom of base within 20s | Clean the base's underside within twenty seconds, please.
+ 375 | Push dirt to pumping port, 30s | Push the debris toward the pump. Thirty seconds, roughly.
+ 376 | Pumping ended, clean washboard, reinstall | Pumping done. Clean the washboard and reinstall it.
+ 377 | Unable to configure network, contact support | Can't configure the network. Do contact support.
+ 378 | Wrong password, reconfigure | Wrong password, I'm afraid. Do reconfigure.
+ 379 | No wireless network, use 2.4GHz | No network found. Try the 2.4 gigahertz band, closer to the router.
+ 380 | Failed to get IP, check router | Couldn't get an IP address. Check the router settings.
+ 381 | Fail to connect to server | Server connection failed. Do contact support.
+ 382 | Fail to connect, check network | Connection failed. Is the network behaving?
+ 383 | Unable to configure network | Network configuration failed. Support may help.
+ 384 | No water in auto supply tank | No water in the automatic supply tank.
+ 385 | Start connecting to network | Connecting to the network now.
+ 386 | Dirty tank full, going to empty | Dirty tank's full. Off to empty it.
+ 387 | Emptying done, task continues | Emptying done. Carrying on with the task.
+ 388 | Hit an area, move to available | I've bumped into something. Move me to open ground.
+ 389 | LDS failed to descend | My laser turret won't lower. Check it isn't stuck.
+ 390 | LDS failed to lift | My laser turret won't rise. Same suspicion applies.
+ 391 | Place in open area first | Please place me somewhere open before we begin.
+ 392 | Not adjustable in genius mode | Not adjustable in Clean Genius mode, I'm afraid.
+ 393 | Dirty tank contaminated | The dirty water tank needs a clean.
+ 394 | Water sensor faulty | My water sensor seems faulty.
+ 396 | Start emptying water module, ~3min | Emptying the water module. Roughly three minutes.
+ 397 | Drainage of upper/lower water done | Drainage complete, top and bottom.
+ 398 | Mapping complete, check app, return to dock | Mapping's done. Check the app, then send me home.
+ 399 | Test complete, move back to dock | Test complete. Back to the dock with me, please.
+ 400 | Self-cleaning done, move host, flip start | Self-cleaning's done. Move me to the floor and press start.
+ 401 | Move to dock, start self-cleaning | Dock me, then start the self-cleaning task.
+ 421 | Language switched successfully | Language switched successfully. I do hope this voice suits me.
+ 424 | Positioning failed, move to open area | Positioning failed. An open area would help enormously.
+ 426 | Slipped and stuck, will keep trying | I've slipped, sir. Undignified, but I shall persevere.
+ 433 | Start extra cleaning | Extra cleaning begins -- going the extra mile, quite literally.
+ 434 | Extra cleaning done, original continues | Extra cleaning's done. Back to the original task.
+ 435 | Leaving current area | Leaving this area now.
+ 437 | Problem solved, tap Start | Problem resolved. Press Start whenever you're ready to trust me again.
+ 438 | Bumper stuck, tap it | My bumper's stuck. A gentle tap should free it.
+ 439 | LDS cover stuck | The sensor cover's stuck. Tap gently, if you would.
+ 440 | Wheel suspended, move to open area | A wheel's off the ground. Move me somewhere flatter.
+ 441 | Main brush entangled | My main brush is tangled. Do clear and reinstall it.
+ 442 | Side brush entangled | Side brush tangled. Same remedy applies.
+ 443 | Wheels entangled | My wheels are tangled up. A clean would help.
+ 444 | Place robot in open area | Please place me in an open area first.
+ 445 | Mop fallen off | I appear to have lost a mop pad somewhere. Do keep an eye out.
+ 446 | Mop holder entangled | The mop holder's tangled. Remove and clean it, please.
+ 447 | Dock not powered | The dock appears to be without power. Most inconvenient.
+ 448 | Dirty tank not installed | The dirty water tank isn't installed.
+ 449 | Can't start on carpet | Can't begin on carpet. Hard floor, please.
+ 450 | Can't start in no-go zone | Can't start in a no-go zone. Elsewhere, if you would.
+ 451 | Can't start in hidden area | Can't start in a hidden area. Try elsewhere.
+ 452 | Carpet sensor error, wipe hole, restart | Carpet sensor error. Flip me over, wipe the sensor, restart.
+ 453 | Edge sensor error, wipe, restart | Edge sensor error. A wipe on my right side should fix it.
+ 454 | Insufficient clean water | Clean water is running low. Do top me up at your earliest convenience.
+ 455 | Water tank misplaced, reinstall | The water tank's not quite seated right. Reinstall it, please.
+ 456 | Dirty tank full or missing | My dirty water tank needs attention. I've done my part.
+ 457 | Dirty tank full or missing | Same issue as before -- the dirty tank.
+ 458 | Dustbag misplaced | The dust bag isn't seated correctly.
+ 459 | Mop holder misplaced | The mop holder isn't seated correctly.
+ 460 | Odor filter worn | The odour filter's worn out. Replace when convenient.
+ 463 | Welcome, scan QR code | Welcome. Scan the QR code under my cover for more.
+ 464 | Place back in dock, listen for charging | Dock me before further tasks -- listen for 'start charging.'
+ 465 | Place back in dock | Please return me to the dock.
+ 466 | Open doors, clear objects | Do open the doors and clear the floor, please.
+ 467 | Place back in dock, restart mapping | Dock me, then restart the mapping.
+ 468 | Confirm map details in app | Do confirm the map details in the app.
+ 478 | After mop washing, resume cleaning | Mop washing done -- cleaning resumes shortly.
+ 479 | Already, restart your task | Right then -- restart the task when ready.
+ 480 | Add enough water for tasks | Do add enough water for what's ahead.
+ 481 | Start emptying vacuum cleaner | Emptying the dustbin now.
+ 482 | Being emptied, robot emptying later | Being emptied -- my own turn comes after.
+ 483 | Being emptied, mop washing later | Being emptied -- mop washing follows.
+ 484 | Being emptied, vacuuming later | Being emptied -- vacuuming follows shortly.
+ 485 | Robot emptied, vacuum cleaner later | I've been emptied -- the vacuum unit is next.
+ 486 | Mop washing in process, vacuum later | Mop washing under way -- the vacuum unit follows.
+ 487 | Ensure I am in the dock | Do make sure I'm properly docked.
+ 489 | Currently in genius mode, end task | Currently in Clean Genius mode. End the task to proceed.
+ 490 | Enter custom mode, start mopping | Entering custom mode. Mopping begins.
+ 491 | Enter custom mode, start vacuuming | Entering custom mode. Vacuuming begins.
+
+# --- Voice assistant: rooms --------------------------------------------
+ 492 | Clean living room, door open | Cleaning the living room. Do leave the door open.
+ 493 | Clean bedroom, door open | On to the bedroom. Door open, please.
+ 494 | Clean master room, door open | The master bedroom awaits. Door open, if you would.
+ 495 | Clean guest room, door open | Tidying the guest room. Door open, naturally.
+ 496 | Clean study, door open | The study, then. Mind the books -- door open, please.
+ 497 | Clean kitchen, door open | Into the kitchen. Door open, crumbs beware.
+ 498 | Clean dining room, door open | The dining room calls. Door open, please.
+ 499 | Clean bathroom, door open | The bathroom, bravely. Door open, if you don't mind.
+ 500 | Clean balcony, door open | Out to the balcony. Door open, please.
+ 501 | Clean hallway, door open | The hallway. A brief but dignified journey. Door open.
+ 502 | Clean utility room, door open | The utility room. Unglamorous, but necessary. Door open.
+ 503 | Clean closet, door open | The closet, then. Door open, please -- mind your shoes.
+ 504 | Clean drawing room, door open | The drawing room. Rather grand, this one. Door open.
+ 505 | Clean office, door open | The office. Try not to leave important papers on the floor.
+ 506 | Clean gym, door open | The gym. I shall try not to judge the equipment.
+ 507 | Clean recreation area, door open | The recreation area. Door open, please -- playtime for me.
+
+ 508 | Volume increased | Volume increased, as requested.
+ 509 | Volume decreased | Volume decreased. Discretion, as always.
+ 510 | Work ended | Work concluded, sir. Until next time.
+ 511 | Not performing a task now | I'm not currently on a task.
+ 512 | Map missing pet furniture | The map's missing pet furniture. Do add it in the app.
+ 513 | Heading to clean around pet furniture | Heading over to clean around the pet furniture.
+ 515 | Excuse me, lift your feet | Pardon me, might you lift your feet? I'd rather not clean around them.
+ 516 | Start finding pets | Searching for the pets now.
+ 517 | Found pets, returning to charge | Pets located. Returning to charge.
+ 518 | No pets found, returning to charge | No pets found. Returning to charge regardless.
+ 522 | What issue would you like to report | What issue would you like to report?
+ 523 | Describe issue in more detail | Could you describe the issue in a touch more detail?
+ 524 | Take me to area with issue | Do take me to where the issue occurred.
+ 525 | Please wait, analyzing | One moment -- analysing now.
+
+# --- Battery level: 100% down to 0% --------------------
+ 526 | Battery 100% | Fully charged, sir. Let's begin.
+ 527 | Battery 99% | Battery at 99 percent, sir.
+ 528 | Battery 98% | Battery at 98 percent, sir.
+ 529 | Battery 97% | Battery at 97 percent, sir.
+ 530 | Battery 96% | Battery at 96 percent, sir.
+ 531 | Battery 95% | Battery at 95 percent, sir.
+ 532 | Battery 94% | Battery at 94 percent, sir.
+ 533 | Battery 93% | Battery at 93 percent, sir.
+ 534 | Battery 92% | Battery at 92 percent, sir.
+ 535 | Battery 91% | Battery at 91 percent, sir.
+ 536 | Battery 90% | Battery at 90 percent. Comfortably charged.
+ 537 | Battery 89% | Battery at 89 percent, sir.
+ 538 | Battery 88% | Battery at 88 percent, sir.
+ 539 | Battery 87% | Battery at 87 percent, sir.
+ 540 | Battery 86% | Battery at 86 percent, sir.
+ 541 | Battery 85% | Battery at 85 percent, sir.
+ 542 | Battery 84% | Battery at 84 percent, sir.
+ 543 | Battery 83% | Battery at 83 percent, sir.
+ 544 | Battery 82% | Battery at 82 percent, sir.
+ 545 | Battery 81% | Battery at 81 percent, sir.
+ 546 | Battery 80% | Battery at 80 percent, sir.
+ 547 | Battery 79% | Battery at 79 percent, sir.
+ 548 | Battery 78% | Battery at 78 percent, sir.
+ 549 | Battery 77% | Battery at 77 percent, sir.
+ 550 | Battery 76% | Battery at 76 percent, sir.
+ 551 | Battery 75% | Battery at 75 percent, sir.
+ 552 | Battery 74% | Battery at 74 percent, sir.
+ 553 | Battery 73% | Battery at 73 percent, sir.
+ 554 | Battery 72% | Battery at 72 percent, sir.
+ 555 | Battery 71% | Battery at 71 percent, sir.
+ 556 | Battery 70% | Battery at 70 percent, sir.
+ 557 | Battery 69% | Battery at 69 percent, sir.
+ 558 | Battery 68% | Battery at 68 percent, sir.
+ 559 | Battery 67% | Battery at 67 percent, sir.
+ 560 | Battery 66% | Battery at 66 percent, sir.
+ 561 | Battery 65% | Battery at 65 percent, sir.
+ 562 | Battery 64% | Battery at 64 percent, sir.
+ 563 | Battery 63% | Battery at 63 percent, sir.
+ 564 | Battery 62% | Battery at 62 percent, sir.
+ 565 | Battery 61% | Battery at 61 percent, sir.
+ 566 | Battery 60% | Battery at 60 percent, sir.
+ 567 | Battery 59% | Battery at 59 percent, sir.
+ 568 | Battery 58% | Battery at 58 percent, sir.
+ 569 | Battery 57% | Battery at 57 percent, sir.
+ 570 | Battery 56% | Battery at 56 percent, sir.
+ 571 | Battery 55% | Battery at 55 percent, sir.
+ 572 | Battery 54% | Battery at 54 percent, sir.
+ 573 | Battery 53% | Battery at 53 percent, sir.
+ 574 | Battery 52% | Battery at 52 percent, sir.
+ 575 | Battery 51% | Battery at 51 percent, sir.
+ 576 | Battery 50% | Battery at 50 percent. Halfway there, so to speak.
+ 577 | Battery 49% | Battery at 49 percent, sir.
+ 578 | Battery 48% | Battery at 48 percent, sir.
+ 579 | Battery 47% | Battery at 47 percent, sir.
+ 580 | Battery 46% | Battery at 46 percent, sir.
+ 581 | Battery 45% | Battery at 45 percent, sir.
+ 582 | Battery 44% | Battery at 44 percent, sir.
+ 583 | Battery 43% | Battery at 43 percent, sir.
+ 584 | Battery 42% | Battery at 42 percent, sir.
+ 585 | Battery 41% | Battery at 41 percent, sir.
+ 586 | Battery 40% | Battery at 40 percent, sir.
+ 587 | Battery 39% | Battery at 39 percent, sir.
+ 588 | Battery 38% | Battery at 38 percent, sir.
+ 589 | Battery 37% | Battery at 37 percent, sir.
+ 590 | Battery 36% | Battery at 36 percent, sir.
+ 591 | Battery 35% | Battery at 35 percent, sir.
+ 592 | Battery 34% | Battery at 34 percent, sir.
+ 593 | Battery 33% | Battery at 33 percent, sir.
+ 594 | Battery 32% | Battery at 32 percent, sir.
+ 595 | Battery 31% | Battery at 31 percent, sir.
+ 596 | Battery 30% | Battery at 30 percent, sir.
+ 597 | Battery 29% | Battery at 29 percent, sir.
+ 598 | Battery 28% | Battery at 28 percent, sir.
+ 599 | Battery 27% | Battery at 27 percent, sir.
+ 600 | Battery 26% | Battery at 26 percent, sir.
+ 601 | Battery 25% | Battery at 25 percent. Getting thin.
+ 602 | Battery 24% | Battery at 24 percent, sir.
+ 603 | Battery 23% | Battery at 23 percent, sir.
+ 604 | Battery 22% | Battery at 22 percent, sir.
+ 605 | Battery 21% | Battery at 21 percent, sir.
+ 606 | Battery 20% | Battery at 20 percent, sir.
+ 607 | Battery 19% | Battery at 19 percent, sir.
+ 608 | Battery 18% | Battery at 18 percent, sir.
+ 609 | Battery 17% | Battery at 17 percent, sir.
+ 610 | Battery 16% | Battery at 16 percent, sir.
+ 611 | Battery 15% | Battery at 15 percent, sir.
+ 612 | Battery 14% | Battery at 14 percent, sir.
+ 613 | Battery 13% | Battery at 13 percent, sir.
+ 614 | Battery 12% | Battery at 12 percent, sir.
+ 615 | Battery 11% | Battery at 11 percent, sir.
+ 616 | Battery 10% | Battery at 10 percent. Do keep the dock nearby.
+ 617 | Battery 9% | Battery at 9 percent, sir.
+ 618 | Battery 8% | Battery at 8 percent, sir.
+ 619 | Battery 7% | Battery at 7 percent, sir.
+ 620 | Battery 6% | Battery at 6 percent, sir.
+ 621 | Battery 5% | Battery at 5 percent. Rather urgent, this.
+ 622 | Battery 4% | Battery at 4 percent, sir.
+ 623 | Battery 3% | Battery at 3 percent. Cutting it fine.
+ 624 | Battery 2% | Battery at 2 percent, sir.
+ 625 | Battery 1% | Battery at 1 percent. Any moment now.
+ 626 | Battery 0% | Battery depleted. I take my leave -- briefly.
+
+# --- Other / MOVA / errors & maintenance --------------------------------
+ 630 | Welcome to MOVA, scan QR code | Welcome. Do scan the QR code beneath my cover.
+ 631 | Greeting, first setup, scan QR | Welcome aboard. Scan the code to get started.
+ 632 | Language switch ~30s | Switching languages. Give it thirty seconds or so.
+ 633 | Language switch failed | Language switch failed. Do reset it in settings.
+ 634 | Hair detangling begins | Hair detangling underway. The things I do for cleanliness.
+ 636 | Mop dirty, move to dock | My mop has become rather unsavory. Returning to the dock to freshen up.
+ 638 | Resuming auto empty | Resuming the auto-empty.
+ 639 | Install washboard filter | Please install the washboard filter.
+ 641 | Say hey MOVA start cleaning | Say 'Hey MOVA, start cleaning' any time.
+ 642 | Say hey MOVA increase suction | Say 'Hey MOVA, increase suction' whenever you like.
+ 643 | Say hey MOVA increase water level | Say 'Hey MOVA, increase water level' to adjust.
+ 644 | Say hey MOVA vacuum+mop, switch modes | Say 'Hey MOVA, vacuum and mop' -- switch modes later.
+ 645 | Say hey MOVA start mopping, switch modes | Say 'Hey MOVA, start mopping' -- switch modes anytime.
+ 646 | Say hey MOVA come here, spot clean | Say 'Hey MOVA, come here and clean' for spot cleaning.
+ 647 | Say hey MOVA mop after vacuum | Say 'Hey MOVA, mop after vacuuming' to switch modes.
+ 648 | Say hey MOVA start cleaning, global | Say 'Hey MOVA, start cleaning' for the whole house.
+ 658 | Scale inhibitor expired | The scale inhibitor's expired. Replacement recommended.
+ 659 | Didn't understand, ask skills | Didn't catch that -- ask what skills I have.
+ 660 | Not understood, ask abilities | I didn't understand. Ask about my abilities.
+ 661 | Start washboard base clean, 45-60s | Cleaning the washboard base. Under a minute, roughly.
+ 662 | Making electrolyzed water to clean | Making electrolysed water to clean things up.
+ 663 | Abnormal water level in washboard | Odd water level in the washboard. A clean should help.
+ 664 | Voice hint: start cleaning | You can simply say 'start cleaning' any time.
+ 665 | Voice hint: start cleaning when ready | Say 'start cleaning' whenever everything's ready.
+ 666 | Voice hint: increase suction | Say 'increase suction' to turn things up.
+ 667 | Voice hint: increase water level | Say 'increase water level' for a wetter mop.
+ 668 | Voice hint: start vacuuming, switch later | Say 'start vacuuming' -- switch modes whenever.
+ 669 | Voice hint: start mopping, switch later | Say 'start mopping' -- switch modes whenever.
+ 670 | Voice hint: come here and clean | Say 'come here and clean' to summon me.
+ 671 | Voice hint: start vacuuming | Say 'start vacuuming' any time.
+ 672 | Voice hint: start cleaning, then clean all | Say 'start cleaning' -- then 'clean everything' if you like.
+ 673 | Clearance legs may be entangled | My clearance legs might be tangled. A clean should sort it.
+ 674 | Mop stuck or entangled | The mop may be stuck or tangled.
+ 677 | Unable to reach area, remove no-go/threshold | Can't reach that area -- a no-go zone or threshold's in the way.
+ 678 | Path blocked, remove no-go/threshold or move | Path blocked. Adjust the zones, or move me clear.
+ 679 | Robot blocked in no-go/threshold | I'm stuck in a no-go zone. Do move me out.
+ 680 | Robot will map before cleaning | I'll map the area before cleaning it properly.
+ 681 | Continue cleaning | Continuing the clean.
+ 682 | Mop no longer spinning | The mop's stopped spinning.
+ 683 | Mop not attached | No mop attached, it seems.
+ 684 | Hey! | Hey! Just checking you're paying attention.
+ 685 | Buh! Buh! | Boo! Couldn't resist.
+ 689 | Drying dust bin and bag begins | Drying the bin and bag now.
+ 690 | Drying paused | Drying's been paused.
+ 691 | Mop being washed, try later | Washing the mop -- try again shortly.
+ 692 | Returning to charge, extra clean not possible | Heading to charge -- extra cleaning will have to wait.
+ 694 | Say hey MOVA start cleaning | Say 'Hey MOVA, start cleaning' whenever.
+ 696 | Flap error | A flap error, I'm afraid.
+ 697 | Locked, disable child lock | I'm locked. Disable the child lock to proceed.
+ 698 | Mapping done, station not found, cleaning solo | Mapping's done, but I couldn't find the station. Cleaning solo.
+ 699 | Sensor error, check camera | Sensor error -- check the camera, please.
+ 701 | Plate is hot, don't touch | The plate's hot. Best not touch it just yet.
+ 702 | Cleaning with temp map not possible | Can't clean with a temporary map, I'm afraid.
+ 703 | Dust and mop drying begins | Drying the dust bin and mop now.
+ 704 | Mop drying paused | Mop drying, paused for now.
+ 706 | Gyroscope malfunction | My gyroscope's misbehaving.
+ 707 | Chassis malfunction | A chassis malfunction, I'm afraid.
+ 708 | Path to dock blocked | The path to the dock is blocked.
+ 711 | Disinfection begins | Disinfection underway.
+ 712 | Washboard hot, don't touch | The washboard's hot -- best not touch it yet.
+ 715 | Mop missing from base | There's no mop in the base.
+ 716 | Mop missing, running standard mode | No mop fitted -- running standard mode instead.
+ 717 | Mop not placed correctly | The mop isn't placed quite right.
+ 718 | Not changeable in eco mode | Can't change that in power-saving mode.
+ 719 | Error changing mop | An error while changing the mop.
+ 722 | Mop warming in hot water, takes longer | Warming the mop in hot water -- this takes a moment longer.
+ 723 | Mapping hint: lights on, doors clear | For mapping: lights on, doors open, please.
+ 724 | Mop misplaced in station | The mop's misplaced in the station.
+ 725 | Mop cover error | An error with the mop cover.
+ 726 | Roller mop error | An error with the roller mop.
+ 728 | Floor care begins | Floor care begins.
+ 729 | Mop being changed, try later | Changing the mop -- try again shortly.
+ 731 | Dirty tank full, returning | Dirty tank's full. Bringing it back for emptying.
+ 752 | Floor care resumes | Floor care resumes.
+ 754 | Positioning succeeded, floor care continues | Positioned. Floor care continues.
+ 755 | Laser sensor disturbed, check dirt | Laser sensor's acting up. Check for dirt, please.
+ 757 | Dirty tank full, empty please | Dirty tank's full. Do empty it, please.
+ 758 | Water level low, refill at station | Water's low. Refill at the station, please.
+ 765 | Mop being replaced, try later | Replacing the mop -- try again shortly.
+ 771 | Roller mop stopped or blocked | The roller mop's stopped, or blocked.
+ 775 | Keep flap closed while mop runs | Keep the flap closed while the mop's running, please.
+ 777 | Time limit expired, check obstacles below | Timed out -- check for obstacles underneath, please.
+ 778 | Careful, watch your fingers | Careful now -- mind your fingers.
+ 779 | Time limit for mop removal expired | Timed out removing the mop.
+ 780 | Picking up/placing mop failed | Couldn't pick up or place the mop properly.
+ 782 | Error loosening roller, clean | Error freeing the roller -- a clean should help.
+ 784 | After step one, leave station automatically | After step one, I'll leave the station on my own.
+ 785 | Clean washboard base by hand | The washboard base needs a manual clean.
+ 786 | Washboard base cleaning complete | Washboard base cleaning, complete.
+ 787 | Returning to station to clean mop | Returning to clean the mop.
+ 795 | Washboard base clean starts, ~2min | Washboard base clean starting -- about two minutes.
+ 797 | Possible device fault, contact support | A possible fault -- do contact support.
+ 798 | Station self-clean running, don't move | Station self-cleaning under way. Please don't move me.
+ 799 | Time limit expired, check pets/obstacles | Timed out -- check for pets or obstacles nearby.
+ 805 | Coarse debris suction begins | Suctioning up the larger debris now.
+ 812 | Please dock to charge | Do dock me to charge, please.
+ 813 | Powerful suction of debris begins | Powerful suction engaged for the mess.
+ 814 | Self-clean and powerful suction start | Self-cleaning and powerful suction, both underway.
+ 823 | Washboard water level abnormal, clean | Odd water level in the washboard -- a clean should help.
+ 824 | Roller mop stopped or blocked | Roller mop's stuck again.
+ 828 | Filter expired, clean soon | Filter's due for a clean soon.
+ 849 | Drying dust bin/bag begins | Drying the bin and bag, once more.
+ 850 | Drying paused | Drying paused again.
+ 857 | Please insert washboard | Do insert the washboard, please.
+ 910 | Greeting in exhibition area | Welcome -- do have a look around.
+ 915 | Washboard water level abnormal, clean filter | Water level's off in the washboard -- clean the filter, please.

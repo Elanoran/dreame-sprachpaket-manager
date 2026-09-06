@@ -58,6 +58,11 @@ voiced right in the app. All of that lives under *Advanced* and only
 shows up if you go looking for it. See [Custom Voices and
 Dialects](docs/Eigene-Stimmen.md).
 
+Want a starting point for your own text pack? [examples/jarvis-voice](examples/jarvis-voice)
+has a full 593-line script written as a dry, formal AI-butler
+character - plus notes on voicing it with a voice you're actually
+entitled to use.
+
 **Preview first:** before anything goes to the robot, *Listen* plays
 four typical announcements. Don't like the voice? Nothing happened.
 
