@@ -16,9 +16,10 @@ No rooting, no installation, a single file.
 > (https://github.com/Anon365-Project/dreame-sprachpaket-manager). This
 > fork translates everything you see and interact with in the app -
 > buttons, labels, error messages, the dialect pack names - to English.
-> The functionality, the dialect voice packs themselves, and the license
-> are unchanged from upstream. The supporting guides linked below (under
-> `docs/`) are still in German for now.
+> That covers roughly 99% of the app; the supporting guides linked below
+> (under `docs/`) are still in German for now. The functionality, the
+> dialect voice packs themselves (their actual spoken content stays in
+> dialect, on purpose), and the license are unchanged from upstream.
 
 **Download: [DreameSprachpaket.exe](../../releases/latest)** - about 97 MB
 
@@ -111,6 +112,15 @@ restart. Turn it off and on once.
 voices already have it. Voicing your own text needs ElevenLabs for that;
 the Windows text-to-speech voice is free and offline, but only carries
 the dialect in word choice. [More on this](docs/Eigene-Stimmen.md)
+
+**"ffmpeg wasn't found."** Only matters for mp3, wav, or m4a input -
+ready-made .ogg files (Vorbis, mono, 16000 Hz) work without it. Easiest
+fix: under **Individual Announcements**, click *Set Up ffmpeg
+Automatically* - it downloads the official Windows build from
+BtbN/FFmpeg-Builds on GitHub (the source ffmpeg.org itself links) and
+places it in the app's data folder, nothing else on the system is
+touched. Alternatively, just copy an existing `ffmpeg.exe` next to the
+app.
 
 ---
 
