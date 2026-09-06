@@ -21,17 +21,28 @@ No rooting, no installation, a single file.
 > dialect voice packs themselves (their actual spoken content stays in
 > dialect, on purpose), and the license are unchanged from upstream.
 
-**Download: [DreameSprachpaket.exe](../../releases/latest)** - about 97 MB
+**This fork doesn't currently ship a prebuilt EXE** - only the
+translated source. Run it directly:
 
-1. Double-click. Windows will warn "Windows protected your PC" because the
-   file isn't signed: *More info → Run anyway*.
-2. Under **Start**, choose the matching app (Dreamehome, MOVA Home, or
+```bash
+git clone https://github.com/Elanoran/dreame-sprachpaket-manager
+cd dreame-sprachpaket-manager
+pip install requests
+python main.py
+```
+
+1. Under **Start**, choose the matching app (Dreamehome, MOVA Home, or
    Trouver) and sign in with the same credentials. The app then fetches
    your robot's voice pack by itself.
-3. Under **Ready-Made Voices**, pick one, *Listen*, *Install*.
+2. Under **Ready-Made Voices**, pick one, *Listen*, *Install*.
 
-That's the whole path. The voices are built into the program file -
-nothing gets downloaded. Don't like it? *Restore Original Voice*.
+Want the original single-file EXE experience? Build it yourself - see
+[Development](docs/Entwicklung.md) - or grab upstream's own prebuilt
+EXE (German UI) from
+[Anon365-Project/dreame-sprachpaket-manager](https://github.com/Anon365-Project/dreame-sprachpaket-manager/releases/latest).
+
+Either way: the voices are built into the program - nothing gets
+downloaded at install time. Don't like it? *Restore Original Voice*.
 
 **Does this work with my robot?** If you can pick a language under *Voice*
 in the Dreamehome app, it works. 402 models checked - [how I verified
