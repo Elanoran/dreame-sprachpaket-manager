@@ -11,6 +11,7 @@ No rooting, no installation, a single file.
     "Na denn los. Ick fang an zu saugen."                Berlin dialect
 ```
 
+> [!WARNING]
 > **This is a bilingual fork.** The original German project is by
 > Maximilian Mangold: [Anon365-Project/dreame-sprachpaket-manager]
 > (https://github.com/Anon365-Project/dreame-sprachpaket-manager). This
