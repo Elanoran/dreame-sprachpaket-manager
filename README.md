@@ -41,7 +41,7 @@ this](docs/Modelle.md).
 > Not reviewed or supported by Dreame, MOVA, or Trouver.
 > [What that means exactly](#disclaimer)
 
-![The app](app-vorschau.png)
+![The app](dream.png)
 
 ---
 
